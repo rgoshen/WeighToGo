@@ -10,7 +10,11 @@ A simple, effective Android mobile application for daily weight tracking and goa
 ![License](https://img.shields.io/badge/License-MIT-blue.svg)
 
 ---
-
+![login screen](./previews/weight_tracker_login.png)
+![dashboard](./previews/weight_tracker_dashboard.png)
+![entry screen](./previews/weight_tracker_entry.png)
+![sms screen](./previews/weight_tracker_sms_notifications.png)
+---
 ## 📱 About
 
 **Weigh to Go!** is a streamlined weight tracking application designed to help users monitor their daily weight and progress toward personal health goals. The app focuses on essential features without overwhelming complexity—secure login, daily weight entry, historical data display, goal setting, and achievement notifications.
@@ -83,7 +87,7 @@ Before you begin, ensure you have the following installed:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/weigh-to-go.git
+git clone https://github.com/rgoshen/weigh-to-go.git
 cd weigh-to-go
 ```
 
@@ -141,7 +145,8 @@ weigh-to-go/
 │   │   │   │   ├── activities/
 │   │   │   │   │   ├── LoginActivity.java
 │   │   │   │   │   ├── MainActivity.java
-│   │   │   │   │   └── WeightEntryActivity.java
+│   │   │   │   │   ├── WeightEntryActivity.java
+│   │   │   │   │   └── SmsNotificationsActivity.java
 │   │   │   │   ├── adapters/
 │   │   │   │   │   └── WeightHistoryAdapter.java
 │   │   │   │   ├── database/
@@ -150,10 +155,14 @@ weigh-to-go/
 │   │   │   │   ├── models/
 │   │   │   │   │   ├── User.java
 │   │   │   │   │   ├── WeightEntry.java
-│   │   │   │   │   └── GoalWeight.java
+│   │   │   │   │   ├── GoalWeight.java
+│   │   │   │   │   ├── Achievement.java
+│   │   │   │   │   └── UserPreference.java
 │   │   │   │   ├── utils/
 │   │   │   │   │   ├── ValidationUtils.java
 │   │   │   │   │   ├── NotificationHelper.java
+│   │   │   │   │   ├── SmsNotificationUtils.java
+│   │   │   │   │   ├── PasswordUtils.java
 │   │   │   │   │   └── SessionManager.java
 │   │   │   │   └── constants/
 │   │   │   │       └── AppConstants.java
@@ -162,6 +171,7 @@ weigh-to-go/
 │   │   │   │   │   ├── activity_login.xml
 │   │   │   │   │   ├── activity_main.xml
 │   │   │   │   │   ├── activity_weight_entry.xml
+│   │   │   │   │   ├── activity_sms_notifications.xml
 │   │   │   │   │   └── item_weight_history.xml
 │   │   │   │   ├── values/
 │   │   │   │   │   ├── colors.xml
@@ -169,6 +179,7 @@ weigh-to-go/
 │   │   │   │   │   ├── styles.xml
 │   │   │   │   │   └── dimens.xml
 │   │   │   │   ├── drawable/
+│   │   │   │   ├── mipmap-*/
 │   │   │   │   └── menu/
 │   │   │   └── AndroidManifest.xml
 │   │   ├── test/
@@ -176,31 +187,73 @@ weigh-to-go/
 │   │   └── androidTest/
 │   │       └── java/com/rickgoshen/weightogo/
 │   └── build.gradle
+├── docs/
+│   ├── architecture/
+│   │   └── WeighToGo_Database_Architecture.md
+│   ├── design/
+│   │   ├── Weight_Tracker_Figma_Design_Specifications.md
+│   │   └── Weight_Tracker_Figma_Quick_Start_Guide.md
+│   ├── api/
+│   │   └── (future API documentation)
+│   └── user-guide/
+│       └── (future user documentation)
+├── previews/
+│   ├── weight_tracker_login.html
+│   ├── weight_tracker_dashboard.html
+│   ├── weight_tracker_weight_entry.html
+│   └── weight_tracker_sms_notifications.html
 ├── gradle/
 │   └── wrapper/
+│       ├── gradle-wrapper.jar
+│       └── gradle-wrapper.properties
 ├── build.gradle
 ├── settings.gradle
 ├── gradle.properties
+├── gradlew
+├── gradlew.bat
 ├── README.md
 ├── LICENSE.md
 ├── CONTRIBUTING.md
 └── .gitignore
 ```
 
+### 📂 Directory Descriptions
+
+| Directory | Purpose |
+|-----------|---------|
+| `app/` | Main Android application module |
+| `app/src/main/java/` | Java source code organized by feature |
+| `app/src/main/res/` | Android resources (layouts, values, drawables) |
+| `app/src/test/` | Unit tests (JUnit) |
+| `app/src/androidTest/` | Instrumented tests (Espresso) |
+| `docs/` | Project documentation |
+| `docs/architecture/` | Database schema and system architecture |
+| `docs/design/` | UI/UX design specifications and Figma guides |
+| `docs/api/` | API documentation (future) |
+| `docs/user-guide/` | End-user documentation (future) |
+| `previews/` | Interactive HTML mockups for UI screens |
+| `gradle/` | Gradle wrapper files |
+
 ---
 
 ## 🗄️ Database Schema
 
-The app uses SQLite with three tables:
+The app uses SQLite with five normalized tables. For complete documentation including SQL scripts, Java implementations, and DAO patterns, see [`docs/architecture/WeighToGo_Database_Architecture.md`](./docs/architecture/WeighToGo_Database_Architecture.md).
 
 ### `users`
 | Column | Type | Constraints |
 |--------|------|-------------|
 | `user_id` | INTEGER | PRIMARY KEY, AUTOINCREMENT |
 | `username` | TEXT | NOT NULL, UNIQUE |
-| `phone_number` | TEXT | For SMS notifications |
-| `password` | TEXT | NOT NULL (hashed) |
+| `email` | TEXT | UNIQUE |
+| `phone_number` | TEXT | E.164 format for SMS |
+| `password_hash` | TEXT | NOT NULL (SHA-256) |
+| `salt` | TEXT | NOT NULL |
+| `display_name` | TEXT | |
 | `created_at` | TEXT | DEFAULT CURRENT_TIMESTAMP |
+| `updated_at` | TEXT | DEFAULT CURRENT_TIMESTAMP |
+| `is_active` | INTEGER | DEFAULT 1 |
+| `last_login` | TEXT | |
 
 ### `daily_weights`
 | Column | Type | Constraints |
@@ -208,8 +261,11 @@ The app uses SQLite with three tables:
 | `weight_id` | INTEGER | PRIMARY KEY, AUTOINCREMENT |
 | `user_id` | INTEGER | FOREIGN KEY → users |
 | `weight_value` | REAL | NOT NULL |
+| `weight_unit` | TEXT | DEFAULT 'lbs' |
 | `weight_date` | TEXT | NOT NULL |
+| `notes` | TEXT | |
 | `created_at` | TEXT | DEFAULT CURRENT_TIMESTAMP |
+| `is_deleted` | INTEGER | DEFAULT 0 |
 
 ### `goal_weights`
 | Column | Type | Constraints |
@@ -217,8 +273,56 @@ The app uses SQLite with three tables:
 | `goal_id` | INTEGER | PRIMARY KEY, AUTOINCREMENT |
 | `user_id` | INTEGER | FOREIGN KEY → users |
 | `goal_weight` | REAL | NOT NULL |
+| `goal_unit` | TEXT | DEFAULT 'lbs' |
+| `start_weight` | REAL | |
+| `target_date` | TEXT | |
+| `is_achieved` | INTEGER | DEFAULT 0 |
+| `achieved_date` | TEXT | |
+| `created_at` | TEXT | DEFAULT CURRENT_TIMESTAMP |
+| `is_active` | INTEGER | DEFAULT 1 |
+
+### `achievements`
+| Column | Type | Constraints |
+|--------|------|-------------|
+| `achievement_id` | INTEGER | PRIMARY KEY, AUTOINCREMENT |
+| `user_id` | INTEGER | FOREIGN KEY → users |
+| `goal_id` | INTEGER | FOREIGN KEY → goal_weights |
+| `type` | TEXT | NOT NULL |
+| `title` | TEXT | NOT NULL |
+| `description` | TEXT | |
+| `achieved_at` | TEXT | DEFAULT CURRENT_TIMESTAMP |
+| `is_notified` | INTEGER | DEFAULT 0 |
+
+### `user_preferences`
+| Column | Type | Constraints |
+|--------|------|-------------|
+| `preference_id` | INTEGER | PRIMARY KEY, AUTOINCREMENT |
+| `user_id` | INTEGER | FOREIGN KEY → users |
+| `pref_key` | TEXT | NOT NULL |
+| `pref_value` | TEXT | |
 | `created_at` | TEXT | DEFAULT CURRENT_TIMESTAMP |
 | `updated_at` | TEXT | DEFAULT CURRENT_TIMESTAMP |
+
+**Preference Keys:** `weight_unit`, `theme`, `notifications_enabled`, `sms_notifications_enabled`, `sms_goal_alerts`, `sms_milestone_alerts`, `sms_reminder_enabled`, `reminder_time`
+
+---
+
+## 📚 Documentation
+
+Comprehensive project documentation is available in the [`docs/`](docs/) folder:
+
+### Architecture
+| Document | Description |
+|----------|-------------|
+| [Database Architecture](./docs/architecture/WeighToGo_Database_Architecture.md) | Complete SQLite schema, ER diagrams, SQL scripts, Java DAOs, and best practices |
+
+### Design
+| Document | Description |
+|----------|-------------|
+| [Figma Design Specifications](./docs/Weight_Tracker_Figma_Design_Specifications.md) | Complete UI specifications with colors, typography, spacing, and component details |
+| [Figma Quick Start Guide](./docs/Weight_Tracker_Figma_Quick_Start_Guide.md) | Step-by-step guide for building UI screens in Figma |
+
+> **Note:** The Project Structure section shows the recommended folder organization with subfolders (`architecture/`, `design/`, `api/`, `user-guide/`) for future scalability.
 
 ---
 
@@ -314,12 +418,12 @@ The app requires the following permissions:
 ## 🗺️ Roadmap
 
 ### Version 1.0 (Current)
-- [x] User authentication
-- [x] Daily weight logging
-- [x] Weight history display
-- [x] Goal weight setting
-- [x] Goal achievement notifications
-- [x] SMS notifications for goals, milestones, and reminders
+- [ ] User authentication
+- [ ] Daily weight logging
+- [ ] Weight history display
+- [ ] Goal weight setting
+- [ ] Goal achievement notifications
+- [ ] SMS notifications for goals, milestones, and reminders
 
 ### Version 1.1 (Planned)
 - [ ] Weight trend graphs/charts
@@ -376,8 +480,8 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 
 If you encounter any issues or have questions:
 
-1. Check the [Issues](https://github.com/yourusername/weigh-to-go/issues) page
-2. Review the [Wiki](https://github.com/yourusername/weigh-to-go/wiki) (if available)
+1. Check the [Issues](https://github.com/rgoshen/weigh-to-go/issues) page
+2. Review the [Wiki](https://github.com/rgoshen/weigh-to-go/wiki) (if available)
 3. Create a new issue with detailed information
 
 ---
