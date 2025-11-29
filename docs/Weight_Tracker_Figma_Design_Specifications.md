@@ -19,6 +19,7 @@
 1. `01_Login_Registration` - Authentication flow
 2. `02_Main_Dashboard` - Primary user interface
 3. `03_Weight_Entry` - Data input interface
+4. `04_SMS_Notifications` - SMS permission and preferences
 
 ---
 
@@ -897,7 +898,406 @@ Icon: ♿ (18px, #FFFFFF)
 
 ---
 
-## 🎯 INTERACTIVE ELEMENTS & DATA
+# 📱 SCREEN 4: SMS NOTIFICATIONS
+
+## Component Specifications
+
+### 4.1 STATUS BAR
+```
+Background: Transparent (over gradient)
+Time/Icons: #FFFFFF
+```
+
+---
+
+### 4.2 HEADER WITH BACK NAVIGATION
+```
+Container:
+  Position: X=0, Y=0
+  Size: 375×140px
+  Fill: Linear gradient (180°)
+    Stop 1: #00897B (0%)
+    Stop 2: #00695C (100%)
+  Padding: 60px 20px 24px 20px
+
+Back Button:
+  Position: X=20, Y=56
+  Size: 40×40px
+  Fill: rgba(255, 255, 255, 0.2)
+  Corner Radius: 12px
+  
+  Icon:
+    Content: "←"
+    Font: Poppins SemiBold, 20px
+    Color: #FFFFFF
+    Align: Center
+
+Title Section:
+  Position: X=76, Y=58
+  
+  Title:
+    Text: "SMS Notifications"
+    Font: Poppins SemiBold, 20px
+    Color: #FFFFFF
+  
+  Subtitle:
+    Text: "Manage text message alerts"
+    Font: Source Sans Pro, 14px
+    Color: rgba(255, 255, 255, 0.8)
+    Margin-top: 4px
+```
+
+---
+
+### 4.3 PERMISSION CARD ⭐ KEY FEATURE
+```
+Container:
+  Position: X=20, Y=160
+  Size: 335×200px
+  Fill: #FFFFFF
+  Corner Radius: 16px
+  Shadow: 0, 2px, 8px, rgba(0,0,0,0.08)
+  Padding: 20px
+
+Permission Icon:
+  Position: X=20 (relative to card)
+  Size: 48×48px
+  Fill: Linear gradient (135°, #00897B → #00695C)
+  Corner Radius: 12px
+  
+  Emoji:
+    Content: "📱"
+    Font-size: 24px
+    Align: Center
+
+Permission Header Row:
+  Position: X=80 (relative to card), Y=20
+  
+  Title:
+    Text: "SMS Permission"
+    Font: Poppins SemiBold, 16px
+    Color: #212121
+
+Status Badge:
+  Position: Right-aligned
+  Size: Auto × 24px
+  Corner Radius: 12px
+  Padding: 4px 8px
+  
+  Pending State:
+    Fill: #FFF3E0
+    Text: "Required"
+    Text Color: #FF9800
+    Font: Poppins SemiBold, 12px
+  
+  Granted State:
+    Fill: #E8F5E9
+    Text: "Granted"
+    Text Color: #4CAF50
+  
+  Denied State:
+    Fill: #FFEBEE
+    Text: "Denied"
+    Text Color: #F44336
+
+Description:
+  Position: X=20, Y=80 (relative to card)
+  Width: 295px
+  Text: "To send you celebratory text messages when you hit your goals and milestones, we need permission to send SMS messages from your device."
+  Font: Source Sans Pro, 14px
+  Color: #757575
+  Line-height: 1.5
+  Margin-bottom: 16px
+
+Permission Button:
+  Position: X=20, Y=140 (relative to card)
+  Size: 295×48px
+  Fill: Linear gradient (135°, #00897B → #00695C)
+  Corner Radius: 12px
+  
+  Pending State:
+    Icon: "📲"
+    Text: "Grant SMS Permission"
+    Font: Poppins SemiBold, 14px
+    Color: #FFFFFF
+    Align: Center (with 8px gap between icon and text)
+  
+  Granted State:
+    Fill: #E8F5E9
+    Icon: "✓"
+    Text: "Permission Granted"
+    Color: #4CAF50
+  
+  Denied State:
+    Fill: Linear gradient (135°, #00897B → #00695C)
+    Text: "Open Settings"
+    Color: #FFFFFF
+```
+
+---
+
+### 4.4 PHONE NUMBER CARD
+```
+Container:
+  Position: X=20, Y=376
+  Size: 335×140px
+  Fill: #FFFFFF
+  Corner Radius: 16px
+  Shadow: 0, 2px, 8px, rgba(0,0,0,0.08)
+  Padding: 20px
+
+Card Title:
+  Text: "Your Phone Number"
+  Font: Poppins SemiBold, 16px
+  Color: #212121
+  Margin-bottom: 8px
+
+Description:
+  Text: "Enter the phone number where you'd like to receive SMS notifications."
+  Font: Source Sans Pro, 13px
+  Color: #757575
+  Line-height: 1.4
+  Margin-bottom: 16px
+
+Phone Input Row:
+  Display: Flex row
+  Gap: 8px
+
+Country Code Input:
+  Size: 60×48px
+  Fill: #F5F5F5
+  Stroke: 2px solid #E0E0E0
+  Corner Radius: 12px
+  
+  Text:
+    Content: "+1"
+    Font: Source Sans Pro, 16px
+    Color: #212121
+    Align: Center
+  
+  State: Read-only (US default)
+
+Phone Number Input:
+  Size: 223×48px (flex: 1)
+  Fill: #F5F5F5
+  Stroke: 2px solid #E0E0E0
+  Corner Radius: 12px
+  Padding: 14px 16px
+  
+  Text:
+    Font: Source Sans Pro, 16px
+    Color: #212121
+  
+  Placeholder:
+    Text: "(555) 123-4567"
+    Color: #9E9E9E
+  
+  Focus State:
+    Stroke: 2px solid #00897B
+```
+
+---
+
+### 4.5 NOTIFICATION OPTIONS CARD ⭐ KEY FEATURE
+```
+Container:
+  Position: X=20, Y=532
+  Size: 335×340px
+  Fill: #FFFFFF
+  Corner Radius: 16px
+  Shadow: 0, 2px, 8px, rgba(0,0,0,0.08)
+  Padding: 20px
+
+Card Title:
+  Text: "Notification Preferences"
+  Font: Poppins SemiBold, 16px
+  Color: #212121
+  Margin-bottom: 4px
+
+Option Item (Repeated Component):
+  Size: 295 × 60px
+  Padding: 16px 0
+  Border-bottom: 1px solid #F0F0F0 (except last)
+  Display: Flex row, space-between
+  
+  Content Side:
+    Flex: 1
+    Padding-right: 16px
+    
+    Title:
+      Font: Poppins Medium, 14px
+      Color: #212121
+      Display: Flex row
+      Gap: 8px
+      
+      Emoji: 16px
+    
+    Description:
+      Font: Source Sans Pro, 12px
+      Color: #757575
+      Line-height: 1.4
+      Margin-top: 4px
+  
+  Toggle Side:
+    Align: flex-end
+
+Toggle Switch Component:
+  Size: 52×28px
+  Corner Radius: 14px
+  Transition: 300ms ease
+  
+  Track OFF:
+    Fill: #E0E0E0
+  
+  Track ON:
+    Fill: Linear gradient (135°, #00897B → #4CAF50)
+  
+  Knob:
+    Size: 24×24px
+    Fill: #FFFFFF
+    Corner Radius: 50%
+    Shadow: 0, 2px, 4px, rgba(0,0,0,0.2)
+    
+    OFF Position: X=2 (left)
+    ON Position: X=26 (right, transform: translateX(24px))
+
+Option 1 - Master Toggle:
+  Emoji: "📬"
+  Title: "Enable SMS Notifications"
+  Description: "Master toggle for all text message alerts"
+  Default State: ON
+
+Option 2 - Goal Alerts:
+  Emoji: "🎉"
+  Title: "Goal Reached Alerts"
+  Description: "Get a text when you hit your target weight"
+  Default State: ON
+
+Option 3 - Milestone Alerts:
+  Emoji: "💪"
+  Title: "Milestone Alerts"
+  Description: "Celebrate 5, 10, 25, 50 lb milestones"
+  Default State: ON
+
+Option 4 - Daily Reminders:
+  Emoji: "⏰"
+  Title: "Daily Reminders"
+  Description: "Get a daily text reminder to log your weight"
+  Default State: OFF
+
+Test SMS Button:
+  Position: Below options, centered
+  Size: 295×44px
+  Fill: #FFFFFF
+  Stroke: 2px solid #00897B
+  Corner Radius: 12px
+  Margin-top: 16px
+  
+  Content:
+    Icon: "🧪"
+    Text: "Send Test Message"
+    Font: Poppins SemiBold, 14px
+    Color: #00897B
+    Gap: 8px
+    Align: Center
+```
+
+---
+
+### 4.6 INFO BANNER
+```
+Container:
+  Position: X=20, Y=888
+  Size: 335×64px
+  Fill: #E0F2F1
+  Corner Radius: 12px
+  Padding: 16px
+  Display: Flex row
+  Gap: 12px
+  Align-items: flex-start
+
+Info Icon:
+  Content: "💡"
+  Font-size: 20px
+  Flex-shrink: 0
+
+Info Text:
+  Text: "Standard messaging rates may apply. You can disable SMS notifications at any time from this screen."
+  Font: Source Sans Pro, 13px
+  Color: #00695C
+  Line-height: 1.5
+  Width: 267px
+```
+
+---
+
+## 🔐 PERMISSION FLOW STATES
+
+### State 1: Permission Not Yet Requested
+```
+Permission Card:
+  Status Badge: "Required" (#FFF3E0 bg, #FF9800 text)
+  Button: "📲 Grant SMS Permission" (primary gradient)
+  
+Phone Card: Visible, editable
+Options Card: Visible, toggles disabled (grayed out)
+Info Banner: Visible
+```
+
+### State 2: Permission Granted
+```
+Permission Card:
+  Status Badge: "Granted" (#E8F5E9 bg, #4CAF50 text)
+  Button: "✓ Permission Granted" (#E8F5E9 bg, #4CAF50 text)
+  
+Phone Card: Visible, editable
+Options Card: Visible, toggles enabled
+Info Banner: Visible
+Test SMS Button: Enabled
+```
+
+### State 3: Permission Denied
+```
+Permission Card:
+  Status Badge: "Denied" (#FFEBEE bg, #F44336 text)
+  Button: "Open Settings" (primary gradient)
+  Description: Updated to explain how to enable in Settings
+  
+Phone Card: Visible but grayed
+Options Card: Visible, toggles disabled (grayed out)
+Info Banner: Updated text about Settings
+```
+
+---
+
+### 4.7 ACCESSIBILITY CONSIDERATIONS
+```
+Touch Targets:
+  - All toggles: 52×28px track + larger touch area
+  - Permission button: 295×48px (exceeds 44px minimum)
+  - Back button: 40×40px
+  - Test SMS button: 295×44px
+
+Content Descriptions:
+  - Toggle switches: "Enable [notification type], currently [on/off]"
+  - Permission button: Announces current state
+  - Status badge: Read by screen reader
+
+Focus Order:
+  1. Back button
+  2. Permission card (button if actionable)
+  3. Phone number input
+  4. Each toggle in order
+  5. Test SMS button
+  6. Info banner
+
+Color Contrast:
+  - All text meets WCAG AA (4.5:1 ratio)
+  - Status badges have sufficient contrast
+  - Toggle states clearly distinguishable
+```
+
+---
 
 ### Login/Registration Screen
 
@@ -937,6 +1337,20 @@ Icon: ♿ (18px, #FFFFFF)
 | Backspace | Delete digit | None |
 | Save Button | Store entry | Weight, date, timestamp |
 | Accessibility FAB | Open settings | Preference changes |
+
+### SMS Notifications Screen
+
+| Element | Action | Data Collected |
+|---------|--------|----------------|
+| Back Button | Return to previous screen | None |
+| Permission Button | Request SEND_SMS permission | Permission grant status |
+| Country Code | Display country prefix | None (read-only) |
+| Phone Input | Enter phone number | Phone number (E.164) |
+| Master Toggle | Enable/disable all SMS | sms_notifications_enabled |
+| Goal Alerts Toggle | Enable goal notifications | sms_goal_alerts |
+| Milestone Toggle | Enable milestone notifications | sms_milestone_alerts |
+| Daily Reminder Toggle | Enable daily reminders | sms_reminder_enabled |
+| Test SMS Button | Send test message | Test timestamp, delivery status |
 
 ---
 
@@ -1048,6 +1462,39 @@ Icon: ♿ (18px, #FFFFFF)
 └── ♿ Accessibility FAB (Component)
 ```
 
+### Screen 4: SMS Notifications
+```
+📱 04_SMS_Notifications (375×812)
+├── 📊 Status Bar (transparent)
+├── 🔙 Header with Back Navigation
+│   ├── Gradient Background
+│   ├── Back Button
+│   ├── Screen Title
+│   └── Subtitle
+├── 🔐 Permission Card ⭐ (Component)
+│   ├── Permission Icon
+│   ├── Title + Status Badge
+│   ├── Description Text
+│   └── Permission Button
+├── 📞 Phone Number Card (Component)
+│   ├── Card Title
+│   ├── Description
+│   └── Phone Input Row (Auto Layout →)
+│       ├── Country Code Input
+│       └── Phone Number Input
+├── ⚙️ Notification Options Card ⭐ (Component)
+│   ├── Card Title
+│   ├── Option Items (Auto Layout ↓)
+│   │   ├── Master Toggle Row
+│   │   ├── Goal Alerts Row
+│   │   ├── Milestone Alerts Row
+│   │   └── Daily Reminders Row
+│   └── Test SMS Button
+└── 💡 Info Banner (Component)
+    ├── Info Icon
+    └── Info Text
+```
+
 ⭐ = Key feature components
 
 ---
@@ -1066,9 +1513,11 @@ Icon: ♿ (18px, #FFFFFF)
 WeighToGo_01_Login.png
 WeighToGo_02_Dashboard.png
 WeighToGo_03_WeightEntry.png
+WeighToGo_04_SMSNotifications.png
 WeighToGo_01_Login_Detail_AuthToggle.png
 WeighToGo_02_Dashboard_Detail_ProgressCard.png
 WeighToGo_03_WeightEntry_Detail_Numpad.png
+WeighToGo_04_SMSNotifications_Detail_Toggles.png
 ```
 
 ---
@@ -1081,11 +1530,14 @@ WeighToGo_03_WeightEntry_Detail_Numpad.png
 1. Login → Dashboard (after successful auth)
 2. Dashboard FAB → Weight Entry
 3. Weight Entry Back → Dashboard
+4. Dashboard Settings → SMS Notifications
+5. SMS Notifications Back → Dashboard
 
 **Within-Screen Interactions:**
 - Login: Tab toggle animation
 - Dashboard: History item expand
 - Entry: Number pad input, date navigation
+- SMS: Toggle switches, permission button states
 
 ### Transition Specifications
 ```
@@ -1139,6 +1591,15 @@ Card Expand:
 - [ ] Save button prominent
 - [ ] Previous entry shows context
 
+### SMS Notifications Screen
+- [ ] Header gradient matches login
+- [ ] Back button touch target ≥40px
+- [ ] Permission card status badge visible
+- [ ] Phone input fields aligned
+- [ ] All toggle switches functional
+- [ ] Test SMS button styled correctly
+- [ ] Info banner positioned at bottom
+
 ---
 
 ## 🎓 COURSE CONCEPTS APPLIED
@@ -1166,6 +1627,6 @@ Card Expand:
 
 **END OF SPECIFICATIONS**
 
-Rick, use this document as your complete reference for building all three **Weigh to Go!** screens in Figma. Every measurement, color, typography setting, and interaction is specified according to Android Design Guidelines and Material Design 3 principles. This ensures your UI design aligns with the technical requirements document and will translate smoothly to Java/XML implementation in Android Studio.
+Rick, use this document as your complete reference for building all four **Weigh to Go!** screens in Figma. Every measurement, color, typography setting, and interaction is specified according to Android Design Guidelines and Material Design 3 principles. This ensures your UI design aligns with the technical requirements document and will translate smoothly to Java/XML implementation in Android Studio.
 
 *You've got this—pound for pound!* 🎉

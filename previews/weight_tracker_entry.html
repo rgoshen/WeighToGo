@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weigh to Go! - Add Weight Entry</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Source+Sans+Pro:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            /* Health/Wellness Color Palette */
+            --primary-teal: #00897B;
+            --primary-dark: #00695C;
+            --primary-light: #4DB6AC;
+            --accent-green: #4CAF50;
+            --success-light: #E8F5E9;
+            --warning-orange: #FF9800;
+            --error-red: #F44336;
+            --surface-white: #FFFFFF;
+            --surface-variant: #E0F2F1;
+            --background: #F5F5F5;
+            --text-primary: #212121;
+            --text-secondary: #757575;
+            --divider: #E0E0E0;
+        }
+        
+        body {
+            font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #E0F2F1 0%, #B2DFDB 50%, #80CBC4 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .phone-frame {
+            width: 375px;
+            height: 812px;
+            background: var(--background);
+            border-radius: 40px;
+            box-shadow: 0 25px 80px rgba(0, 105, 92, 0.4);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        /* Status Bar */
+        .status-bar {
+            height: 44px;
+            background: var(--surface-white);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 24px;
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+        
+        .time { 
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600; 
+        }
+        
+        .status-icons { 
+            display: flex; 
+            gap: 6px;
+            font-size: 12px;
+        }
+        
+        /* Navigation Header */
+        .nav-header {
+            height: 56px;
+            background: var(--surface-white);
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            border-bottom: 1px solid var(--divider);
+        }
+        
+        .back-btn {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: var(--text-primary);
+            cursor: pointer;
+            border-radius: 12px;
+        }
+        
+        .nav-title {
+            flex: 1;
+            text-align: center;
+            font-family: 'Poppins', sans-serif;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-right: 40px;
+        }
+        
+        /* Content Area */
+        .content {
+            padding: 24px;
+            height: calc(100% - 100px);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Date Selector Card */
+        .date-card {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+            margin-bottom: 24px;
+        }
+        
+        .date-label {
+            font-family: 'Poppins', sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .date-selector {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .date-nav-btn {
+            width: 44px;
+            height: 44px;
+            background: var(--surface-variant);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: var(--primary-teal);
+            cursor: pointer;
+        }
+        
+        .date-display {
+            text-align: center;
+        }
+        
+        .date-day {
+            font-family: 'Poppins', sans-serif;
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--primary-teal);
+        }
+        
+        .date-full {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        
+        .today-badge {
+            display: inline-block;
+            background: var(--success-light);
+            color: var(--accent-green);
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+        
+        /* Weight Input Card */
+        .weight-card {
+            background: white;
+            border-radius: 24px;
+            padding: 32px 24px;
+            box-shadow: 0 8px 32px rgba(0, 105, 92, 0.12);
+            text-align: center;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .weight-card-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+        
+        .weight-card-subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+        
+        /* Large Weight Display */
+        .weight-display {
+            background: var(--surface-variant);
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+        
+        .weight-value {
+            font-family: 'Poppins', sans-serif;
+            font-size: 64px;
+            font-weight: 700;
+            color: var(--primary-teal);
+            line-height: 1;
+        }
+        
+        .weight-decimal {
+            font-size: 40px;
+        }
+        
+        .weight-unit-display {
+            font-size: 24px;
+            color: var(--text-secondary);
+            margin-left: 8px;
+        }
+        
+        /* Unit Toggle */
+        .unit-toggle {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+        
+        .unit-btn {
+            padding: 10px 24px;
+            border-radius: 12px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid var(--divider);
+            background: white;
+            color: var(--text-secondary);
+        }
+        
+        .unit-btn.active {
+            background: var(--primary-teal);
+            border-color: var(--primary-teal);
+            color: white;
+        }
+        
+        /* Number Pad */
+        .number-pad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            flex: 1;
+        }
+        
+        .num-btn {
+            height: 56px;
+            background: white;
+            border: 2px solid var(--divider);
+            border-radius: 16px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+        
+        .num-btn:active {
+            background: var(--surface-variant);
+            transform: scale(0.95);
+        }
+        
+        .num-btn.decimal {
+            font-size: 32px;
+        }
+        
+        .num-btn.backspace {
+            font-size: 20px;
+            color: var(--text-secondary);
+        }
+        
+        /* Save Button */
+        .save-btn {
+            width: 100%;
+            height: 60px;
+            background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-dark) 100%);
+            color: white;
+            border: none;
+            border-radius: 18px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+            box-shadow: 0 6px 20px rgba(0, 137, 123, 0.35);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .save-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 137, 123, 0.45);
+        }
+        
+        /* Previous Entry Hint */
+        .previous-entry {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 16px;
+            padding: 12px;
+            background: var(--surface-variant);
+            border-radius: 12px;
+        }
+        
+        .previous-entry-text {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        
+        .previous-entry-value {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            color: var(--primary-teal);
+        }
+        
+        /* Quick Adjust Buttons */
+        .quick-adjust {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .adjust-btn {
+            width: 56px;
+            height: 40px;
+            background: white;
+            border: 2px solid var(--primary-light);
+            border-radius: 12px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--primary-teal);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .adjust-btn:active {
+            background: var(--surface-variant);
+        }
+        
+        /* Accessibility FAB */
+        .accessibility-fab {
+            position: absolute;
+            bottom: 24px;
+            left: 24px;
+            width: 44px;
+            height: 44px;
+            background: var(--text-primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+            cursor: pointer;
+            z-index: 10;
+        }
+        
+        /* Annotations Panel */
+        .annotations-panel {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            max-width: 280px;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+        
+        .annotations-panel h3 {
+            font-family: 'Poppins', sans-serif;
+            color: var(--primary-teal);
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+        
+        .annotations-panel ul {
+            padding-left: 16px;
+            color: var(--text-secondary);
+        }
+        
+        .annotations-panel li {
+            margin-bottom: 8px;
+        }
+        
+        .annotations-panel strong {
+            color: var(--text-primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-frame">
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <div class="time">9:41</div>
+            <div class="status-icons">
+                <span>📶</span>
+                <span>📡</span>
+                <span>🔋</span>
+            </div>
+        </div>
+        
+        <!-- Navigation Header -->
+        <div class="nav-header">
+            <div class="back-btn">←</div>
+            <div class="nav-title">Log Weight</div>
+        </div>
+        
+        <!-- Content -->
+        <div class="content">
+            <!-- Date Selector -->
+            <div class="date-card">
+                <div class="date-label">Entry Date</div>
+                <div class="date-selector">
+                    <div class="date-nav-btn">‹</div>
+                    <div class="date-display">
+                        <div class="date-day">26</div>
+                        <div class="date-full">Tuesday, November 26, 2025</div>
+                        <span class="today-badge">Today</span>
+                    </div>
+                    <div class="date-nav-btn" style="opacity: 0.3; pointer-events: none;">›</div>
+                </div>
+            </div>
+            
+            <!-- Weight Input Card -->
+            <div class="weight-card">
+                <div class="weight-card-title">Enter Your Weight</div>
+                <div class="weight-card-subtitle">Step on the scale and log your reading</div>
+                
+                <!-- Weight Display -->
+                <div class="weight-display">
+                    <span class="weight-value">172<span class="weight-decimal">.0</span></span>
+                    <span class="weight-unit-display">lbs</span>
+                </div>
+                
+                <!-- Quick Adjust -->
+                <div class="quick-adjust">
+                    <button class="adjust-btn">-1</button>
+                    <button class="adjust-btn">-0.5</button>
+                    <button class="adjust-btn">+0.5</button>
+                    <button class="adjust-btn">+1</button>
+                </div>
+                
+                <!-- Unit Toggle -->
+                <div class="unit-toggle">
+                    <button class="unit-btn active">lbs</button>
+                    <button class="unit-btn">kg</button>
+                </div>
+                
+                <!-- Number Pad -->
+                <div class="number-pad">
+                    <button class="num-btn">1</button>
+                    <button class="num-btn">2</button>
+                    <button class="num-btn">3</button>
+                    <button class="num-btn">4</button>
+                    <button class="num-btn">5</button>
+                    <button class="num-btn">6</button>
+                    <button class="num-btn">7</button>
+                    <button class="num-btn">8</button>
+                    <button class="num-btn">9</button>
+                    <button class="num-btn decimal">.</button>
+                    <button class="num-btn">0</button>
+                    <button class="num-btn backspace">⌫</button>
+                </div>
+                
+                <!-- Save Button -->
+                <button class="save-btn">
+                    <span>✓</span>
+                    <span>Save Entry</span>
+                </button>
+                
+                <!-- Previous Entry Hint -->
+                <div class="previous-entry">
+                    <span class="previous-entry-text">Last entry:</span>
+                    <span class="previous-entry-value">172.5 lbs</span>
+                    <span class="previous-entry-text">on Nov 25</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Accessibility FAB -->
+        <div class="accessibility-fab" title="Accessibility Settings">♿</div>
+    </div>
+    
+    <!-- Annotations Panel -->
+    <div class="annotations-panel">
+        <h3>🎉 Weigh to Go! - Weight Entry</h3>
+        <ul>
+            <li><strong>Date Picker:</strong> Navigate to previous dates; future dates disabled</li>
+            <li><strong>Large Display:</strong> Clear, prominent weight value (64px font)</li>
+            <li><strong>Quick Adjust:</strong> ±0.5 and ±1 buttons for fine-tuning</li>
+            <li><strong>Unit Toggle:</strong> Easy switch between lbs and kg</li>
+            <li><strong>Custom Numpad:</strong> Large touch targets (56px) for easy input</li>
+            <li><strong>Previous Entry:</strong> Context showing last recorded weight</li>
+            <li><strong>60px Save Button:</strong> Exceeds Android 48dp touch requirement</li>
+            <li><strong>Accessibility FAB:</strong> Quick access to text size/contrast settings</li>
+        </ul>
+    </div>
+</body>
+</html>

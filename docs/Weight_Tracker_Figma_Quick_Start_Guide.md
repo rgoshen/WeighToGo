@@ -1,9 +1,9 @@
 # FIGMA QUICK START GUIDE
-## Weigh to Go! Mobile App - Complete UI Design (3 Screens)
+## Weigh to Go! Mobile App - Complete UI Design (4 Screens)
 
 **App Name:** Weigh to Go!  
 **Tagline:** "You've got this—pound for pound."  
-**Time Required:** ~2-2.5 hours (all three screens)  
+**Time Required:** ~2.5-3 hours (all four screens)  
 **Skill Level:** Beginner-friendly with detailed instructions  
 **Developer:** Rick Goshen  
 **Course:** CS 360 - Mobile Architecture & Programming
@@ -12,10 +12,11 @@
 
 ## 🎯 OVERVIEW
 
-This guide walks you through creating three complete screens for the **Weigh to Go!** app:
+This guide walks you through creating four complete screens for the **Weigh to Go!** app:
 1. **Login/Registration Screen** (~40 min)
 2. **Main Dashboard Screen** (~50 min)
 3. **Weight Entry Screen** (~40 min)
+4. **SMS Notifications Screen** (~40 min)
 
 Each screen follows Material Design 3 principles and Android Design Guidelines.
 
@@ -28,14 +29,15 @@ Each screen follows Material Design 3 principles and Android Design Guidelines.
 2. Click "New Design File"
 3. Name it: `CS360_WeightToGo_UI_RickGoshen`
 
-### Step 2: Create Three Frames
+### Step 2: Create Four Frames
 1. Press `F` (frame tool) or click frame icon
 2. Select "iPhone 13 / 13 Pro" (375×812) from right sidebar
-3. Create 3 frames side by side
+3. Create 4 frames side by side
 4. Rename frames:
    - Frame 1: `01_Login_Registration`
    - Frame 2: `02_Main_Dashboard`
    - Frame 3: `03_Weight_Entry`
+   - Frame 4: `04_SMS_Notifications`
 
 ### Step 3: Setup Grid System
 1. Select each frame
@@ -661,6 +663,218 @@ Create 4 buttons in a row:
 
 ---
 
+# 📱 SCREEN 4: SMS NOTIFICATIONS (~40 minutes)
+
+## PART 4.1: Screen Setup (2 min)
+
+1. Select frame `04_SMS_Notifications`
+2. Background: #F5F5F5
+3. This screen handles SMS permission requests and notification preferences
+
+---
+
+## PART 4.2: Header with Back Navigation (5 min)
+
+### Header Background:
+1. **Rectangle (R)** → 375×140
+2. Fill: Linear gradient (180°)
+   - Top: #00897B
+   - Bottom: #00695C
+3. Position: X=0, Y=0
+
+### Back Button:
+1. **Rectangle (R)** → 40×40
+2. Fill: rgba(255, 255, 255, 0.2)
+3. Corner radius: 12px
+4. Position: X=20, Y=56
+5. **Text (T)** → "←" (20px, White, Poppins SemiBold)
+6. Center in rectangle
+
+### Header Text:
+1. **Text (T)** → "SMS Notifications" (20px, White, Poppins SemiBold)
+2. Position: X=76, Y=58
+3. **Text (T)** → "Manage text message alerts" (14px, rgba(255,255,255,0.8))
+4. Position: X=76, Y=82
+
+**Group all** → Rename: `Header`
+
+---
+
+## PART 4.3: Permission Card (10 min)
+
+### Card Container:
+1. **Rectangle (R)** → 335×200
+2. Fill: White
+3. Corner radius: 16px
+4. Shadow: X=0, Y=2, Blur=8, rgba(0,0,0,0.08)
+5. Position: X=20, Y=160
+
+### Permission Icon:
+1. **Rectangle (R)** → 48×48
+2. Fill: Linear gradient (135°, #00897B → #00695C)
+3. Corner radius: 12px
+4. Position: X=40, Y=180
+5. **Text (T)** → "📱" (24px)
+6. Center in icon rectangle
+
+### Permission Title Row:
+1. **Text (T)** → "SMS Permission" (16px, #212121, Poppins SemiBold)
+2. Position: X=100, Y=184
+
+### Status Badge:
+1. **Rectangle (R)** → 70×24
+2. Fill: #FFF3E0 (pending state)
+3. Corner radius: 12px
+4. **Text (T)** → "Required" (12px, #FF9800, Poppins SemiBold)
+5. Position badge at X=265, Y=182
+
+### Description Text:
+1. **Text (T)** → "To send you celebratory text messages when you hit your goals and milestones, we need permission to send SMS messages from your device."
+2. Style: 14px, #757575, Source Sans Pro
+3. Width: 295px
+4. Position: X=40, Y=220
+
+### Permission Button:
+1. **Rectangle (R)** → 295×48
+2. Fill: Linear gradient (135°, #00897B → #00695C)
+3. Corner radius: 12px
+4. Position: X=40, Y=300
+5. **Text (T)** → "📲 Grant SMS Permission" (14px, White, Poppins SemiBold)
+6. Center in button
+
+**Group all** → Rename: `Permission Card`
+
+---
+
+## PART 4.4: Phone Number Card (8 min)
+
+### Card Container:
+1. **Rectangle (R)** → 335×140
+2. Fill: White
+3. Corner radius: 16px
+4. Shadow: X=0, Y=2, Blur=8, rgba(0,0,0,0.08)
+5. Position: X=20, Y=376
+
+### Card Title:
+1. **Text (T)** → "Your Phone Number" (16px, #212121, Poppins SemiBold)
+2. Position: X=40, Y=396
+
+### Description:
+1. **Text (T)** → "Enter the phone number where you'd like to receive SMS notifications."
+2. Style: 13px, #757575
+3. Position: X=40, Y=420
+
+### Country Code Input:
+1. **Rectangle (R)** → 60×48
+2. Fill: #F5F5F5
+3. Stroke: 2px, #E0E0E0
+4. Corner radius: 12px
+5. Position: X=40, Y=456
+6. **Text (T)** → "+1" (16px, #212121)
+7. Center in rectangle
+
+### Phone Input:
+1. **Rectangle (R)** → 223×48
+2. Fill: #F5F5F5
+3. Stroke: 2px, #E0E0E0
+4. Corner radius: 12px
+5. Position: X=108, Y=456
+6. **Text (T)** → "(555) 867-5309" (16px, #212121)
+7. Position: X=124, Y=470
+
+**Group all** → Rename: `Phone Number Card`
+
+---
+
+## PART 4.5: Notification Options Card (12 min)
+
+### Card Container:
+1. **Rectangle (R)** → 335×340
+2. Fill: White
+3. Corner radius: 16px
+4. Shadow: X=0, Y=2, Blur=8, rgba(0,0,0,0.08)
+5. Position: X=20, Y=532
+
+### Card Title:
+1. **Text (T)** → "Notification Preferences" (16px, #212121, Poppins SemiBold)
+2. Position: X=40, Y=552
+
+### Create Toggle Switch Component:
+**Toggle - ON State:**
+1. **Rectangle (R)** → 52×28
+2. Fill: Linear gradient (135°, #00897B → #4CAF50)
+3. Corner radius: 14px
+4. **Ellipse (O)** → 24×24
+5. Fill: White
+6. Shadow: X=0, Y=2, Blur=4, rgba(0,0,0,0.2)
+7. Position: X=26 from left of track (right side)
+
+**Toggle - OFF State:**
+1. **Rectangle (R)** → 52×28
+2. Fill: #E0E0E0
+3. Corner radius: 14px
+4. **Ellipse (O)** → 24×24
+5. Fill: White
+6. Position: X=2 from left of track (left side)
+
+### Option 1 - Master Toggle:
+1. **Text (T)** → "📬 Enable SMS Notifications" (14px, #212121, Poppins Medium)
+2. **Text (T)** → "Master toggle for all text message alerts" (12px, #757575)
+3. Add Toggle (ON) at right side
+4. Position row at Y=580
+5. Add divider line below: 1px, #F0F0F0
+
+### Option 2 - Goal Alerts:
+1. **Text (T)** → "🎉 Goal Reached Alerts" (14px, #212121, Poppins Medium)
+2. **Text (T)** → "Get a text when you hit your target weight" (12px, #757575)
+3. Add Toggle (ON) at right side
+4. Position row at Y=640
+5. Add divider line below
+
+### Option 3 - Milestone Alerts:
+1. **Text (T)** → "💪 Milestone Alerts" (14px, #212121, Poppins Medium)
+2. **Text (T)** → "Celebrate 5, 10, 25, 50 lb milestones" (12px, #757575)
+3. Add Toggle (ON) at right side
+4. Position row at Y=700
+5. Add divider line below
+
+### Option 4 - Daily Reminders:
+1. **Text (T)** → "⏰ Daily Reminders" (14px, #212121, Poppins Medium)
+2. **Text (T)** → "Get a daily text reminder to log your weight" (12px, #757575)
+3. Add Toggle (OFF) at right side
+4. Position row at Y=760
+
+### Test SMS Button:
+1. **Rectangle (R)** → 295×44
+2. Fill: White
+3. Stroke: 2px, #00897B
+4. Corner radius: 12px
+5. Position: X=40, Y=816
+6. **Text (T)** → "🧪 Send Test Message" (14px, #00897B, Poppins SemiBold)
+7. Center in button
+
+**Group all** → Rename: `Options Card`
+
+---
+
+## PART 4.6: Info Banner (3 min)
+
+1. **Rectangle (R)** → 335×64
+2. Fill: #E0F2F1
+3. Corner radius: 12px
+4. Position: X=20, Y=888
+
+### Info Content:
+1. **Text (T)** → "💡" (20px)
+2. Position: X=36, Y=904
+3. **Text (T)** → "Standard messaging rates may apply. You can disable SMS notifications at any time from this screen."
+4. Style: 13px, #00695C, Width=267px
+5. Position: X=68, Y=900
+
+**Group all** → Rename: `Info Banner`
+
+---
+
 # ✅ FINAL TOUCHES (10 minutes)
 
 ## Add Annotations for All Screens
@@ -684,6 +898,12 @@ Create text boxes pointing to key features:
 - "Quick adjust ± buttons"
 - "Previous entry context"
 
+**SMS Notifications:**
+- "Permission request card with status"
+- "Phone number input with country code"
+- "Toggle switches for each notification type"
+- "Test SMS button for verification"
+
 ---
 
 ## Export for Assignment
@@ -691,12 +911,13 @@ Create text boxes pointing to key features:
 1. Select each frame
 2. Bottom-right: Export section
 3. Add: "2x" size, PNG format
-4. Export all three screens
+4. Export all four screens
 
 ### Suggested File Names:
 - `WeighToGo_01_Login.png`
 - `WeighToGo_02_Dashboard.png`
 - `WeighToGo_03_WeightEntry.png`
+- `WeighToGo_04_SMSNotifications.png`
 
 ---
 
@@ -718,6 +939,11 @@ For your assignment submission:
 - [ ] Full screen export (2x PNG)
 - [ ] Number pad detail
 - [ ] Date selector close-up
+
+### SMS Notifications:
+- [ ] Full screen export (2x PNG)
+- [ ] Permission card close-up
+- [ ] Toggle switches detail
 
 ---
 
@@ -811,11 +1037,18 @@ Before submitting, verify for ALL screens:
 - Number pad: 8 min
 - Save button + hints: 5 min
 
+### SMS Notifications (40 min)
+- Header with back nav: 5 min
+- Permission card: 10 min
+- Phone number card: 8 min
+- Options card with toggles: 12 min
+- Info banner: 5 min
+
 ### Final Touches (10 min)
 - Annotations: 5 min
 - Exports: 5 min
 
-**Total: ~2.5 hours**
+**Total: ~3 hours**
 
 ---
 
@@ -837,6 +1070,6 @@ Before submitting, verify for ALL screens:
 
 ---
 
-**You've got this, Rick! (Pound for pound! 🎉) With your development background, you'll pick up Figma quickly. The design is well-specified and follows Material Design 3 principles throughout. Take it screen by screen, and you'll have a professional UI design in about 2.5 hours.**
+**You've got this, Rick! (Pound for pound! 🎉) With your development background, you'll pick up Figma quickly. The design is well-specified and follows Material Design 3 principles throughout. Take it screen by screen, and you'll have a professional UI design for all four screens in about 3 hours.**
 
 **Questions while building? Feel free to ask!** 🚀

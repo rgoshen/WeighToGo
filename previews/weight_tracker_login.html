@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weigh to Go! - Login/Registration Screen</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Source+Sans+Pro:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            /* Health/Wellness Color Palette */
+            --primary-teal: #00897B;
+            --primary-dark: #00695C;
+            --primary-light: #4DB6AC;
+            --accent-green: #4CAF50;
+            --success-light: #E8F5E9;
+            --warning-orange: #FF9800;
+            --error-red: #F44336;
+            --surface-white: #FFFFFF;
+            --surface-variant: #E0F2F1;
+            --background: #F5F5F5;
+            --text-primary: #212121;
+            --text-secondary: #757575;
+            --divider: #E0E0E0;
+        }
+        
+        body {
+            font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #E0F2F1 0%, #B2DFDB 50%, #80CBC4 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .phone-frame {
+            width: 375px;
+            height: 812px;
+            background: linear-gradient(180deg, var(--primary-teal) 0%, var(--primary-dark) 100%);
+            border-radius: 40px;
+            box-shadow: 0 25px 80px rgba(0, 105, 92, 0.4);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        /* Status Bar */
+        .status-bar {
+            height: 44px;
+            background: transparent;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 24px;
+            font-size: 14px;
+            color: white;
+        }
+        
+        .time { 
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600; 
+        }
+        
+        .status-icons { 
+            display: flex; 
+            gap: 6px;
+            font-size: 12px;
+        }
+        
+        /* Header/Branding Section */
+        .branding-section {
+            padding: 40px 24px 60px;
+            text-align: center;
+            color: white;
+        }
+        
+        .app-icon {
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 40px;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .app-name {
+            font-family: 'Poppins', sans-serif;
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+        
+        .app-tagline {
+            font-size: 16px;
+            opacity: 0.9;
+            font-weight: 400;
+        }
+        
+        /* Auth Card */
+        .auth-card {
+            background: white;
+            border-radius: 32px 32px 0 0;
+            padding: 32px 24px;
+            height: calc(100% - 250px);
+            position: relative;
+            box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Tab Toggle */
+        .auth-toggle {
+            display: flex;
+            background: var(--surface-variant);
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 28px;
+        }
+        
+        .auth-tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            font-family: 'Poppins', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .auth-tab.active {
+            background: white;
+            color: var(--primary-teal);
+            box-shadow: 0 2px 8px rgba(0, 137, 123, 0.15);
+        }
+        
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            font-family: 'Poppins', sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+        
+        .input-wrapper {
+            position: relative;
+        }
+        
+        .form-input {
+            width: 100%;
+            height: 52px;
+            padding: 0 16px 0 48px;
+            border: 2px solid var(--divider);
+            border-radius: 14px;
+            font-family: 'Source Sans Pro', sans-serif;
+            font-size: 16px;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+            background: var(--surface-white);
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-teal);
+            box-shadow: 0 0 0 4px rgba(0, 137, 123, 0.1);
+        }
+        
+        .form-input::placeholder {
+            color: #BDBDBD;
+        }
+        
+        .input-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 20px;
+            color: var(--text-secondary);
+        }
+        
+        .password-toggle {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 18px;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+        
+        /* Primary Button */
+        .btn-primary {
+            width: 100%;
+            height: 56px;
+            background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-dark) 100%);
+            color: white;
+            border: none;
+            border-radius: 16px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 8px;
+            box-shadow: 0 4px 16px rgba(0, 137, 123, 0.35);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 137, 123, 0.45);
+        }
+        
+        /* Forgot Password */
+        .forgot-password {
+            text-align: right;
+            margin-top: -8px;
+            margin-bottom: 20px;
+        }
+        
+        .forgot-password a {
+            font-size: 13px;
+            color: var(--primary-teal);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        /* Divider */
+        .auth-divider {
+            display: flex;
+            align-items: center;
+            margin: 24px 0;
+        }
+        
+        .auth-divider::before,
+        .auth-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--divider);
+        }
+        
+        .auth-divider span {
+            padding: 0 16px;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+        
+        /* Social Login */
+        .social-buttons {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .btn-social {
+            flex: 1;
+            height: 48px;
+            background: white;
+            border: 2px solid var(--divider);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-social:hover {
+            border-color: var(--primary-teal);
+            background: var(--surface-variant);
+        }
+        
+        /* Terms Text */
+        .terms-text {
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 24px;
+            line-height: 1.6;
+        }
+        
+        .terms-text a {
+            color: var(--primary-teal);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        /* Accessibility FAB */
+        .accessibility-fab {
+            position: absolute;
+            bottom: 24px;
+            right: 24px;
+            width: 48px;
+            height: 48px;
+            background: var(--text-primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+            cursor: pointer;
+            z-index: 10;
+        }
+        
+        /* Password Strength Indicator (for registration) */
+        .password-strength {
+            display: flex;
+            gap: 4px;
+            margin-top: 8px;
+        }
+        
+        .strength-bar {
+            flex: 1;
+            height: 4px;
+            background: var(--divider);
+            border-radius: 2px;
+        }
+        
+        .strength-bar.active {
+            background: var(--accent-green);
+        }
+        
+        .strength-bar.medium {
+            background: var(--warning-orange);
+        }
+        
+        .strength-bar.weak {
+            background: var(--error-red);
+        }
+        
+        /* Annotations Panel */
+        .annotations-panel {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            max-width: 280px;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+        
+        .annotations-panel h3 {
+            font-family: 'Poppins', sans-serif;
+            color: var(--primary-teal);
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+        
+        .annotations-panel ul {
+            padding-left: 16px;
+            color: var(--text-secondary);
+        }
+        
+        .annotations-panel li {
+            margin-bottom: 8px;
+        }
+        
+        .annotations-panel strong {
+            color: var(--text-primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-frame">
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <div class="time">9:41</div>
+            <div class="status-icons">
+                <span>📶</span>
+                <span>📡</span>
+                <span>🔋</span>
+            </div>
+        </div>
+        
+        <!-- Branding Section -->
+        <div class="branding-section">
+            <div class="app-icon">🎉</div>
+            <h1 class="app-name">Weigh to Go!</h1>
+            <p class="app-tagline">You've got this—pound for pound.</p>
+        </div>
+        
+        <!-- Auth Card -->
+        <div class="auth-card">
+            <!-- Tab Toggle -->
+            <div class="auth-toggle">
+                <div class="auth-tab active">Sign In</div>
+                <div class="auth-tab">Register</div>
+            </div>
+            
+            <!-- Login Form -->
+            <form>
+                <div class="form-group">
+                    <label class="form-label">Email or Username</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">👤</span>
+                        <input type="text" class="form-input" placeholder="Enter your email">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">🔒</span>
+                        <input type="password" class="form-input" placeholder="Enter your password">
+                        <span class="password-toggle">👁️</span>
+                    </div>
+                </div>
+                
+                <div class="forgot-password">
+                    <a href="#">Forgot Password?</a>
+                </div>
+                
+                <button type="submit" class="btn-primary">
+                    <span>Sign In</span>
+                    <span>→</span>
+                </button>
+            </form>
+            
+            <!-- Divider -->
+            <div class="auth-divider">
+                <span>or continue with</span>
+            </div>
+            
+            <!-- Social Buttons -->
+            <div class="social-buttons">
+                <button class="btn-social">G</button>
+                <button class="btn-social">f</button>
+                <button class="btn-social">🍎</button>
+            </div>
+            
+            <!-- Terms -->
+            <p class="terms-text">
+                By continuing, you agree to our<br>
+                <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>
+            </p>
+        </div>
+        
+        <!-- Accessibility FAB -->
+        <div class="accessibility-fab" title="Accessibility Settings">♿</div>
+    </div>
+    
+    <!-- Annotations Panel -->
+    <div class="annotations-panel">
+        <h3>🎉 Weigh to Go! - Login Features</h3>
+        <ul>
+            <li><strong>Gradient Header:</strong> Health-focused teal palette creates calming first impression</li>
+            <li><strong>Tab Toggle:</strong> Easy switch between Sign In/Register without navigation</li>
+            <li><strong>Input Icons:</strong> Visual cues for each field type</li>
+            <li><strong>Password Toggle:</strong> Show/hide password for usability</li>
+            <li><strong>Social Login:</strong> Quick authentication options</li>
+            <li><strong>56px Button:</strong> Meets Android 48dp touch target requirement</li>
+            <li><strong>Accessibility FAB:</strong> Quick access to text size and contrast settings</li>
+        </ul>
+    </div>
+</body>
+</html>

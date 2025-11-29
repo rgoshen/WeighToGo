@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weigh to Go! - SMS Notifications Screen</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Source+Sans+Pro:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Source Sans Pro', sans-serif;
+            background-color: #E8E8E8;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 20px;
+        }
+
+        .preview-container {
+            display: flex;
+            gap: 40px;
+            align-items: flex-start;
+        }
+
+        /* Phone Frame */
+        .phone-frame {
+            width: 375px;
+            height: 812px;
+            background: #F5F5F5;
+            border-radius: 40px;
+            overflow: hidden;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+            position: relative;
+        }
+
+        /* Header with Gradient */
+        .header {
+            background: linear-gradient(180deg, #00897B 0%, #00695C 100%);
+            padding: 60px 20px 24px 20px;
+            position: relative;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .back-button {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .back-arrow {
+            color: white;
+            font-size: 20px;
+        }
+
+        .header-title {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            font-size: 20px;
+            color: white;
+        }
+
+        .header-subtitle {
+            font-family: 'Source Sans Pro', sans-serif;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-top: 4px;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 20px;
+            height: calc(812px - 140px);
+            overflow-y: auto;
+        }
+
+        /* Permission Card */
+        .permission-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .permission-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .permission-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #00897B 0%, #00695C 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .permission-title {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            font-size: 16px;
+            color: #212121;
+        }
+
+        .permission-status {
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+
+        .status-granted {
+            background: #E8F5E9;
+            color: #4CAF50;
+        }
+
+        .status-denied {
+            background: #FFEBEE;
+            color: #F44336;
+        }
+
+        .status-pending {
+            background: #FFF3E0;
+            color: #FF9800;
+        }
+
+        .permission-description {
+            font-size: 14px;
+            color: #757575;
+            line-height: 1.5;
+            margin-bottom: 16px;
+        }
+
+        .permission-button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #00897B 0%, #00695C 100%);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .permission-button.granted {
+            background: #E8F5E9;
+            color: #4CAF50;
+        }
+
+        /* Phone Number Card */
+        .phone-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .card-title {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            font-size: 16px;
+            color: #212121;
+            margin-bottom: 8px;
+        }
+
+        .card-description {
+            font-size: 13px;
+            color: #757575;
+            margin-bottom: 16px;
+            line-height: 1.4;
+        }
+
+        .phone-input-container {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .country-code {
+            background: #F5F5F5;
+            border: 2px solid #E0E0E0;
+            border-radius: 12px;
+            padding: 14px 12px;
+            font-family: 'Source Sans Pro', sans-serif;
+            font-size: 16px;
+            color: #212121;
+            width: 70px;
+            text-align: center;
+        }
+
+        .phone-input {
+            flex: 1;
+            background: #F5F5F5;
+            border: 2px solid #E0E0E0;
+            border-radius: 12px;
+            padding: 14px 16px;
+            font-family: 'Source Sans Pro', sans-serif;
+            font-size: 16px;
+            color: #212121;
+        }
+
+        .phone-input:focus {
+            border-color: #00897B;
+            outline: none;
+        }
+
+        .phone-input::placeholder {
+            color: #9E9E9E;
+        }
+
+        /* SMS Options Card */
+        .options-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .option-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 0;
+            border-bottom: 1px solid #F0F0F0;
+        }
+
+        .option-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .option-item:first-child {
+            padding-top: 0;
+        }
+
+        .option-content {
+            flex: 1;
+            padding-right: 16px;
+        }
+
+        .option-title {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 500;
+            font-size: 14px;
+            color: #212121;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .option-emoji {
+            font-size: 16px;
+        }
+
+        .option-description {
+            font-size: 12px;
+            color: #757575;
+            line-height: 1.4;
+        }
+
+        /* Toggle Switch */
+        .toggle-switch {
+            width: 52px;
+            height: 28px;
+            background: #E0E0E0;
+            border-radius: 14px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .toggle-switch.active {
+            background: linear-gradient(135deg, #00897B 0%, #4CAF50 100%);
+        }
+
+        .toggle-knob {
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .toggle-switch.active .toggle-knob {
+            transform: translateX(24px);
+        }
+
+        /* Test SMS Button */
+        .test-sms-button {
+            width: 100%;
+            padding: 12px;
+            background: white;
+            border: 2px solid #00897B;
+            border-radius: 12px;
+            color: #00897B;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        /* Info Banner */
+        .info-banner {
+            background: #E0F2F1;
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .info-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .info-text {
+            font-size: 13px;
+            color: #00695C;
+            line-height: 1.5;
+        }
+
+        /* Annotations Panel */
+        .annotations {
+            width: 380px;
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            max-height: 812px;
+            overflow-y: auto;
+        }
+
+        .annotations h2 {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            font-size: 18px;
+            color: #00897B;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #E0F2F1;
+        }
+
+        .annotation-section {
+            margin-bottom: 20px;
+        }
+
+        .annotation-section h3 {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            font-size: 14px;
+            color: #212121;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .annotation-section p {
+            font-size: 13px;
+            color: #757575;
+            line-height: 1.5;
+            margin-bottom: 8px;
+        }
+
+        .spec-list {
+            background: #F5F5F5;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 12px;
+            color: #424242;
+        }
+
+        .spec-list code {
+            background: #E0E0E0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .color-swatch {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+            vertical-align: middle;
+            margin-right: 6px;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .highlight-box {
+            background: #FFF3E0;
+            border-left: 4px solid #FF9800;
+            padding: 12px;
+            border-radius: 0 8px 8px 0;
+            margin: 12px 0;
+        }
+
+        .highlight-box p {
+            color: #E65100;
+            font-weight: 500;
+            margin: 0;
+        }
+
+        .permission-flow {
+            background: #E8F5E9;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 8px;
+        }
+
+        .permission-flow-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: #2E7D32;
+            margin-bottom: 6px;
+        }
+
+        .permission-flow-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .flow-number {
+            width: 20px;
+            height: 20px;
+            background: #4CAF50;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="preview-container">
+        <!-- Phone Frame -->
+        <div class="phone-frame">
+            <!-- Header -->
+            <div class="header">
+                <div class="header-content">
+                    <div class="back-button">
+                        <span class="back-arrow">←</span>
+                    </div>
+                    <div>
+                        <div class="header-title">SMS Notifications</div>
+                        <div class="header-subtitle">Manage text message alerts</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="main-content">
+                <!-- Permission Request Card -->
+                <div class="permission-card">
+                    <div class="permission-header">
+                        <div class="permission-icon">📱</div>
+                        <div style="flex: 1;">
+                            <div class="permission-title">SMS Permission</div>
+                        </div>
+                        <span class="permission-status status-pending">Required</span>
+                    </div>
+                    <p class="permission-description">
+                        To send you celebratory text messages when you hit your goals and milestones, 
+                        we need permission to send SMS messages from your device.
+                    </p>
+                    <button class="permission-button">
+                        <span>📲</span>
+                        Grant SMS Permission
+                    </button>
+                </div>
+
+                <!-- Phone Number Card -->
+                <div class="phone-card">
+                    <div class="card-title">Your Phone Number</div>
+                    <p class="card-description">
+                        Enter the phone number where you'd like to receive SMS notifications.
+                    </p>
+                    <div class="phone-input-container">
+                        <input type="text" class="country-code" value="+1" readonly>
+                        <input type="tel" class="phone-input" placeholder="(555) 123-4567" value="(555) 867-5309">
+                    </div>
+                </div>
+
+                <!-- SMS Options Card -->
+                <div class="options-card">
+                    <div class="card-title">Notification Preferences</div>
+                    
+                    <!-- Master Toggle -->
+                    <div class="option-item">
+                        <div class="option-content">
+                            <div class="option-title">
+                                <span class="option-emoji">📬</span>
+                                Enable SMS Notifications
+                            </div>
+                            <div class="option-description">
+                                Master toggle for all text message alerts
+                            </div>
+                        </div>
+                        <div class="toggle-switch active">
+                            <div class="toggle-knob"></div>
+                        </div>
+                    </div>
+
+                    <!-- Goal Alerts -->
+                    <div class="option-item">
+                        <div class="option-content">
+                            <div class="option-title">
+                                <span class="option-emoji">🎉</span>
+                                Goal Reached Alerts
+                            </div>
+                            <div class="option-description">
+                                Get a text when you hit your target weight
+                            </div>
+                        </div>
+                        <div class="toggle-switch active">
+                            <div class="toggle-knob"></div>
+                        </div>
+                    </div>
+
+                    <!-- Milestone Alerts -->
+                    <div class="option-item">
+                        <div class="option-content">
+                            <div class="option-title">
+                                <span class="option-emoji">💪</span>
+                                Milestone Alerts
+                            </div>
+                            <div class="option-description">
+                                Celebrate 5, 10, 25, 50 lb milestones
+                            </div>
+                        </div>
+                        <div class="toggle-switch active">
+                            <div class="toggle-knob"></div>
+                        </div>
+                    </div>
+
+                    <!-- Daily Reminders -->
+                    <div class="option-item">
+                        <div class="option-content">
+                            <div class="option-title">
+                                <span class="option-emoji">⏰</span>
+                                Daily Reminders
+                            </div>
+                            <div class="option-description">
+                                Get a daily text reminder to log your weight
+                            </div>
+                        </div>
+                        <div class="toggle-switch">
+                            <div class="toggle-knob"></div>
+                        </div>
+                    </div>
+
+                    <!-- Test SMS Button -->
+                    <button class="test-sms-button">
+                        <span>🧪</span>
+                        Send Test Message
+                    </button>
+                </div>
+
+                <!-- Info Banner -->
+                <div class="info-banner">
+                    <span class="info-icon">💡</span>
+                    <span class="info-text">
+                        Standard messaging rates may apply. You can disable SMS notifications 
+                        at any time from this screen.
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Annotations Panel -->
+        <div class="annotations">
+            <h2>🎉 Weigh to Go! - SMS Notifications</h2>
+
+            <div class="annotation-section">
+                <h3>📋 Screen Purpose</h3>
+                <p>
+                    This screen handles SMS permission requests and allows users to configure 
+                    text message notification preferences. It displays different UI states based 
+                    on whether SMS permission has been granted or denied.
+                </p>
+                <div class="highlight-box">
+                    <p>⚠️ Critical: Must request SEND_SMS permission at runtime (Android 6.0+)</p>
+                </div>
+            </div>
+
+            <div class="annotation-section">
+                <h3>🔐 Permission Flow</h3>
+                <div class="permission-flow">
+                    <div class="permission-flow-item">
+                        <span class="flow-number">1</span>
+                        <span>User taps "Grant SMS Permission" button</span>
+                    </div>
+                    <div class="permission-flow-item">
+                        <span class="flow-number">2</span>
+                        <span>System permission dialog appears</span>
+                    </div>
+                    <div class="permission-flow-item">
+                        <span class="flow-number">3</span>
+                        <span>User grants or denies permission</span>
+                    </div>
+                    <div class="permission-flow-item">
+                        <span class="flow-number">4</span>
+                        <span>UI updates to show permission status</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="annotation-section">
+                <h3>🎨 Permission Card States</h3>
+                <p><strong>Pending (Not Yet Requested):</strong></p>
+                <div class="spec-list">
+                    Status Badge: <code>#FFF3E0</code> bg, <code>#FF9800</code> text<br>
+                    Button: Primary gradient, "Grant SMS Permission"
+                </div>
+                <p style="margin-top: 12px;"><strong>Granted:</strong></p>
+                <div class="spec-list">
+                    Status Badge: <code>#E8F5E9</code> bg, <code>#4CAF50</code> text<br>
+                    Button: <code>#E8F5E9</code> bg, "✓ Permission Granted"
+                </div>
+                <p style="margin-top: 12px;"><strong>Denied:</strong></p>
+                <div class="spec-list">
+                    Status Badge: <code>#FFEBEE</code> bg, <code>#F44336</code> text<br>
+                    Button: Primary gradient, "Open Settings"
+                </div>
+            </div>
+
+            <div class="annotation-section">
+                <h3>📱 Phone Number Input</h3>
+                <div class="spec-list">
+                    Country Code: Fixed "+1" (US default)<br>
+                    Input Format: <code>(XXX) XXX-XXXX</code><br>
+                    Storage Format: E.164 <code>+1XXXXXXXXXX</code><br>
+                    Validation: 10 digits required<br>
+                    Border Focus: <code>#00897B</code> 2px
+                </div>
+            </div>
+
+            <div class="annotation-section">
+                <h3>🔘 Toggle Switches</h3>
+                <div class="spec-list">
+                    Size: 52px × 28px<br>
+                    Knob: 24px circle, white<br>
+                    Track Inactive: <code>#E0E0E0</code><br>
+                    Track Active: Gradient <code>#00897B</code> → <code>#4CAF50</code><br>
+                    Animation: 300ms ease transition
+                </div>
+            </div>
+
+            <div class="annotation-section">
+                <h3>📲 SMS Notification Types</h3>
+                <div class="spec-list">
+                    <strong>Goal Reached:</strong> When weight ≤ goal weight<br>
+                    <strong>Milestone:</strong> 5, 10, 25, 50 lbs lost<br>
+                    <strong>New Low:</strong> New lowest recorded weight<br>
+                    <strong>Streak:</strong> 7 and 30 day logging streaks<br>
+                    <strong>Daily Reminder:</strong> Configurable time
+                </div>
+            </div>
+
+            <div class="annotation-section">
+                <h3>🧪 Test Message Button</h3>
+                <p>
+                    Sends a test SMS to verify the phone number and permission are working correctly.
+                </p>
+                <div class="spec-list">
+                    Style: Outlined button, <code>#00897B</code> border<br>
+                    Text: <code>#00897B</code><br>
+                    Test Message: "🎉 Weigh to Go! Test message successful. You're all set!"
+                </div>
+            </div>
+
+            <div class="annotation-section">
+                <h3>♿ Accessibility</h3>
+                <div class="spec-list">
+                    • Toggle switches: Include contentDescription<br>
+                    • Permission button: Announces status changes<br>
+                    • Phone input: Proper inputType="phone"<br>
+                    • All touch targets: Minimum 48dp<br>
+                    • Color contrast: WCAG AA compliant
+                </div>
+            </div>
+
+            <div class="annotation-section">
+                <h3>💾 Database Integration</h3>
+                <div class="spec-list">
+                    <strong>users table:</strong><br>
+                    • phone_number (E.164 format)<br><br>
+                    <strong>user_preferences table:</strong><br>
+                    • sms_notifications_enabled<br>
+                    • sms_goal_alerts<br>
+                    • sms_milestone_alerts<br>
+                    • sms_reminder_enabled
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

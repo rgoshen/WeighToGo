@@ -33,7 +33,8 @@ A simple, effective Android mobile application for daily weight tracking and goa
 | ⚖️ **Daily Weight Logging** | Quick entry with date picker and unit toggle (lbs/kg) |
 | 📊 **Weight History** | Chronological display with trend indicators |
 | 🎯 **Goal Setting** | Set and track progress toward target weight |
-| 🔔 **Smart Notifications** | Celebration alerts when you reach your goal |
+| 📱 **SMS Notifications** | Text message alerts for goals, milestones, and daily reminders |
+| 🔔 **Smart Notifications** | Push notification alerts when you reach your goal |
 | ♿ **Accessibility** | Built-in accessibility settings on every screen |
 
 ### UI Highlights
@@ -197,6 +198,7 @@ The app uses SQLite with three tables:
 |--------|------|-------------|
 | `user_id` | INTEGER | PRIMARY KEY, AUTOINCREMENT |
 | `username` | TEXT | NOT NULL, UNIQUE |
+| `phone_number` | TEXT | For SMS notifications |
 | `password` | TEXT | NOT NULL (hashed) |
 | `created_at` | TEXT | DEFAULT CURRENT_TIMESTAMP |
 
@@ -292,16 +294,20 @@ Output location: `app/build/outputs/apk/`
 
 ## 🔒 Permissions
 
-The app requires minimal permissions:
+The app requires the following permissions:
 
 ```xml
 <!-- AndroidManifest.xml -->
 <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+<uses-permission android:name="android.permission.SEND_SMS" />
 ```
 
-| Permission | Purpose |
-|------------|---------|
-| `POST_NOTIFICATIONS` | Goal achievement celebrations |
+| Permission | Purpose | Required |
+|------------|---------|----------|
+| `POST_NOTIFICATIONS` | Goal achievement and reminder alerts | Optional |
+| `SEND_SMS` | SMS notifications for goals, milestones, and reminders | Optional |
+
+> **Note:** Both permissions require explicit user consent at runtime (Android 6.0+). Users can use the app without granting these permissions, but notification features will be disabled.
 
 ---
 
@@ -313,6 +319,7 @@ The app requires minimal permissions:
 - [x] Weight history display
 - [x] Goal weight setting
 - [x] Goal achievement notifications
+- [x] SMS notifications for goals, milestones, and reminders
 
 ### Version 1.1 (Planned)
 - [ ] Weight trend graphs/charts
@@ -324,7 +331,7 @@ The app requires minimal permissions:
 - [ ] Cloud sync
 - [ ] Multiple profiles
 - [ ] BMI calculator
-- [ ] Reminders/daily prompts
+- [ ] Scheduled daily reminders
 - [ ] Wear OS companion app
 
 ---
