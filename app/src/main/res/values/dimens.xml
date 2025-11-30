@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Spacing (8dp grid system) -->
+    <dimen name="spacing_micro">4dp</dimen>
+    <dimen name="spacing_small">8dp</dimen>
+    <dimen name="spacing_medium">12dp</dimen>
+    <dimen name="spacing_standard">16dp</dimen>
+    <dimen name="spacing_large">20dp</dimen>
+    <dimen name="spacing_xl">24dp</dimen>
+    <dimen name="spacing_xxl">32dp</dimen>
+
+    <!-- Corner Radius -->
+    <dimen name="corner_radius_small">8dp</dimen>
+    <dimen name="corner_radius_medium">12dp</dimen>
+    <dimen name="corner_radius_large">16dp</dimen>
+    <dimen name="corner_radius_xl">24dp</dimen>
+    <dimen name="corner_radius_card">16dp</dimen>
+    <dimen name="corner_radius_button">16dp</dimen>
+    <dimen name="corner_radius_input">14dp</dimen>
+
+    <!-- Button Heights -->
+    <dimen name="button_height_standard">56dp</dimen>
+    <dimen name="button_height_large">60dp</dimen>
+    <dimen name="touch_target_min">48dp</dimen>
+
+    <!-- Icon Sizes -->
+    <dimen name="icon_size_small">18dp</dimen>
+    <dimen name="icon_size_medium">24dp</dimen>
+    <dimen name="icon_size_large">40dp</dimen>
+    <dimen name="icon_size_xl">48dp</dimen>
+
+    <!-- Text Sizes -->
+    <dimen name="text_size_micro">10sp</dimen>
+    <dimen name="text_size_small">12sp</dimen>
+    <dimen name="text_size_body">14sp</dimen>
+    <dimen name="text_size_input">16sp</dimen>
+    <dimen name="text_size_title">18sp</dimen>
+    <dimen name="text_size_headline">24sp</dimen>
+    <dimen name="text_size_display">32sp</dimen>
+    <dimen name="text_size_large_display">64sp</dimen>
+
+    <!-- Card Elevation -->
+    <dimen name="elevation_card">2dp</dimen>
+    <dimen name="elevation_raised">4dp</dimen>
+    <dimen name="elevation_fab">6dp</dimen>
+
+    <!-- Input Field -->
+    <dimen name="input_height">52dp</dimen>
+
+    <!-- Header Heights -->
+    <dimen name="header_height_login">294dp</dimen>
+    <dimen name="header_height_dashboard">160dp</dimen>
+    <dimen name="toolbar_height">56dp</dimen>
+
+    <!-- Progress Card -->
+    <dimen name="progress_card_height">200dp</dimen>
+    <dimen name="progress_bar_height">12dp</dimen>
+
+    <!-- Bottom Navigation -->
+    <dimen name="bottom_nav_height">80dp</dimen>
+
+    <!-- FAB -->
+    <dimen name="fab_size">64dp</dimen>
+    <dimen name="fab_margin">16dp</dimen>
+
+    <!-- Weight Entry Item -->
+    <dimen name="weight_item_height">80dp</dimen>
+    <dimen name="date_badge_size">48dp</dimen>
+</resources>
