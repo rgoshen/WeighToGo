@@ -107,3 +107,60 @@ None identified
 
 ### Technical Debt
 None identified
+
+---
+
+## [2025-11-29] Phase 4: SMS Notifications Screen - Completed
+
+### Work Completed
+- Updated `AndroidManifest.xml` with required SMS permissions:
+  - `<uses-permission android:name="android.permission.SEND_SMS" />`
+  - `<uses-feature android:name="android.hardware.telephony" android:required="false" />`
+  - The `required="false"` ensures app works on devices without SMS capability (CRITICAL RUBRIC REQUIREMENT)
+- Created `activity_sms_settings.xml` layout matching the preview design:
+  - Gradient header with back button, "SMS Notifications" title, and subtitle
+  - Permission Card with:
+    - 48dp permission icon with gradient background
+    - "SMS Permission" title with status badge (Required/Granted/Denied states)
+    - Description text explaining why permission is needed
+    - "Grant SMS Permission" primary button
+  - Phone Number Card with:
+    - Title and description
+    - Country code input (+1, disabled/fixed)
+    - Phone number input field with inputType="phone"
+  - Notification Preferences Card with MaterialSwitch toggles:
+    - Master toggle: "Enable SMS Notifications"
+    - Goal Reached Alerts toggle
+    - Milestone Alerts toggle
+    - Daily Reminders toggle
+    - "Send Test Message" outlined button
+  - Info Banner with messaging rates disclaimer
+- Added new color resources for permission status badges:
+  - Pending: #FFF3E0 bg, #FF9800 text
+  - Granted: #E8F5E9 bg, #4CAF50 text
+  - Denied: #FFEBEE bg, #F44336 text
+  - Info banner: #E0F2F1 bg, #00695C text
+- Created supporting drawable resources:
+  - `bg_permission_icon.xml` - Gradient rounded square (12dp corners)
+  - `bg_info_banner.xml` - Light teal rounded background
+  - `bg_status_pending.xml`, `bg_status_granted.xml`, `bg_status_denied.xml`
+- Updated `strings.xml` with all SMS screen text:
+  - Permission card strings
+  - Phone number card strings
+  - Notification preferences strings
+  - Info banner text
+  - Content descriptions for accessibility
+
+### Issues Encountered
+None - referenced the preview file (`weight_tracker_sms_notifications.html`) before implementation
+
+### Corrections Made
+1. Changed info banner icon from `ic_info` (which doesn't exist) to `ic_notification` (which exists in the project)
+
+### Lessons Learned
+- Checking available icons before referencing them in layouts prevents build errors
+- MaterialSwitch is the modern replacement for SwitchCompat in Material Design 3
+- Using `android:required="false"` on `<uses-feature>` is essential for app store compatibility on devices without telephony
+
+### Technical Debt
+None identified

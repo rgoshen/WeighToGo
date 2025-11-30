@@ -77,9 +77,32 @@ Create all required XML layouts and resources following the Figma Design Specifi
 - [x] Update TODO.md with completed tasks (2025-11-29)
 - [x] Update project_summary.md with Phase 3 notes (2025-11-29)
 
-### Phase 4: SMS Notifications Screen (30%)
-- [ ] Update AndroidManifest.xml with SMS permissions and telephony feature
-- [ ] Create activity_settings.xml for SMS permissions UI
+### Phase 4: SMS Notifications Screen (30%) - Completed
+- [x] Update AndroidManifest.xml with SMS permissions and telephony feature (2025-11-29)
+  - [x] Add `<uses-permission android:name="android.permission.SEND_SMS" />`
+  - [x] Add `<uses-feature android:name="android.hardware.telephony" android:required="false" />`
+- [x] Add new string resources for SMS screen (2025-11-29)
+- [x] Add new color resources for status badge states (2025-11-29)
+  - [x] Pending: #FFF3E0 bg, #FF9800 text
+  - [x] Granted: #E8F5E9 bg, #4CAF50 text
+  - [x] Denied: #FFEBEE bg, #F44336 text
+- [x] Create supporting drawable resources (2025-11-29)
+  - [x] bg_permission_icon.xml (gradient rounded square, 12dp corners)
+  - [x] bg_info_banner.xml (light teal #E0F2F1 rounded background)
+  - [x] bg_status_pending.xml, bg_status_granted.xml, bg_status_denied.xml
+- [x] Create activity_sms_settings.xml layout (2025-11-29)
+  - [x] Gradient header with back button, title "SMS Notifications", subtitle
+  - [x] Permission Card (icon, title, status badge, description, grant button)
+  - [x] Phone Number Card (title, description, country code +1, phone input)
+  - [x] Notification Preferences Card with MaterialSwitch toggles:
+    - [x] Master toggle: "Enable SMS Notifications"
+    - [x] Goal toggle: "Goal Reached Alerts"
+    - [x] Milestone toggle: "Milestone Alerts"
+    - [x] Daily toggle: "Daily Reminders"
+    - [x] "Send Test Message" outlined button
+  - [x] Info Banner with messaging rates disclaimer
+- [x] Update TODO.md with completed tasks (2025-11-29)
+- [x] Update project_summary.md with Phase 4 notes (2025-11-29)
 
 ### Completed
 - [x] Create feature branch (2025-11-29)
