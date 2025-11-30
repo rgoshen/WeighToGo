@@ -56,3 +56,54 @@ None identified
 
 ### Technical Debt
 None identified
+
+---
+
+## [2025-11-29] Phase 3: Database Grid Screen - Completed
+
+### Work Completed
+- Created `bottom_nav_menu.xml` with four navigation items (Home, Trends, Goals, Profile)
+- Created `activity_main.xml` dashboard layout matching the preview design:
+  - Gradient header with greeting text ("Good morning,") and user name
+  - Notification and settings icon buttons with semi-transparent backgrounds
+  - Progress card with "Your Progress" title, trend badge, and motivational subtitle
+  - Current/Start/Goal weight display with progress bar
+  - Quick stats row (Total Lost, lbs to Goal, Day Streak cards)
+  - "Recent Entries" section header with "View All" link
+  - RecyclerView for weight history items
+  - Empty state container with icon and messages
+  - FloatingActionButton with rounded square shape (20dp corner radius)
+  - BottomNavigationView with color selector for states
+- Created `item_weight_entry.xml` RecyclerView item layout:
+  - MaterialCardView with elevation and rounded corners
+  - Date badge with day number and month abbreviation
+  - Weight value with unit and time text
+  - Trend indicator badge (up/down/same)
+  - Edit and Delete ImageButtons (48dp touch targets, delete has red tint)
+  - **Delete button per row - CRITICAL RUBRIC REQUIREMENT**
+- Created supporting resources:
+  - `bg_header_button.xml` - Semi-transparent (#33FFFFFF) rounded rectangle
+  - `bg_date_badge.xml` - Surface variant colored rounded background
+  - `bottom_nav_color.xml` - Color selector for checked/unchecked states
+  - Added FAB shape style to themes.xml
+  - Added new strings: progress_to_goal, total_lost, lbs_to_goal, day_streak
+
+### Issues Encountered
+1. **Initial layout mismatch with design previews** - First implementation used a toolbar-based design with grid headers (DATE | WEIGHT | TREND | ACTIONS) instead of the card-based design shown in the HTML/PNG preview files
+2. **Build errors from previous phase** - Style name typo (`TextAppearance.WeighToGo.Headline` instead of `TextAppearance.WeightToGo.Headline`) and invalid `minHeight="match_parent"` in activity_login.xml
+3. **Creating unnecessary XML drawables** - Created XML drawable resources when PNG files already existed in the project
+
+### Corrections Made
+1. Completely revised `activity_main.xml` and `item_weight_entry.xml` to match the preview designs in `/previews/weight_tracker_dashboard.html` and `/previews/weight_tracker_entry.html`
+2. Fixed the style name typo (added missing 't' in WeightToGo)
+3. Fixed activity_login.xml by changing `minHeight="match_parent"` to `layout_height="match_parent"`
+4. Only created essential XML drawables (bg_header_button, bg_date_badge, bottom_nav_color) that don't have existing PNG equivalents
+
+### Lessons Learned
+- **ALWAYS check preview/mockup files before implementing** - The HTML and PNG preview files in `/previews/` folder show the actual intended design and should be the primary reference
+- Design specifications documents describe concepts, but preview files show exact implementation
+- Avoid creating XML drawables when PNG resources already exist in the project
+- The design uses a modern card-based approach rather than a traditional grid/table layout
+
+### Technical Debt
+None identified

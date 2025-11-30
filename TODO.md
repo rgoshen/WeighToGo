@@ -49,16 +49,37 @@ Create all required XML layouts and resources following the Figma Design Specifi
   - [x] Verify focus order matches user flow
   - [x] Validate accessibility (content descriptions, 48dp touch targets)
 
-### Phase 3: Database Grid Screen (25%)
-- [ ] Create activity_main.xml layout with grid
-- [ ] Create item_weight_entry.xml with delete button
+### Phase 3: Database Grid Screen (25%) - Completed
+- [x] Create bottom_nav_menu.xml resource (2025-11-29)
+- [x] Build activity_main.xml with full dashboard structure (2025-11-29)
+  - [x] Gradient header with greeting, notification/settings buttons
+  - [x] Progress Summary Card (current/start/goal weights, progress bar, trend badge)
+  - [x] Quick Stats Row (Total Lost, lbs to Goal, Day Streak)
+  - [x] Section Header ("Recent Entries" + "View All")
+  - [x] RecyclerView for weight entries
+  - [x] Empty State Container (icon + messages)
+  - [x] FloatingActionButton with rounded square shape
+  - [x] BottomNavigationView (Home, Trends, Goals, Profile)
+- [x] Create item_weight_entry.xml with delete button (2025-11-29)
+  - [x] MaterialCardView container with elevation
+  - [x] Date badge (day number + month abbreviation)
+  - [x] Weight value with unit and time text
+  - [x] Trend indicator badge (up/down/same icons)
+  - [x] Edit ImageButton (48dp touch target)
+  - [x] Delete ImageButton (48dp, red tint) ← REQUIRED
+  - [x] Content descriptions for accessibility
+- [x] Add missing string resources (2025-11-29)
+- [x] Create supporting drawable resources (2025-11-29)
+  - [x] bg_header_button.xml (semi-transparent rounded button)
+  - [x] bg_date_badge.xml (surface_variant rounded background)
+  - [x] bottom_nav_color.xml (color selector for nav states)
+- [x] Add FAB shape style to themes.xml (2025-11-29)
+- [x] Update TODO.md with completed tasks (2025-11-29)
+- [x] Update project_summary.md with Phase 3 notes (2025-11-29)
 
 ### Phase 4: SMS Notifications Screen (30%)
 - [ ] Update AndroidManifest.xml with SMS permissions and telephony feature
 - [ ] Create activity_settings.xml for SMS permissions UI
-
-### Phase 5: Validation
-- [ ] Build and validate project
 
 ### Completed
 - [x] Create feature branch (2025-11-29)

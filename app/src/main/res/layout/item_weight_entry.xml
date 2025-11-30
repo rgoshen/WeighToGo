@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/weightEntryCard"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="@dimen/spacing_medium"
+    app:cardBackgroundColor="@color/card_background"
+    app:cardCornerRadius="@dimen/corner_radius_large"
+    app:cardElevation="@dimen/elevation_card"
+    app:strokeWidth="0dp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="@dimen/spacing_standard">
+
+        <!-- Date Badge (Day + Month) -->
+        <LinearLayout
+            android:id="@+id/dateBadge"
+            android:layout_width="@dimen/date_badge_size"
+            android:layout_height="@dimen/date_badge_size"
+            android:background="@drawable/bg_date_badge"
+            android:gravity="center"
+            android:orientation="vertical"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <TextView
+                android:id="@+id/dayNumber"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-medium"
+                android:textColor="@color/primary_teal"
+                android:textSize="@dimen/text_size_title"
+                android:textStyle="bold"
+                android:includeFontPadding="false"
+                tools:text="26" />
+
+            <TextView
+                android:id="@+id/monthName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAllCaps="true"
+                android:textColor="@color/text_secondary"
+                android:textSize="@dimen/text_size_micro"
+                android:includeFontPadding="false"
+                tools:text="NOV" />
+
+        </LinearLayout>
+
+        <!-- Weight and Time Details -->
+        <LinearLayout
+            android:id="@+id/detailsContainer"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/spacing_standard"
+            android:orientation="vertical"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/actionsContainer"
+            app:layout_constraintStart_toEndOf="@id/dateBadge"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <!-- Weight Value -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="bottom">
+
+                <TextView
+                    android:id="@+id/weightValue"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-medium"
+                    android:textColor="@color/text_primary"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    tools:text="172.0" />
+
+                <TextView
+                    android:id="@+id/weightUnit"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/spacing_micro"
+                    android:text="@string/lbs_unit"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="@dimen/text_size_body" />
+
+            </LinearLayout>
+
+            <!-- Time/Date Description -->
+            <TextView
+                android:id="@+id/entryTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_micro"
+                android:textColor="@color/text_secondary"
+                android:textSize="@dimen/text_size_small"
+                tools:text="Today, 7:32 AM" />
+
+        </LinearLayout>
+
+        <!-- Actions Container (Trend + Edit + Delete) -->
+        <LinearLayout
+            android:id="@+id/actionsContainer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <!-- Trend Change Badge -->
+            <TextView
+                android:id="@+id/trendBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_badge_trend_down"
+                android:gravity="center"
+                android:paddingHorizontal="@dimen/spacing_small"
+                android:paddingVertical="@dimen/spacing_micro"
+                android:textColor="@color/trend_down"
+                android:textSize="@dimen/text_size_body"
+                android:textStyle="bold"
+                tools:text="↓ 0.5" />
+
+            <!-- Edit Button (for rubric requirement) -->
+            <ImageButton
+                android:id="@+id/editButton"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_marginStart="@dimen/spacing_small"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/cd_edit_button"
+                android:padding="@dimen/spacing_small"
+                android:src="@drawable/ic_edit"
+                app:tint="@color/text_secondary" />
+
+            <!-- DELETE BUTTON (REQUIRED per rubric) -->
+            <ImageButton
+                android:id="@+id/deleteButton"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/cd_delete_button"
+                android:padding="@dimen/spacing_small"
+                android:src="@drawable/ic_delete"
+                app:tint="@color/error" />
+
+        </LinearLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</com.google.android.material.card.MaterialCardView>

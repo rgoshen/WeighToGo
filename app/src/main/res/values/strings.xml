@@ -43,12 +43,18 @@
     <string name="trend_same">Weight unchanged</string>
 
     <!-- Progress Card -->
+    <string name="progress_to_goal">Progress to Goal</string>
     <string name="current_weight">Current</string>
     <string name="start_weight">Start</string>
     <string name="goal_weight">Goal</string>
     <string name="lbs_unit">lbs</string>
     <string name="kg_unit">kg</string>
     <string name="progress_format">%d%% to goal</string>
+
+    <!-- Quick Stats -->
+    <string name="total_lost">Total Lost</string>
+    <string name="lbs_to_goal">lbs to Goal</string>
+    <string name="day_streak">Day Streak</string>
 
     <!-- Weight Entry -->
     <string name="log_weight">Log Weight</string>

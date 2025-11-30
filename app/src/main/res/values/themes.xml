@@ -99,4 +99,10 @@
         <item name="boxStrokeColor">@color/input_stroke_focused</item>
         <item name="hintTextColor">@color/primary_teal</item>
     </style>
+
+    <!-- FAB Shape (rounded square like in design) -->
+    <style name="ShapeAppearance.WeightToGo.FAB" parent="ShapeAppearance.Material3.Corner.Large">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">20dp</item>
+    </style>
 </resources>
