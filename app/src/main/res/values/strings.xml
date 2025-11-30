@@ -6,7 +6,7 @@
 
     <!-- Login Screen -->
     <string name="tab_sign_in">Sign In</string>
-    <string name="tab_create_account">Create Account</string>
+    <string name="tab_register">Register</string>
     <string name="hint_username">Username or Email</string>
     <string name="hint_password">Password</string>
     <string name="hint_confirm_password">Confirm Password</string>
@@ -167,4 +167,8 @@
     <string name="cd_edit_button">Edit this entry</string>
     <string name="cd_delete_button">Delete this entry</string>
     <string name="cd_trend_indicator">Weight trend indicator</string>
+    <string name="cd_sign_in_google">Sign in with Google</string>
+    <string name="cd_sign_in_facebook">Sign in with Facebook</string>
+    <string name="cd_sign_in_apple">Sign in with Apple</string>
+    <string name="cd_accessibility_settings">Open accessibility settings</string>
 </resources>

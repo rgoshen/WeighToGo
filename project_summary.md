@@ -222,3 +222,37 @@ None identified
 
 ### Technical Debt
 None identified
+
+---
+
+## [2025-11-29] Phase 6: Final Validation & Login Screen Updates - Completed
+
+### Work Completed
+- Replaced "Create Account" button with social login buttons (Google, Facebook, Apple) to match HTML preview design
+- Removed redundant "or continue with → Create Account" flow (tabs already handle Sign In / Create Account)
+- Added content description strings for social login buttons
+- Verified WCAG 2.1 AA compliance across all screens:
+  - All interactive elements meet 48dp minimum touch target
+  - All ImageButtons and ImageViews have contentDescription (or @null for decorative)
+  - High contrast text throughout (dark on light, white on dark)
+  - Logical focus order for keyboard/accessibility navigation
+  - Text sizes use sp units for user scaling
+
+### Issues Encountered
+1. **Redundant Create Account button** - Original layout had "or continue with" leading to a Create Account button, but the tab toggle already had Create Account option
+2. **Accessibility FAB considered but removed** - No accessibility icon (♿) available, and the FAB would require Java code for functionality
+
+### Corrections Made
+1. Replaced Create Account button with 3 social login buttons (G, f, 🍎) matching the HTML preview
+2. Decided against accessibility FAB - ensured WCAG compliance through proper implementation instead
+3. Changed tab labels from "Sign In / Create Account" to "Sign In / Register" to match HTML preview
+4. Added rounded corners to tab toggle container and active tab state
+
+### Lessons Learned
+- Social login buttons can use simple text labels (G, f) as placeholders until proper brand icons are integrated
+- WCAG compliance is better achieved through proper implementation (touch targets, content descriptions, contrast) rather than a dedicated accessibility settings button
+- Decorative images should use `contentDescription="@null"` to be ignored by screen readers
+- Tab toggle styling requires separate drawables for container (12dp corners) and active state (10dp corners) to achieve nested rounded appearance
+
+### Technical Debt
+- Social login buttons use text placeholders - should be replaced with proper brand icons/SDKs when implementing OAuth
