@@ -104,6 +104,44 @@ Create all required XML layouts and resources following the Figma Design Specifi
 - [x] Update TODO.md with completed tasks (2025-11-29)
 - [x] Update project_summary.md with Phase 4 notes (2025-11-29)
 
+### Phase 5: Weight Entry Screen - Completed
+- [x] Add new string resources for weight entry screen (2025-11-29)
+- [x] Create supporting drawable resources (2025-11-29)
+  - [x] bg_weight_display.xml (surface_variant rounded background, 20dp corners)
+  - [x] bg_numpad_button.xml (bordered button with pressed state, 16dp corners)
+  - [x] bg_unit_toggle_active.xml, bg_unit_toggle_inactive.xml (unit button states)
+  - [x] bg_adjust_button.xml (outlined teal button, 12dp corners)
+  - [x] bg_date_nav_button.xml (surface_variant rounded square, 12dp corners)
+  - [x] bg_today_badge.xml (success green rounded badge)
+- [x] Create activity_weight_entry.xml layout (2025-11-29)
+  - [x] Navigation header with back button and "Log Weight" title
+  - [x] Date Selector Card:
+    - [x] "Entry Date" label
+    - [x] Prev/Next date navigation buttons (44dp)
+    - [x] Large day number display (32sp)
+    - [x] Full date text
+    - [x] "Today" badge (success_light bg, accent_green text)
+  - [x] Weight Input Card:
+    - [x] Title and subtitle
+    - [x] Large weight display (64sp font, surface_variant bg)
+    - [x] Quick adjust buttons row (-1, -0.5, +0.5, +1)
+    - [x] Unit toggle buttons (lbs / kg)
+    - [x] Number pad grid (3x4: 1-9, decimal, 0, backspace)
+    - [x] Save button (60dp height, MaterialButton)
+    - [x] Previous entry hint
+- [x] Fix button styling - Material Button overrides background (2025-11-29)
+  - [x] Changed Button to TextView for quick adjust buttons
+  - [x] Changed Button to TextView for unit toggle buttons
+  - [x] Changed Button to TextView for number pad buttons
+  - [x] Added clickable="true" and focusable="true" for touch handling
+- [x] Update TODO.md with completed tasks (2025-11-29)
+- [x] Update project_summary.md with Phase 5 notes (2025-11-29)
+- [x] Verify build succeeds (2025-11-29)
+
+### Phase 6: Final Validation
+- [ ] Build and validate entire project
+- [ ] Verify all rubric requirements met
+
 ### Completed
 - [x] Create feature branch (2025-11-29)
 

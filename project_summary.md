@@ -164,3 +164,61 @@ None - referenced the preview file (`weight_tracker_sms_notifications.html`) bef
 
 ### Technical Debt
 None identified
+
+---
+
+## [2025-11-29] Phase 5: Weight Entry Screen - Completed
+
+### Work Completed
+- Created `activity_weight_entry.xml` - the screen opened when user taps FAB on dashboard:
+  - Navigation header with back button and centered "Log Weight" title
+  - Date Selector Card with:
+    - "Entry Date" label (uppercase, letter-spaced)
+    - Previous/Next date navigation buttons (44dp, surface_variant bg)
+    - Large day number (32sp, primary_teal)
+    - Full date text (e.g., "Tuesday, November 26, 2025")
+    - "Today" badge with success green styling
+  - Weight Input Card with:
+    - Title "Enter Your Weight" and subtitle
+    - Large weight display (64sp, primary_teal, surface_variant background)
+    - Quick adjust buttons (-1, -0.5, +0.5, +1) with outlined teal styling
+    - Unit toggle (lbs/kg) with active/inactive states
+    - Custom number pad (3x4 GridLayout, 56dp buttons, 16dp corners)
+    - Save button (60dp height, MaterialButton with check icon)
+    - Previous entry hint showing last recorded weight
+- Created supporting drawable resources:
+  - `bg_weight_display.xml` - 20dp rounded surface_variant background
+  - `bg_numpad_button.xml` - Bordered button with pressed state
+  - `bg_unit_toggle_active.xml` - Solid primary_teal background
+  - `bg_unit_toggle_inactive.xml` - Bordered inactive state
+  - `bg_adjust_button.xml` - Outlined teal with pressed state
+  - `bg_date_nav_button.xml` - Surface_variant with pressed state
+  - `bg_today_badge.xml` - Success green badge background
+- Added new strings for weight entry screen:
+  - Entry date, weight entry title/subtitle
+  - Quick adjust button labels
+  - Number pad characters
+  - Content descriptions for accessibility
+
+### Issues Encountered
+1. **Missing ic_next icon** - Preview design showed a right arrow for next date navigation
+2. **Material Button overrides custom backgrounds** - All buttons (quick adjust, unit toggle, number pad) rendered as solid teal instead of white with borders because Material Design 3 `Button` widget ignores `android:background` and applies its own theme styling
+
+### Corrections Made
+1. Used `android:rotation="180"` on ic_back to create a right-pointing arrow for the next date button, avoiding the need to create a new icon
+2. Changed all `Button` elements to `TextView` for custom-styled buttons:
+   - Quick adjust buttons (-1, -0.5, +0.5, +1)
+   - Unit toggle buttons (lbs, kg)
+   - Number pad buttons (0-9, decimal, backspace)
+   - Added `android:clickable="true"` and `android:focusable="true"` to maintain touch handling
+   - Added `android:gravity="center"` for proper text alignment
+
+### Lessons Learned
+- `android:rotation` can be used to flip/rotate icons, avoiding the need for duplicate assets
+- GridLayout with `layout_columnWeight` distributes button widths evenly across the number pad
+- 60dp save button exceeds Android's 48dp minimum touch target requirement
+- **Material Design 3 `Button` widget overrides `android:background`** - Use `TextView` with `clickable="true"` and `focusable="true"` when you need custom drawable backgrounds that the theme should not override
+- `TextView` is a valid alternative to `Button` for clickable elements when custom styling is required
+
+### Technical Debt
+None identified

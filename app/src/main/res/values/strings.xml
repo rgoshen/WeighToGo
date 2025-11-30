@@ -56,12 +56,43 @@
     <string name="lbs_to_goal">lbs to Goal</string>
     <string name="day_streak">Day Streak</string>
 
-    <!-- Weight Entry -->
+    <!-- Weight Entry Screen -->
     <string name="log_weight">Log Weight</string>
-    <string name="select_date">Select Date</string>
+    <string name="entry_date">Entry Date</string>
     <string name="today">Today</string>
+    <string name="enter_your_weight">Enter Your Weight</string>
+    <string name="weight_entry_subtitle">Step on the scale and log your reading</string>
     <string name="save_entry">Save Entry</string>
-    <string name="last_entry_format">Last entry: %.1f lbs on %s</string>
+    <string name="last_entry">Last entry:</string>
+    <string name="last_entry_date">on %s</string>
+
+    <!-- Quick Adjust Buttons -->
+    <string name="adjust_minus_one">-1</string>
+    <string name="adjust_minus_half">-0.5</string>
+    <string name="adjust_plus_half">+0.5</string>
+    <string name="adjust_plus_one">+1</string>
+
+    <!-- Number Pad -->
+    <string name="numpad_1">1</string>
+    <string name="numpad_2">2</string>
+    <string name="numpad_3">3</string>
+    <string name="numpad_4">4</string>
+    <string name="numpad_5">5</string>
+    <string name="numpad_6">6</string>
+    <string name="numpad_7">7</string>
+    <string name="numpad_8">8</string>
+    <string name="numpad_9">9</string>
+    <string name="numpad_0">0</string>
+    <string name="numpad_decimal">.</string>
+    <string name="numpad_backspace">⌫</string>
+
+    <!-- Content Descriptions for Weight Entry -->
+    <string name="cd_previous_date">Go to previous date</string>
+    <string name="cd_next_date">Go to next date</string>
+    <string name="cd_numpad_backspace">Delete last digit</string>
+    <string name="cd_adjust_weight">Adjust weight by %s</string>
+    <string name="cd_unit_lbs">Select pounds</string>
+    <string name="cd_unit_kg">Select kilograms</string>
 
     <!-- SMS/Notifications Screen -->
     <string name="sms_notifications_title">SMS Notifications</string>

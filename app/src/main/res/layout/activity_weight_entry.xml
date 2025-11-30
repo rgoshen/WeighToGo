@@ -1,0 +1,623 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background_secondary"
+    android:fitsSystemWindows="true">
+
+    <!-- Scrollable Content -->
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- Navigation Header -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="@dimen/spacing_medium"
+                android:background="@color/card_background"
+                android:elevation="2dp">
+
+                <!-- Back Button -->
+                <ImageButton
+                    android:id="@+id/backButton"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_back"
+                    android:scaleType="centerInside"
+                    android:padding="8dp"
+                    android:contentDescription="@string/cd_back_button"
+                    app:tint="@color/text_primary" />
+
+                <!-- Title -->
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/log_weight"
+                    android:textColor="@color/text_primary"
+                    android:textSize="18sp"
+                    android:fontFamily="sans-serif-medium"
+                    android:gravity="center"
+                    android:layout_marginEnd="40dp" />
+
+            </LinearLayout>
+
+            <!-- Content Area -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="@dimen/spacing_large">
+
+                <!-- Date Selector Card -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/dateCard"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/spacing_large"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="4dp"
+                    app:cardBackgroundColor="@color/card_background">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="@dimen/spacing_large">
+
+                        <!-- Date Label -->
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/entry_date"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="13sp"
+                            android:fontFamily="sans-serif-medium"
+                            android:textAllCaps="true"
+                            android:letterSpacing="0.05"
+                            android:layout_marginBottom="@dimen/spacing_small" />
+
+                        <!-- Date Selector Row -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
+
+                            <!-- Previous Date Button -->
+                            <ImageButton
+                                android:id="@+id/prevDateButton"
+                                android:layout_width="44dp"
+                                android:layout_height="44dp"
+                                android:background="@drawable/bg_date_nav_button"
+                                android:src="@drawable/ic_back"
+                                android:scaleType="centerInside"
+                                android:padding="10dp"
+                                android:contentDescription="@string/cd_previous_date"
+                                app:tint="@color/primary_teal" />
+
+                            <!-- Date Display -->
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical"
+                                android:gravity="center">
+
+                                <!-- Large Day Number -->
+                                <TextView
+                                    android:id="@+id/dayNumber"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="26"
+                                    android:textColor="@color/primary_teal"
+                                    android:textSize="32sp"
+                                    android:fontFamily="sans-serif-medium"
+                                    tools:text="26" />
+
+                                <!-- Full Date -->
+                                <TextView
+                                    android:id="@+id/fullDate"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Tuesday, November 26, 2025"
+                                    android:textColor="@color/text_secondary"
+                                    android:textSize="14sp"
+                                    tools:text="Tuesday, November 26, 2025" />
+
+                                <!-- Today Badge -->
+                                <TextView
+                                    android:id="@+id/todayBadge"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="8dp"
+                                    android:background="@drawable/bg_today_badge"
+                                    android:paddingHorizontal="12dp"
+                                    android:paddingVertical="4dp"
+                                    android:text="@string/today"
+                                    android:textColor="@color/accent_green"
+                                    android:textSize="12sp"
+                                    android:fontFamily="sans-serif-medium" />
+
+                            </LinearLayout>
+
+                            <!-- Next Date Button (disabled for future) -->
+                            <ImageButton
+                                android:id="@+id/nextDateButton"
+                                android:layout_width="44dp"
+                                android:layout_height="44dp"
+                                android:background="@drawable/bg_date_nav_button"
+                                android:src="@drawable/ic_back"
+                                android:rotation="180"
+                                android:scaleType="centerInside"
+                                android:padding="10dp"
+                                android:enabled="false"
+                                android:alpha="0.3"
+                                android:contentDescription="@string/cd_next_date"
+                                app:tint="@color/primary_teal" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Weight Input Card -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/weightCard"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:cardCornerRadius="24dp"
+                    app:cardElevation="8dp"
+                    app:cardBackgroundColor="@color/card_background">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="@dimen/spacing_large"
+                        android:gravity="center_horizontal">
+
+                        <!-- Card Title -->
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/enter_your_weight"
+                            android:textColor="@color/text_primary"
+                            android:textSize="16sp"
+                            android:fontFamily="sans-serif-medium"
+                            android:layout_marginBottom="8dp" />
+
+                        <!-- Card Subtitle -->
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/weight_entry_subtitle"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="14sp"
+                            android:layout_marginBottom="@dimen/spacing_large" />
+
+                        <!-- Weight Display -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/bg_weight_display"
+                            android:padding="@dimen/spacing_large"
+                            android:gravity="center"
+                            android:layout_marginBottom="@dimen/spacing_medium">
+
+                            <TextView
+                                android:id="@+id/weightValue"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="172.0"
+                                android:textColor="@color/primary_teal"
+                                android:textSize="64sp"
+                                android:fontFamily="sans-serif-medium"
+                                tools:text="172.0" />
+
+                            <TextView
+                                android:id="@+id/weightUnit"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="8dp"
+                                android:text="@string/lbs_unit"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="24sp" />
+
+                        </LinearLayout>
+
+                        <!-- Quick Adjust Buttons -->
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:layout_marginBottom="@dimen/spacing_medium">
+
+                            <TextView
+                                android:id="@+id/adjustMinusOne"
+                                android:layout_width="56dp"
+                                android:layout_height="40dp"
+                                android:layout_marginEnd="@dimen/spacing_small"
+                                android:background="@drawable/bg_adjust_button"
+                                android:text="@string/adjust_minus_one"
+                                android:textColor="@color/primary_teal"
+                                android:textSize="14sp"
+                                android:fontFamily="sans-serif-medium"
+                                android:gravity="center"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:contentDescription="@string/cd_adjust_weight" />
+
+                            <TextView
+                                android:id="@+id/adjustMinusHalf"
+                                android:layout_width="56dp"
+                                android:layout_height="40dp"
+                                android:layout_marginEnd="@dimen/spacing_small"
+                                android:background="@drawable/bg_adjust_button"
+                                android:text="@string/adjust_minus_half"
+                                android:textColor="@color/primary_teal"
+                                android:textSize="14sp"
+                                android:fontFamily="sans-serif-medium"
+                                android:gravity="center"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:contentDescription="@string/cd_adjust_weight" />
+
+                            <TextView
+                                android:id="@+id/adjustPlusHalf"
+                                android:layout_width="56dp"
+                                android:layout_height="40dp"
+                                android:layout_marginEnd="@dimen/spacing_small"
+                                android:background="@drawable/bg_adjust_button"
+                                android:text="@string/adjust_plus_half"
+                                android:textColor="@color/primary_teal"
+                                android:textSize="14sp"
+                                android:fontFamily="sans-serif-medium"
+                                android:gravity="center"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:contentDescription="@string/cd_adjust_weight" />
+
+                            <TextView
+                                android:id="@+id/adjustPlusOne"
+                                android:layout_width="56dp"
+                                android:layout_height="40dp"
+                                android:background="@drawable/bg_adjust_button"
+                                android:text="@string/adjust_plus_one"
+                                android:textColor="@color/primary_teal"
+                                android:textSize="14sp"
+                                android:fontFamily="sans-serif-medium"
+                                android:gravity="center"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:contentDescription="@string/cd_adjust_weight" />
+
+                        </LinearLayout>
+
+                        <!-- Unit Toggle -->
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:layout_marginBottom="@dimen/spacing_large">
+
+                            <TextView
+                                android:id="@+id/unitLbs"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:minWidth="72dp"
+                                android:layout_marginEnd="8dp"
+                                android:background="@drawable/bg_unit_toggle_active"
+                                android:paddingHorizontal="@dimen/spacing_large"
+                                android:paddingVertical="10dp"
+                                android:text="@string/lbs_unit"
+                                android:textColor="@color/text_on_primary"
+                                android:textSize="14sp"
+                                android:fontFamily="sans-serif-medium"
+                                android:gravity="center"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:contentDescription="@string/cd_unit_lbs" />
+
+                            <TextView
+                                android:id="@+id/unitKg"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:minWidth="72dp"
+                                android:background="@drawable/bg_unit_toggle_inactive"
+                                android:paddingHorizontal="@dimen/spacing_large"
+                                android:paddingVertical="10dp"
+                                android:text="@string/kg_unit"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="14sp"
+                                android:fontFamily="sans-serif-medium"
+                                android:gravity="center"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:contentDescription="@string/cd_unit_kg" />
+
+                        </LinearLayout>
+
+                        <!-- Number Pad -->
+                        <GridLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:columnCount="3"
+                            android:rowCount="4"
+                            android:useDefaultMargins="true"
+                            android:alignmentMode="alignMargins">
+
+                            <!-- Row 1: 1, 2, 3 -->
+                            <TextView
+                                android:id="@+id/numpad1"
+                                android:layout_width="0dp"
+                                android:layout_height="56dp"
+                                android:layout_columnWeight="1"
+                                android:layout_marginEnd="6dp"
+                                android:layout_marginBottom="6dp"
+                                android:background="@drawable/bg_numpad_button"
+                                android:text="@string/numpad_1"
+                                android:textColor="@color/text_primary"
+                                android:textSize="24sp"
+                                android:fontFamily="sans-serif-medium"
+                                android:gravity="center"
+                                android:clickable="true"
+                                android:focusable="true" />
+
+                            <TextView
+                                android:id="@+id/numpad2"
+                                android:layout_width="0dp"
+                                android:layout_height="56dp"
+                                android:layout_columnWeight="1"
+                                android:layout_marginHorizontal="6dp"
+                                android:layout_marginBottom="6dp"
+                                android:background="@drawable/bg_numpad_button"
+                                android:text="@string/numpad_2"
+                                android:textColor="@color/text_primary"
+                                android:textSize="24sp"
+                                android:fontFamily="sans-serif-medium"
+                                android:gravity="center"
+                                android:clickable="true"
+                                android:focusable="true" />
+
+                            <TextView
+                                android:id="@+id/numpad3"
+                                android:layout_width="0dp"
+                                android:layout_height="56dp"
+                                android:layout_columnWeight="1"
+                                android:layout_marginStart="6dp"
+                                android:layout_marginBottom="6dp"
+                                android:background="@drawable/bg_numpad_button"
+                                android:text="@string/numpad_3"
+                                android:textColor="@color/text_primary"
+                                android:textSize="24sp"
+                                android:fontFamily="sans-serif-medium"
+                                android:gravity="center"
+                                android:clickable="true"
+                                android:focusable="true" />
+
+                            <!-- Row 2: 4, 5, 6 -->
+                            <TextView
+                                android:id="@+id/numpad4"
+                                android:layout_width="0dp"
+                                android:layout_height="56dp"
+                                android:layout_columnWeight="1"
+                                android:layout_marginEnd="6dp"
+                                android:layout_marginBottom="6dp"
+                                android:background="@drawable/bg_numpad_button"
+                                android:text="@string/numpad_4"
+                                android:textColor="@color/text_primary"
+                                android:textSize="24sp"
+                                android:fontFamily="sans-serif-medium"
+                                android:gravity="center"
+                                android:clickable="true"
+                                android:focusable="true" />
+
+                            <TextView
+                                android:id="@+id/numpad5"
+                                android:layout_width="0dp"
+                                android:layout_height="56dp"
+                                android:layout_columnWeight="1"
+                                android:layout_marginHorizontal="6dp"
+                                android:layout_marginBottom="6dp"
+                                android:background="@drawable/bg_numpad_button"
+                                android:text="@string/numpad_5"
+                                android:textColor="@color/text_primary"
+                                android:textSize="24sp"
+                                android:fontFamily="sans-serif-medium"
+                                android:gravity="center"
+                                android:clickable="true"
+                                android:focusable="true" />
+
+                            <TextView
+                                android:id="@+id/numpad6"
+                                android:layout_width="0dp"
+                                android:layout_height="56dp"
+                                android:layout_columnWeight="1"
+                                android:layout_marginStart="6dp"
+                                android:layout_marginBottom="6dp"
+                                android:background="@drawable/bg_numpad_button"
+                                android:text="@string/numpad_6"
+                                android:textColor="@color/text_primary"
+                                android:textSize="24sp"
+                                android:fontFamily="sans-serif-medium"
+                                android:gravity="center"
+                                android:clickable="true"
+                                android:focusable="true" />
+
+                            <!-- Row 3: 7, 8, 9 -->
+                            <TextView
+                                android:id="@+id/numpad7"
+                                android:layout_width="0dp"
+                                android:layout_height="56dp"
+                                android:layout_columnWeight="1"
+                                android:layout_marginEnd="6dp"
+                                android:layout_marginBottom="6dp"
+                                android:background="@drawable/bg_numpad_button"
+                                android:text="@string/numpad_7"
+                                android:textColor="@color/text_primary"
+                                android:textSize="24sp"
+                                android:fontFamily="sans-serif-medium"
+                                android:gravity="center"
+                                android:clickable="true"
+                                android:focusable="true" />
+
+                            <TextView
+                                android:id="@+id/numpad8"
+                                android:layout_width="0dp"
+                                android:layout_height="56dp"
+                                android:layout_columnWeight="1"
+                                android:layout_marginHorizontal="6dp"
+                                android:layout_marginBottom="6dp"
+                                android:background="@drawable/bg_numpad_button"
+                                android:text="@string/numpad_8"
+                                android:textColor="@color/text_primary"
+                                android:textSize="24sp"
+                                android:fontFamily="sans-serif-medium"
+                                android:gravity="center"
+                                android:clickable="true"
+                                android:focusable="true" />
+
+                            <TextView
+                                android:id="@+id/numpad9"
+                                android:layout_width="0dp"
+                                android:layout_height="56dp"
+                                android:layout_columnWeight="1"
+                                android:layout_marginStart="6dp"
+                                android:layout_marginBottom="6dp"
+                                android:background="@drawable/bg_numpad_button"
+                                android:text="@string/numpad_9"
+                                android:textColor="@color/text_primary"
+                                android:textSize="24sp"
+                                android:fontFamily="sans-serif-medium"
+                                android:gravity="center"
+                                android:clickable="true"
+                                android:focusable="true" />
+
+                            <!-- Row 4: ., 0, backspace -->
+                            <TextView
+                                android:id="@+id/numpadDecimal"
+                                android:layout_width="0dp"
+                                android:layout_height="56dp"
+                                android:layout_columnWeight="1"
+                                android:layout_marginEnd="6dp"
+                                android:background="@drawable/bg_numpad_button"
+                                android:text="@string/numpad_decimal"
+                                android:textColor="@color/text_primary"
+                                android:textSize="32sp"
+                                android:fontFamily="sans-serif-medium"
+                                android:gravity="center"
+                                android:clickable="true"
+                                android:focusable="true" />
+
+                            <TextView
+                                android:id="@+id/numpad0"
+                                android:layout_width="0dp"
+                                android:layout_height="56dp"
+                                android:layout_columnWeight="1"
+                                android:layout_marginHorizontal="6dp"
+                                android:background="@drawable/bg_numpad_button"
+                                android:text="@string/numpad_0"
+                                android:textColor="@color/text_primary"
+                                android:textSize="24sp"
+                                android:fontFamily="sans-serif-medium"
+                                android:gravity="center"
+                                android:clickable="true"
+                                android:focusable="true" />
+
+                            <TextView
+                                android:id="@+id/numpadBackspace"
+                                android:layout_width="0dp"
+                                android:layout_height="56dp"
+                                android:layout_columnWeight="1"
+                                android:layout_marginStart="6dp"
+                                android:background="@drawable/bg_numpad_button"
+                                android:text="@string/numpad_backspace"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="20sp"
+                                android:gravity="center"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:contentDescription="@string/cd_numpad_backspace" />
+
+                        </GridLayout>
+
+                        <!-- Save Button -->
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/saveButton"
+                            android:layout_width="match_parent"
+                            android:layout_height="60dp"
+                            android:layout_marginTop="@dimen/spacing_medium"
+                            android:text="@string/save_entry"
+                            android:textAllCaps="false"
+                            android:textSize="18sp"
+                            app:cornerRadius="18dp"
+                            app:icon="@drawable/ic_check"
+                            app:iconGravity="textStart"
+                            app:iconPadding="10dp" />
+
+                        <!-- Previous Entry Hint -->
+                        <LinearLayout
+                            android:id="@+id/previousEntryContainer"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/spacing_medium"
+                            android:background="@drawable/bg_weight_display"
+                            android:padding="@dimen/spacing_small"
+                            android:gravity="center"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/last_entry"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="13sp" />
+
+                            <TextView
+                                android:id="@+id/lastEntryValue"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="4dp"
+                                android:text="172.5 lbs"
+                                android:textColor="@color/primary_teal"
+                                android:textSize="13sp"
+                                android:fontFamily="sans-serif-medium"
+                                tools:text="172.5 lbs" />
+
+                            <TextView
+                                android:id="@+id/lastEntryDate"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="4dp"
+                                android:text="on Nov 25"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="13sp"
+                                tools:text="on Nov 25" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                </com.google.android.material.card.MaterialCardView>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
