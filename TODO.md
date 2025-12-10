@@ -220,10 +220,17 @@ Follow strict TDD methodology (Red-Green-Refactor), MVC architecture, and GitFlo
 - [x] Move MainActivity to activities package
 
 ### 1.2 Implement Model Classes (TDD)
-- [ ] Write `UserTest.java` - failing tests first
-- [ ] Implement `models/User.java`
+- [x] Write `UserTest.java` - failing tests first (2025-12-09)
+  - 12 tests total following strict TDD (one test at a time)
+  - Tests for all fields: userId, username, passwordHash, salt, createdAt, lastLogin
+  - Tests for default constructor and full constructor
+  - Tests for toString() including security check (no password/salt exposure)
+- [x] Implement `models/User.java` (2025-12-09)
   - Fields: userId, username, passwordHash, salt, createdAt, lastLogin
-  - Getters/setters, constructor, toString
+  - Getters/setters for all fields
+  - Default constructor and full constructor
+  - toString() that excludes sensitive fields (passwordHash, salt)
+  - All 12 tests passing
 - [ ] Write `WeightEntryTest.java` - failing tests first
 - [ ] Implement `models/WeightEntry.java`
   - Fields: entryId, userId, weightValue, weightUnit, dateRecorded, notes, createdAt, isDeleted
