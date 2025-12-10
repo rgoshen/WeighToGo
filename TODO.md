@@ -266,21 +266,26 @@ Follow strict TDD methodology (Red-Green-Refactor), MVC architecture, and GitFlo
   - onCreate() - create users, weight_entries, goal_weights tables
   - onUpgrade() - handle migrations
   - onConfigure() - enable foreign keys
+  - **Logging**: Add TAG constant, log onCreate (Log.i), table creation (Log.d), onUpgrade (Log.w), errors (Log.e with exception)
 
 ### 1.4 Implement DAO Classes
 - [ ] Write `UserDAOTest.java` - all CRUD operations
 - [ ] Implement `database/UserDAO.java`
   - insertUser(), getUserById(), getUserByUsername()
   - usernameExists(), updateLastLogin(), deleteUser()
+  - **Logging**: Add TAG constant, log method entry (Log.d), successful operations (Log.i), warnings (Log.w), errors (Log.e with exception)
+  - **Security**: NEVER log passwords, passwordHash, or salt values
 - [ ] Write `WeightEntryDAOTest.java` - all CRUD operations
 - [ ] Implement `database/WeightEntryDAO.java`
   - insertWeightEntry(), getWeightEntriesForUser()
   - getWeightEntryById(), getLatestWeightEntry()
   - updateWeightEntry(), deleteWeightEntry() (soft delete)
+  - **Logging**: Add TAG constant, log CRUD operations (Log.d/Log.i), errors (Log.e with exception)
 - [ ] Write `GoalWeightDAOTest.java` - all CRUD operations
 - [ ] Implement `database/GoalWeightDAO.java`
   - insertGoal(), getActiveGoal(), getGoalHistory()
   - updateGoal(), deactivateGoal()
+  - **Logging**: Add TAG constant, log CRUD operations (Log.d/Log.i), errors (Log.e with exception)
 
 ### 1.5 Phase 1 Validation
 - [ ] Run `./gradlew test` - all tests pass
