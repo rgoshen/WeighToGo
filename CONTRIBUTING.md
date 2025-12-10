@@ -56,7 +56,7 @@ Instances of abusive, harassing, or otherwise unacceptable behavior may be repor
 Before contributing, ensure you have:
 
 - [Android Studio](https://developer.android.com/studio) Ladybug (2024.2.1+)
-- [JDK 17](https://adoptium.net/) or higher
+- [JDK 21](https://adoptium.net/) or higher
 - Android SDK 34 (Android 14)
 - Git installed and configured
 - A GitHub account

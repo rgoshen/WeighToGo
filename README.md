@@ -4,8 +4,9 @@
 
 A simple, effective Android mobile application for daily weight tracking and goal achievement. Built with Java and Android Studio for CS 360: Mobile Architecture & Programming at Southern New Hampshire University.
 
+![Android CI](https://github.com/rgoshen/WeightToGo/actions/workflows/android-ci.yml/badge.svg)
 ![Android](https://img.shields.io/badge/Android-14+-3DDC84?style=flat&logo=android&logoColor=white)
-![Java](https://img.shields.io/badge/Java-17-ED8B00?style=flat&logo=openjdk&logoColor=white)
+![Java](https://img.shields.io/badge/Java-21-ED8B00?style=flat&logo=openjdk&logoColor=white)
 ![Gradle](https://img.shields.io/badge/Gradle-8.2+-02303A?style=flat&logo=gradle&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-blue.svg)
 
@@ -56,7 +57,7 @@ A simple, effective Android mobile application for daily weight tracking and goa
 | Technology | Version | Purpose |
 |------------|---------|---------|
 | **Android Studio** | Ladybug (2024.2.1+) | IDE |
-| **Java** | 17 | Primary language |
+| **Java** | 21 | Primary language |
 | **Gradle** | 8.2+ | Build system |
 | **Android SDK** | 34 (Android 14) | Target platform |
 | **Min SDK** | 26 (Android 8.0) | Minimum supported |
@@ -70,7 +71,7 @@ A simple, effective Android mobile application for daily weight tracking and goa
 Before you begin, ensure you have the following installed:
 
 - [Android Studio](https://developer.android.com/studio) (Ladybug 2024.2.1 or newer)
-- [Java Development Kit (JDK)](https://adoptium.net/) 17 or higher
+- [Java Development Kit (JDK)](https://adoptium.net/) 21 or higher
 - Android SDK 34 (installed via Android Studio SDK Manager)
 - Git (for version control)
 

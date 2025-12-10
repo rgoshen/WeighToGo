@@ -256,3 +256,59 @@ None identified
 
 ### Technical Debt
 - Social login buttons use text placeholders - should be replaced with proper brand icons/SDKs when implementing OAuth
+
+---
+
+## [2025-12-09] Project Three Setup: CI/CD Pipeline - Completed
+
+### Work Completed
+- Created `.github/workflows/android-ci.yml` with three jobs:
+  - **Lint Check**: Runs Android Lint, uploads reports as artifacts
+  - **Unit Tests**: Runs `./gradlew test`, uploads test results
+  - **Build Debug APK**: Builds APK after lint and tests pass, uploads artifact
+- Configured workflow triggers for push to `main`/`develop` and PRs to `main`
+- Added Gradle caching via `gradle/actions/setup-gradle@v4`
+- Updated Java version from 17 to 21 across all documentation (README.md, CONTRIBUTING.md)
+- Added CI status badge to README.md
+- Added Project Three implementation plan to TODO.md
+
+### Issues Encountered
+1. **Non-standard compileSdk syntax** - `app/build.gradle` used `compileSdk { version = release(36) }` block syntax instead of standard `compileSdk 36`
+2. **Java version mismatch** - Documentation referenced Java 17, but development environment uses Java 21
+3. **Source/target compatibility outdated** - Was targeting Java 11 bytecode, updated to Java 17 for access to newer language features while maintaining Android compatibility
+4. **Missing workflow permissions** - Initial workflow relied on default GITHUB_TOKEN permissions instead of explicit minimal permissions
+5. **Missing Gradle wrapper validation** - Security risk of potentially tampered Gradle wrapper binaries
+6. **Lint artifact path glob issue** - Used `lint-results*.html` instead of `lint-results-*.html`, missing `if-no-files-found` handling
+
+### Corrections Made
+1. Changed `compileSdk { version = release(36) }` to `compileSdk 36` (standard syntax)
+2. Updated `sourceCompatibility` and `targetCompatibility` from `VERSION_11` to `VERSION_17`
+3. Updated all documentation to reference Java 21 (JDK for building) and Java 17 (bytecode target)
+4. Added explicit permissions block: `contents: read`, `actions: read`, `checks: write`
+5. Added `gradle/actions/wrapper-validation@v4` step before Setup Gradle in all jobs
+6. Fixed lint artifact path to `lint-results-*.html` and added `if-no-files-found: warn`
+
+### Lessons Learned
+- **JDK version vs bytecode target**: Using JDK 21 to compile to Java 17 bytecode is valid - the JDK runs the build tools, while source/target compatibility determines language features and bytecode version
+- **Android desugaring**: Java 17 features are fully supported via desugaring for minSdk 28; Java 21 features have limited desugaring support
+- **Security best practices for CI**:
+  - Always declare explicit minimal permissions
+  - Validate Gradle wrapper integrity before execution
+  - Use `if-no-files-found` to handle missing artifacts gracefully
+- **Gradle syntax variations**: AGP 8.x may accept non-standard syntax locally but standard syntax is safer for CI compatibility
+
+### Technical Debt
+- JaCoCo test coverage reporting deferred until meaningful tests exist (Phase 1+)
+- Codecov integration deferred (requires account setup and repository secret)
+
+### Review Comments Addressed
+| Comment | Action |
+|---------|--------|
+| Build configuration mismatch | Fixed compileSdk syntax and Java versions |
+| Missing permissions declaration | Added explicit minimal permissions |
+| No Gradle validation | Added wrapper-validation step |
+| Artifact upload path issue | Fixed glob pattern, added if-no-files-found |
+| Consider lint fail-on-error | Skipped - current behavior is correct |
+| Missing test coverage reporting | Deferred - no meaningful tests yet |
+| Hardcoded retention days | Skipped - acceptable for project size |
+| Missing workflow status badge | Added to README.md |
