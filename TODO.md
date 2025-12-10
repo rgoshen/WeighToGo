@@ -1,4 +1,4 @@
-# TODO.md - Weigh to Go! Project Two
+## TODO.md - Weigh to Go! Project Two
 
 ## [2025-11-29] Feature: UI Design Implementation
 
@@ -210,14 +210,14 @@ Follow strict TDD methodology (Red-Green-Refactor), MVC architecture, and GitFlo
 ## Phase 1: Database Foundation
 **Branch:** `feature/FR1.0-database-setup`
 
-### 1.1 Create Package Structure
-- [ ] Create `activities/` package
-- [ ] Create `adapters/` package
-- [ ] Create `database/` package
-- [ ] Create `models/` package
-- [ ] Create `utils/` package
-- [ ] Create `constants/` package
-- [ ] Move MainActivity to activities package
+### 1.1 Create Package Structure (Completed 2025-12-09)
+- [x] Create `activities/` package
+- [x] Create `adapters/` package
+- [x] Create `database/` package
+- [x] Create `models/` package
+- [x] Create `utils/` package
+- [x] Create `constants/` package
+- [x] Move MainActivity to activities package
 
 ### 1.2 Implement Model Classes (TDD)
 - [ ] Write `UserTest.java` - failing tests first
