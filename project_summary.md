@@ -369,3 +369,62 @@ None identified
   - Both constructors tested
   - toString() method tested including security validation
 - **Total tests**: 12 passing (0 failures)
+
+---
+
+## [2025-12-10] Phase 1.2: WeightEntry Model Implementation (TDD) - Completed
+
+### Work Completed
+- Created `models/WeightEntry.java` with complete data model:
+  - Fields: `weightId` (long), `userId` (long), `weightValue` (double), `weightUnit`, `weightDate`, `notes`, `createdAt`, `updatedAt` (all String), `isDeleted` (int)
+  - Default constructor (no-args) only
+  - **NO full constructor** - deliberately avoided 9-parameter constructor anti-pattern
+  - Getters and setters for all 9 fields
+  - `toString()` method including all fields
+- Created `models/WeightEntryTest.java` with 11 comprehensive unit tests:
+  - `test_defaultConstructor_createsWeightEntryObject` - verifies object creation
+  - `test_getWeightId_defaultValue_returnsZero` - verifies default weightId is 0
+  - `test_setWeightId_withValidId_setsValue` - tests weightId setter/getter
+  - `test_setUserId_withValidId_setsValue` - tests userId setter/getter
+  - `test_setWeightValue_withValidValue_setsValue` - tests weightValue setter/getter (with delta for double comparison)
+  - `test_setWeightUnit_withValidUnit_setsValue` - tests weightUnit setter/getter
+  - `test_setWeightDate_withValidDate_setsValue` - tests weightDate setter/getter
+  - `test_setNotes_withValidNotes_setsValue` - tests notes setter/getter
+  - `test_setCreatedAt_withValidTimestamp_setsValue` - tests createdAt setter/getter
+  - `test_setUpdatedAt_withValidTimestamp_setsValue` - tests updatedAt setter/getter
+  - `test_setIsDeleted_withValidFlag_setsValue` - tests isDeleted setter/getter
+  - `test_toString_returnsNonNullString` - verifies toString includes key fields
+- Followed **strict TDD methodology**: Red → Green → Refactor cycle
+  - Wrote ONE failing test at a time
+  - Implemented minimal code to make it pass
+  - Verified GREEN (all tests pass) before writing next test
+- Updated TODO.md with completion status and test details
+
+### Issues Encountered
+1. **Telescoping Constructor anti-pattern discussion** - Initially considered adding a 9-parameter full constructor similar to User model (which has 6 parameters)
+
+### Corrections Made
+1. **Avoided telescoping constructor** - After discussion, decided NOT to implement a full constructor with 9 parameters because:
+   - Hard to read: `new WeightEntry(1L, 123L, 175.5, "lbs", "2025-12-10", "notes", "time1", "time2", 0)` lacks clarity
+   - Error-prone: Multiple `long` and `String` parameters easily mixed up
+   - Inflexible: Requires all parameters even when some are null/default
+   - Better alternative: Default constructor + setters is more readable and flexible
+   - DAO cursor mapping is cleaner with setters (each field assignment is explicit)
+
+### Lessons Learned
+- **Not all patterns should be replicated** - Even though User has a full constructor, WeightEntry with 9 fields shouldn't blindly follow that pattern
+- **Code smells in existing code** - User.java's 6-parameter constructor is also a code smell, but leaving it to avoid breaking existing tested code
+- **Model classes are "dumb data containers"** - They hold data but don't enforce business rules (validation belongs in ValidationUtils, DAOs, and UI)
+- **Edge case testing belongs elsewhere** - Null checks, boundary values, and validation should be tested in ValidationUtils and DAO classes, not model POJOs
+- **Default constructor + setters is best practice** for complex data models with many fields
+- **TDD helps avoid bad patterns** - Writing tests first revealed how cumbersome a 9-parameter constructor would be
+
+### Technical Debt
+None identified
+
+### Test Coverage
+- **WeightEntry.java**: 100% coverage
+  - All 9 fields: getters, setters tested
+  - Default constructor tested
+  - toString() method tested
+- **Total tests**: 11 passing (0 failures)
