@@ -4,6 +4,7 @@
 
 A simple, effective Android mobile application for daily weight tracking and goal achievement. Built with Java and Android Studio for CS 360: Mobile Architecture & Programming at Southern New Hampshire University.
 
+![Android CI](https://github.com/rgoshen/WeightToGo/actions/workflows/android-ci.yml/badge.svg)
 ![Android](https://img.shields.io/badge/Android-14+-3DDC84?style=flat&logo=android&logoColor=white)
 ![Java](https://img.shields.io/badge/Java-21-ED8B00?style=flat&logo=openjdk&logoColor=white)
 ![Gradle](https://img.shields.io/badge/Gradle-8.2+-02303A?style=flat&logo=gradle&logoColor=white)
