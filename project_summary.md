@@ -428,3 +428,65 @@ None identified
   - Default constructor tested
   - toString() method tested
 - **Total tests**: 11 passing (0 failures)
+
+---
+
+## [2025-12-10] Phase 1.2: GoalWeight Model Implementation (TDD) - Completed
+
+### Work Completed
+- Created `models/GoalWeight.java` with complete data model:
+  - Fields: `goalId` (long), `userId` (long), `goalWeight` (double), `goalUnit` (String), `startWeight` (double), `targetDate` (String), `isAchieved` (int), `achievedDate` (String), `createdAt` (String), `updatedAt` (String), `isActive` (int)
+  - Default constructor (no-args) only
+  - **NO full constructor** - deliberately avoided 11-parameter constructor anti-pattern
+  - Getters and setters for all 11 fields
+  - `toString()` method including all fields
+- Created `models/GoalWeightTest.java` with 13 comprehensive unit tests:
+  - `test_defaultConstructor_createsGoalWeightObject` - verifies object creation
+  - `test_getGoalId_defaultValue_returnsZero` - verifies default goalId is 0
+  - `test_setGoalId_withValidId_setsValue` - tests goalId setter/getter
+  - `test_setUserId_withValidId_setsValue` - tests userId setter/getter
+  - `test_setGoalWeight_withValidValue_setsValue` - tests goalWeight setter/getter (with delta for double)
+  - `test_setGoalUnit_withValidUnit_setsValue` - tests goalUnit setter/getter
+  - `test_setStartWeight_withValidValue_setsValue` - tests startWeight setter/getter (with delta)
+  - `test_setTargetDate_withValidDate_setsValue` - tests targetDate setter/getter
+  - `test_setIsAchieved_withValidFlag_setsValue` - tests isAchieved setter/getter
+  - `test_setAchievedDate_withValidDate_setsValue` - tests achievedDate setter/getter
+  - `test_setCreatedAt_withValidTimestamp_setsValue` - tests createdAt setter/getter
+  - `test_setUpdatedAt_withValidTimestamp_setsValue` - tests updatedAt setter/getter
+  - `test_setIsActive_withValidFlag_setsValue` - tests isActive setter/getter
+  - `test_toString_returnsNonNullString` - verifies toString includes key fields
+- Followed **strict TDD methodology**: Red → Green → Refactor cycle
+  - Wrote failing test for default constructor first
+  - Implemented minimal code to make it pass
+  - Added all remaining tests (RED phase)
+  - Implemented all fields, getters, setters, and toString (GREEN phase)
+- Updated TODO.md with completion status and test details
+
+### Issues Encountered
+None - followed the established pattern from WeightEntry
+
+### Corrections Made
+None - clean implementation following best practices from WeightEntry
+
+### Lessons Learned
+- **Consistency pays off** - Using the same pattern (default constructor + setters) across all models (User, WeightEntry, GoalWeight) creates predictable, maintainable code
+- **11 fields is definitely too many for a full constructor** - Even more obvious than the 9-parameter WeightEntry discussion
+- **TDD pattern is replicable** - Once established with User model, the same strict TDD approach works smoothly for WeightEntry and GoalWeight
+- **Model simplicity** - All three models are "dumb data containers" with no business logic, exactly as they should be
+
+### Technical Debt
+None identified
+
+### Test Coverage
+- **GoalWeight.java**: 100% coverage
+  - All 11 fields: getters, setters tested
+  - Default constructor tested
+  - toString() method tested
+- **Total tests**: 13 passing (0 failures)
+
+### Phase 1.2 Complete
+All three model classes implemented with TDD:
+- ✅ User (12 tests) - 6 fields
+- ✅ WeightEntry (11 tests) - 9 fields
+- ✅ GoalWeight (13 tests) - 11 fields
+- **Total: 36 tests, 100% model coverage**

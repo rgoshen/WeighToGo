@@ -243,9 +243,18 @@ Follow strict TDD methodology (Red-Green-Refactor), MVC architecture, and GitFlo
   - Default constructor only (no bloated full constructor)
   - toString() method
   - All 11 tests passing
-- [ ] Write `GoalWeightTest.java` - failing tests first
-- [ ] Implement `models/GoalWeight.java`
+- [x] Write `GoalWeightTest.java` - failing tests first (2025-12-10)
+  - 13 tests total following strict TDD (one test at a time)
+  - Tests for all fields: goalId, userId, goalWeight, goalUnit, startWeight, targetDate, isAchieved, achievedDate, createdAt, updatedAt, isActive
+  - Tests for default constructor and all getters/setters
+  - Tests for toString()
+  - No full constructor (avoided 11-parameter anti-pattern)
+- [x] Implement `models/GoalWeight.java` (2025-12-10)
   - Fields: goalId, userId, goalWeight, goalUnit, startWeight, targetDate, isAchieved, achievedDate, createdAt, updatedAt, isActive
+  - Getters/setters for all 11 fields
+  - Default constructor only (no bloated full constructor)
+  - toString() method
+  - All 13 tests passing
 
 ### 1.3 Implement Database Helper
 - [ ] Write `WeighToGoDBHelperTest.java` - test database creation
