@@ -10,6 +10,8 @@ import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.weighttogo.R;
+import com.example.weighttogo.database.DatabaseException;
+import com.example.weighttogo.database.DuplicateUsernameException;
 import com.example.weighttogo.database.UserDAO;
 import com.example.weighttogo.database.WeighToGoDBHelper;
 import com.example.weighttogo.models.User;
@@ -261,5 +263,86 @@ public class LoginActivity extends AppCompatActivity {
 
         Toast.makeText(this, "Welcome, " + (user.getDisplayName() != null ? user.getDisplayName() : user.getUsername()) + "!", Toast.LENGTH_SHORT).show();
         Log.i(TAG, "handleSignIn: Navigated to MainActivity");
+    }
+
+    // =============================================================================================
+    // REGISTRATION (Commit 6)
+    // =============================================================================================
+
+    /**
+     * Handle user registration flow.
+     * Creates new user account with hashed password and auto-login.
+     * Will be called from tab switching in Commit 7.
+     */
+    public void handleRegister() {
+        String username = usernameEditText.getText().toString().trim();
+        String password = passwordEditText.getText().toString();
+
+        Log.d(TAG, "handleRegister: Attempting registration for username: " + username);
+
+        // Check if username already exists
+        if (userDAO.usernameExists(username)) {
+            Log.w(TAG, "handleRegister: Username already exists: " + username);
+            usernameInputLayout.setError("Username already taken");
+            Toast.makeText(this, "Username already taken. Please choose another.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Generate salt and hash password
+        String salt = PasswordUtils.generateSalt();
+        String passwordHash = PasswordUtils.hashPassword(password, salt);
+
+        if (passwordHash == null) {
+            Log.e(TAG, "handleRegister: Failed to hash password");
+            Toast.makeText(this, "Registration failed. Please try again.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Create User object
+        User newUser = new User();
+        newUser.setUsername(username);
+        newUser.setPasswordHash(passwordHash);
+        newUser.setSalt(salt);
+        newUser.setCreatedAt(LocalDateTime.now());
+        newUser.setUpdatedAt(LocalDateTime.now());
+        newUser.setActive(true);
+
+        try {
+            // Insert user into database
+            long userId = userDAO.insertUser(newUser);
+
+            if (userId > 0) {
+                Log.i(TAG, "handleRegister: Successfully registered user_id: " + userId);
+                newUser.setUserId(userId);
+
+                // Auto-login: Update last_login timestamp
+                userDAO.updateLastLogin(userId, LocalDateTime.now());
+
+                // Create session
+                sessionManager.createSession(newUser);
+                Log.d(TAG, "handleRegister: Session created for new user_id: " + userId);
+
+                // Navigate to MainActivity
+                Intent intent = new Intent(this, MainActivity.class);
+                startActivity(intent);
+                finish();  // Prevent back button from returning to login
+
+                Toast.makeText(this, "Welcome, " + username + "! Your account has been created.", Toast.LENGTH_SHORT).show();
+                Log.i(TAG, "handleRegister: Registration complete, navigated to MainActivity");
+
+            } else {
+                Log.e(TAG, "handleRegister: Insert returned invalid user_id");
+                Toast.makeText(this, "Registration failed. Please try again.", Toast.LENGTH_SHORT).show();
+            }
+
+        } catch (DuplicateUsernameException e) {
+            Log.w(TAG, "handleRegister: Duplicate username caught: " + username, e);
+            usernameInputLayout.setError("Username already taken");
+            Toast.makeText(this, "Username already taken. Please choose another.", Toast.LENGTH_SHORT).show();
+
+        } catch (DatabaseException e) {
+            Log.e(TAG, "handleRegister: Database error during registration", e);
+            Toast.makeText(this, "Registration failed. Please try again.", Toast.LENGTH_SHORT).show();
+        }
     }
 }
