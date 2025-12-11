@@ -68,14 +68,6 @@ public class MainActivityTest {
         dbHelper = WeighToGoDBHelper.getInstance(context);
         sessionManager = SessionManager.getInstance(context);
 
-        // Clear all tables for test isolation
-        android.database.sqlite.SQLiteDatabase db = dbHelper.getWritableDatabase();
-        db.execSQL("DELETE FROM achievements");
-        db.execSQL("DELETE FROM user_preferences");
-        db.execSQL("DELETE FROM goal_weights");
-        db.execSQL("DELETE FROM daily_weights");
-        db.execSQL("DELETE FROM users");
-
         // Clear session
         sessionManager.logout();
 
@@ -84,9 +76,9 @@ public class MainActivityTest {
         weightEntryDAO = new WeightEntryDAO(dbHelper);
         goalWeightDAO = new GoalWeightDAO(dbHelper);
 
-        // Create test user
+        // Create test user (use unique username to avoid conflicts)
         testUser = new User();
-        testUser.setUsername("testuser");
+        testUser.setUsername("mainactivity_testuser_" + System.currentTimeMillis());
         testUser.setPasswordHash("hashed_password");
         testUser.setSalt("test_salt");
         testUser.setDisplayName("Test User");
