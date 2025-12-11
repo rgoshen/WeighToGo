@@ -16,6 +16,16 @@ import android.util.Log;
  * - weight_entries: Daily weight tracking with soft delete support
  * - goal_weights: User goal weights and achievement tracking
  *
+ * Naming Convention:
+ * - Database: snake_case (id, user_id, created_at) - Android/SQL convention
+ * - Java Models: camelCase (userId, createdAt) - Java convention
+ * - DAO Layer: Handles mapping between DB snake_case and Java camelCase
+ *   Example: cursor.getLong(cursor.getColumnIndexOrThrow("user_id")) → user.setUserId(value)
+ *
+ * Performance Optimization:
+ * - Indexes on foreign key columns (user_id) for faster JOIN and WHERE queries
+ * - Unique index on username for faster login lookups and uniqueness enforcement
+ *
  * Security:
  * - Uses foreign keys for referential integrity
  * - Passwords stored as salted SHA-256 hashes (never plain text)
@@ -159,6 +169,17 @@ public class WeighToGoDBHelper extends SQLiteOpenHelper {
             // Create goal_weights table
             db.execSQL(CREATE_TABLE_GOAL_WEIGHTS);
             Log.d(TAG, "Created table: " + TABLE_GOAL_WEIGHTS);
+
+            // Create indexes for foreign key columns (performance optimization)
+            db.execSQL("CREATE INDEX idx_weight_entries_user_id ON " + TABLE_WEIGHT_ENTRIES + "(user_id)");
+            Log.d(TAG, "Created index: idx_weight_entries_user_id");
+
+            db.execSQL("CREATE INDEX idx_goal_weights_user_id ON " + TABLE_GOAL_WEIGHTS + "(user_id)");
+            Log.d(TAG, "Created index: idx_goal_weights_user_id");
+
+            // Create unique index on username (performance + uniqueness enforcement)
+            db.execSQL("CREATE UNIQUE INDEX idx_users_username ON " + TABLE_USERS + "(username)");
+            Log.d(TAG, "Created unique index: idx_users_username");
 
             Log.i(TAG, "Database creation completed successfully");
 

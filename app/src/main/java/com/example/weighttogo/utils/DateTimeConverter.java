@@ -2,6 +2,7 @@ package com.example.weighttogo.utils;
 
 import android.util.Log;
 
+import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -55,7 +56,7 @@ public final class DateTimeConverter {
 
         try {
             return dateTime.format(TIMESTAMP_FORMATTER);
-        } catch (Exception e) {
+        } catch (DateTimeException e) {
             Log.e(TAG, "Error formatting LocalDateTime to timestamp: " + e.getMessage(), e);
             return null;
         }
@@ -95,7 +96,7 @@ public final class DateTimeConverter {
 
         try {
             return date.format(DATE_FORMATTER);
-        } catch (Exception e) {
+        } catch (DateTimeException e) {
             Log.e(TAG, "Error formatting LocalDate to date string: " + e.getMessage(), e);
             return null;
         }

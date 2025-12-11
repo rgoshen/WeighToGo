@@ -289,7 +289,73 @@ public class WeighToGoDBHelperTest {
     }
 
     /**
-     * Test 9: onUpgrade drops and recreates all tables
+     * Test 9: onCreate creates index on weight_entries.user_id
+     * Foreign key columns should have indexes for query performance
+     */
+    @Test
+    public void test_onCreate_createsIndexOnWeightEntriesUserId() {
+        // ACT
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+
+        // ASSERT - Check index exists
+        Cursor cursor = db.rawQuery(
+            "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_weight_entries_user_id'",
+            null
+        );
+        assertTrue("Index idx_weight_entries_user_id should exist", cursor.moveToFirst());
+        cursor.close();
+    }
+
+    /**
+     * Test 10: onCreate creates index on goal_weights.user_id
+     * Foreign key columns should have indexes for query performance
+     */
+    @Test
+    public void test_onCreate_createsIndexOnGoalWeightsUserId() {
+        // ACT
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+
+        // ASSERT - Check index exists
+        Cursor cursor = db.rawQuery(
+            "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_goal_weights_user_id'",
+            null
+        );
+        assertTrue("Index idx_goal_weights_user_id should exist", cursor.moveToFirst());
+        cursor.close();
+    }
+
+    /**
+     * Test 11: onCreate creates unique index on users.username
+     * Username must be unique and queries should be fast
+     */
+    @Test
+    public void test_onCreate_createsUniqueIndexOnUsername() {
+        // ACT
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+
+        // ASSERT - Check index exists
+        Cursor cursor = db.rawQuery(
+            "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_users_username'",
+            null
+        );
+        assertTrue("Index idx_users_username should exist", cursor.moveToFirst());
+        cursor.close();
+
+        // ASSERT - Verify it's a unique index by checking sql column
+        cursor = db.rawQuery(
+            "SELECT sql FROM sqlite_master WHERE type='index' AND name='idx_users_username'",
+            null
+        );
+        assertTrue("Should find index definition", cursor.moveToFirst());
+        String sql = cursor.getString(0);
+        assertTrue("Index should be UNIQUE", sql.toUpperCase().contains("UNIQUE"));
+        cursor.close();
+    }
+
+    // ========== EDGE CASE TESTS ==========
+
+    /**
+     * Test 12: onUpgrade drops and recreates all tables
      * Simulates database upgrade scenario
      */
     @Test
