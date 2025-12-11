@@ -469,8 +469,8 @@ WeighToGo_Database_Architecture.md is the source of truth specification document
 ### 2.4 Integration & UI Tests (Critical Flows) - HYBRID APPROACH
 **Rationale:** Now that we have a complete authentication flow, add minimal integration/UI tests for critical coverage. Comprehensive scenario testing deferred to Phase 8.
 
-#### 2.4.1 Integration Tests (End-to-End Flow)
-- [ ] Write `LoginActivityIntegrationTest.java`
+#### 2.4.1 Integration Tests (End-to-End Flow) - Completed 2025-12-11
+- [x] Write `LoginActivityIntegrationTest.java` (2 tests)
   - test_registrationFlow_createsUserAndNavigates
     - Validates input via ValidationUtils
     - Generates salt/hash via PasswordUtils
@@ -483,8 +483,8 @@ WeighToGo_Database_Architecture.md is the source of truth specification document
     - Creates session via SessionManager
     - Updates last_login timestamp
     - Verifies navigation to MainActivity
-- [ ] Run integration tests (`./gradlew test`)
-- [ ] Verify both flows pass with real database (Robolectric)
+- [x] Run integration tests (`./gradlew test`) - All 121 tests passing (91 Phase 1 + 28 Phase 2 + 2 integration)
+- [x] Verify both flows pass with real database (Robolectric) - Verified
 
 #### 2.4.2 UI Tests (Espresso - Critical Paths)
 - [ ] Write `LoginActivityUITest.java` (Espresso)
