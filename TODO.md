@@ -1,4 +1,4 @@
-# TODO.md - Weigh to Go! Project Two
+## TODO.md - Weigh to Go! Project Two
 
 ## [2025-11-29] Feature: UI Design Implementation
 
@@ -210,26 +210,52 @@ Follow strict TDD methodology (Red-Green-Refactor), MVC architecture, and GitFlo
 ## Phase 1: Database Foundation
 **Branch:** `feature/FR1.0-database-setup`
 
-### 1.1 Create Package Structure
-- [ ] Create `activities/` package
-- [ ] Create `adapters/` package
-- [ ] Create `database/` package
-- [ ] Create `models/` package
-- [ ] Create `utils/` package
-- [ ] Create `constants/` package
-- [ ] Move MainActivity to activities package
+### 1.1 Create Package Structure (Completed 2025-12-09)
+- [x] Create `activities/` package
+- [x] Create `adapters/` package
+- [x] Create `database/` package
+- [x] Create `models/` package
+- [x] Create `utils/` package
+- [x] Create `constants/` package
+- [x] Move MainActivity to activities package
 
 ### 1.2 Implement Model Classes (TDD)
-- [ ] Write `UserTest.java` - failing tests first
-- [ ] Implement `models/User.java`
+- [x] Write `UserTest.java` - failing tests first (2025-12-09, updated 2025-12-10)
+  - 11 tests total following strict TDD (one test at a time)
+  - Tests for all fields: userId, username, passwordHash, salt, createdAt, lastLogin
+  - Tests for default constructor and all getters/setters
+  - Tests for toString() including security check (no password/salt exposure)
+  - Removed full constructor test (6-parameter anti-pattern)
+- [x] Implement `models/User.java` (2025-12-09, updated 2025-12-10)
   - Fields: userId, username, passwordHash, salt, createdAt, lastLogin
-  - Getters/setters, constructor, toString
-- [ ] Write `WeightEntryTest.java` - failing tests first
-- [ ] Implement `models/WeightEntry.java`
-  - Fields: entryId, userId, weightValue, weightUnit, dateRecorded, notes, createdAt, isDeleted
-- [ ] Write `GoalWeightTest.java` - failing tests first
-- [ ] Implement `models/GoalWeight.java`
-  - Fields: goalId, userId, targetWeight, targetUnit, startWeight, targetDate, isActive, isAchieved, createdAt
+  - Getters/setters for all fields
+  - Default constructor only (removed 6-parameter full constructor)
+  - toString() that excludes sensitive fields (passwordHash, salt)
+  - All 11 tests passing
+- [x] Write `WeightEntryTest.java` - failing tests first (2025-12-10)
+  - 11 tests total following strict TDD (one test at a time)
+  - Tests for all fields: weightId, userId, weightValue, weightUnit, weightDate, notes, createdAt, updatedAt, isDeleted
+  - Tests for default constructor and all getters/setters
+  - Tests for toString()
+  - No full constructor (avoided 9-parameter anti-pattern)
+- [x] Implement `models/WeightEntry.java` (2025-12-10)
+  - Fields: weightId, userId, weightValue, weightUnit, weightDate, notes, createdAt, updatedAt, isDeleted
+  - Getters/setters for all fields
+  - Default constructor only (no bloated full constructor)
+  - toString() method
+  - All 11 tests passing
+- [x] Write `GoalWeightTest.java` - failing tests first (2025-12-10)
+  - 13 tests total following strict TDD (one test at a time)
+  - Tests for all fields: goalId, userId, goalWeight, goalUnit, startWeight, targetDate, isAchieved, achievedDate, createdAt, updatedAt, isActive
+  - Tests for default constructor and all getters/setters
+  - Tests for toString()
+  - No full constructor (avoided 11-parameter anti-pattern)
+- [x] Implement `models/GoalWeight.java` (2025-12-10)
+  - Fields: goalId, userId, goalWeight, goalUnit, startWeight, targetDate, isAchieved, achievedDate, createdAt, updatedAt, isActive
+  - Getters/setters for all 11 fields
+  - Default constructor only (no bloated full constructor)
+  - toString() method
+  - All 13 tests passing
 
 ### 1.3 Implement Database Helper
 - [ ] Write `WeighToGoDBHelperTest.java` - test database creation
@@ -240,21 +266,26 @@ Follow strict TDD methodology (Red-Green-Refactor), MVC architecture, and GitFlo
   - onCreate() - create users, weight_entries, goal_weights tables
   - onUpgrade() - handle migrations
   - onConfigure() - enable foreign keys
+  - **Logging**: Add TAG constant, log onCreate (Log.i), table creation (Log.d), onUpgrade (Log.w), errors (Log.e with exception)
 
 ### 1.4 Implement DAO Classes
 - [ ] Write `UserDAOTest.java` - all CRUD operations
 - [ ] Implement `database/UserDAO.java`
   - insertUser(), getUserById(), getUserByUsername()
   - usernameExists(), updateLastLogin(), deleteUser()
+  - **Logging**: Add TAG constant, log method entry (Log.d), successful operations (Log.i), warnings (Log.w), errors (Log.e with exception)
+  - **Security**: NEVER log passwords, passwordHash, or salt values
 - [ ] Write `WeightEntryDAOTest.java` - all CRUD operations
 - [ ] Implement `database/WeightEntryDAO.java`
   - insertWeightEntry(), getWeightEntriesForUser()
   - getWeightEntryById(), getLatestWeightEntry()
   - updateWeightEntry(), deleteWeightEntry() (soft delete)
+  - **Logging**: Add TAG constant, log CRUD operations (Log.d/Log.i), errors (Log.e with exception)
 - [ ] Write `GoalWeightDAOTest.java` - all CRUD operations
 - [ ] Implement `database/GoalWeightDAO.java`
   - insertGoal(), getActiveGoal(), getGoalHistory()
   - updateGoal(), deactivateGoal()
+  - **Logging**: Add TAG constant, log CRUD operations (Log.d/Log.i), errors (Log.e with exception)
 
 ### 1.5 Phase 1 Validation
 - [ ] Run `./gradlew test` - all tests pass
