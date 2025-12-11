@@ -271,6 +271,233 @@ public class GoalWeightDAOTest {
         assertEquals("Should update 0 rows when no active goals exist", 0, rowsUpdated);
     }
 
+    // ========== EDGE CASE TESTS ==========
+
+    @Test
+    public void test_insertGoal_withInvalidUserId_violatesForeignKey() {
+        // ARRANGE
+        long invalidUserId = 99999; // Non-existent user
+        GoalWeight goal = createTestGoal(invalidUserId, 150.0, 180.0, true, false);
+
+        // ACT
+        long goalId = goalWeightDAO.insertGoal(goal);
+
+        // ASSERT
+        assertEquals("Insert with invalid user_id should fail due to foreign key constraint", -1, goalId);
+    }
+
+    @Test
+    public void test_updateGoal_withNonExistentGoal_returnsZero() {
+        // ARRANGE
+        GoalWeight nonExistent = createTestGoal(testUserId, 150.0, 180.0, true, false);
+        nonExistent.setGoalId(99999); // Non-existent ID
+
+        // ACT
+        int rowsUpdated = goalWeightDAO.updateGoal(nonExistent);
+
+        // ASSERT
+        assertEquals("Updating non-existent goal should return 0 rows updated", 0, rowsUpdated);
+    }
+
+    @Test
+    public void test_deactivateGoal_withNonExistentGoal_returnsZero() {
+        // ACT
+        int rowsUpdated = goalWeightDAO.deactivateGoal(99999);
+
+        // ASSERT
+        assertEquals("Deactivating non-existent goal should return 0 rows updated", 0, rowsUpdated);
+    }
+
+    @Test
+    public void test_insertGoal_withNegativeGoalWeight_insertsSuccessfully() {
+        // ARRANGE - Database allows it, app should validate
+        GoalWeight goal = createTestGoal(testUserId, -10.0, 180.0, true, false);
+
+        // ACT
+        long goalId = goalWeightDAO.insertGoal(goal);
+        GoalWeight retrieved = goalWeightDAO.getActiveGoal(testUserId);
+
+        // ASSERT
+        assertTrue("Database should allow negative goal weight (app should validate)", goalId > 0);
+        assertNotNull("Goal should be retrieved", retrieved);
+        assertEquals("Negative goal weight should be preserved", -10.0, retrieved.getGoalWeight(), 0.01);
+    }
+
+    @Test
+    public void test_insertGoal_withZeroGoalWeight_insertsSuccessfully() {
+        // ARRANGE
+        GoalWeight goal = createTestGoal(testUserId, 0.0, 180.0, true, false);
+
+        // ACT
+        long goalId = goalWeightDAO.insertGoal(goal);
+        GoalWeight retrieved = goalWeightDAO.getActiveGoal(testUserId);
+
+        // ASSERT
+        assertTrue("Database should allow zero goal weight", goalId > 0);
+        assertNotNull("Goal should be retrieved", retrieved);
+        assertEquals("Zero goal weight should be preserved", 0.0, retrieved.getGoalWeight(), 0.01);
+    }
+
+    @Test
+    public void test_insertGoal_withSameStartAndGoalWeight_insertsSuccessfully() {
+        // ARRANGE - Edge case: no actual goal (start == goal)
+        GoalWeight goal = createTestGoal(testUserId, 150.0, 150.0, true, false);
+
+        // ACT
+        long goalId = goalWeightDAO.insertGoal(goal);
+        GoalWeight retrieved = goalWeightDAO.getActiveGoal(testUserId);
+
+        // ASSERT
+        assertTrue("Database should allow same start and goal weight", goalId > 0);
+        assertNotNull("Goal should be retrieved", retrieved);
+        assertEquals("Goal weight should match start weight", 150.0, retrieved.getGoalWeight(), 0.01);
+        assertEquals("Start weight should match goal weight", 150.0, retrieved.getStartWeight(), 0.01);
+    }
+
+    @Test
+    public void test_insertGoal_withTargetDateInPast_insertsSuccessfully() {
+        // ARRANGE
+        GoalWeight goal = createTestGoal(testUserId, 150.0, 180.0, true, false);
+        goal.setTargetDate(LocalDate.of(2020, 1, 1)); // Past date
+
+        // ACT
+        long goalId = goalWeightDAO.insertGoal(goal);
+        GoalWeight retrieved = goalWeightDAO.getActiveGoal(testUserId);
+
+        // ASSERT
+        assertTrue("Database should allow past target dates", goalId > 0);
+        assertNotNull("Goal should be retrieved", retrieved);
+        assertEquals("Past target date should be preserved", LocalDate.of(2020, 1, 1), retrieved.getTargetDate());
+    }
+
+    @Test
+    public void test_insertGoal_withVeryFarFutureTargetDate_insertsSuccessfully() {
+        // ARRANGE
+        GoalWeight goal = createTestGoal(testUserId, 150.0, 180.0, true, false);
+        goal.setTargetDate(LocalDate.of(2099, 12, 31)); // Far future
+
+        // ACT
+        long goalId = goalWeightDAO.insertGoal(goal);
+        GoalWeight retrieved = goalWeightDAO.getActiveGoal(testUserId);
+
+        // ASSERT
+        assertTrue("Database should allow far future target dates", goalId > 0);
+        assertNotNull("Goal should be retrieved", retrieved);
+        assertEquals("Far future target date should be preserved", LocalDate.of(2099, 12, 31), retrieved.getTargetDate());
+    }
+
+    @Test
+    public void test_insertGoal_withAchievedDateButNotAchieved_insertsSuccessfully() {
+        // ARRANGE - Data inconsistency: achievedDate set but isAchieved=false
+        GoalWeight goal = createTestGoal(testUserId, 150.0, 180.0, true, false);
+        goal.setAchievedDate(LocalDate.now()); // Set achieved date
+        // isAchieved is false
+
+        // ACT
+        long goalId = goalWeightDAO.insertGoal(goal);
+        GoalWeight retrieved = goalWeightDAO.getActiveGoal(testUserId);
+
+        // ASSERT
+        assertTrue("Database should allow inconsistent achieved data", goalId > 0);
+        assertNotNull("Goal should be retrieved", retrieved);
+        assertFalse("Goal should not be marked as achieved", retrieved.getIsAchieved());
+        assertNotNull("Achieved date should still be present (inconsistent state)", retrieved.getAchievedDate());
+    }
+
+    @Test
+    public void test_insertGoal_withAchievedTrueButNoDate_insertsSuccessfully() {
+        // ARRANGE - Data inconsistency: isAchieved=true but no achievedDate
+        GoalWeight goal = createTestGoal(testUserId, 150.0, 180.0, true, true);
+        // achievedDate is null
+
+        // ACT
+        long goalId = goalWeightDAO.insertGoal(goal);
+        GoalWeight retrieved = goalWeightDAO.getActiveGoal(testUserId);
+
+        // ASSERT
+        assertTrue("Database should allow inconsistent achieved data", goalId > 0);
+        assertNotNull("Goal should be retrieved", retrieved);
+        assertTrue("Goal should be marked as achieved", retrieved.getIsAchieved());
+        assertNull("Achieved date should be null (inconsistent state)", retrieved.getAchievedDate());
+    }
+
+    @Test
+    public void test_getGoalHistory_orderedByCreatedAtDesc() {
+        // ARRANGE - Insert goals in specific order
+        GoalWeight goal1 = createTestGoal(testUserId, 150.0, 180.0, false, false);
+        GoalWeight goal2 = createTestGoal(testUserId, 145.0, 175.0, false, false);
+        GoalWeight goal3 = createTestGoal(testUserId, 140.0, 170.0, true, false);
+
+        try {
+            long id1 = goalWeightDAO.insertGoal(goal1);
+            Thread.sleep(10); // Ensure different timestamps
+            long id2 = goalWeightDAO.insertGoal(goal2);
+            Thread.sleep(10);
+            long id3 = goalWeightDAO.insertGoal(goal3);
+
+            // ACT
+            List<GoalWeight> history = goalWeightDAO.getGoalHistory(testUserId);
+
+            // ASSERT
+            assertEquals("Should return 3 goals", 3, history.size());
+            // Most recent (id3) should be first
+            assertEquals("First goal should be most recently created", id3, history.get(0).getGoalId());
+            assertEquals("Second goal should be middle", id2, history.get(1).getGoalId());
+            assertEquals("Third goal should be oldest", id1, history.get(2).getGoalId());
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    public void test_deactivateAllGoalsForUser_withNonExistentUser_returnsZero() {
+        // ACT
+        int rowsUpdated = goalWeightDAO.deactivateAllGoalsForUser(99999);
+
+        // ASSERT
+        assertEquals("Deactivating goals for non-existent user should return 0", 0, rowsUpdated);
+    }
+
+    @Test
+    public void test_insertGoal_withExtremelyLargeWeights_insertsSuccessfully() {
+        // ARRANGE
+        GoalWeight goal = createTestGoal(testUserId, 999999.99, 999999.99, true, false);
+
+        // ACT
+        long goalId = goalWeightDAO.insertGoal(goal);
+        GoalWeight retrieved = goalWeightDAO.getActiveGoal(testUserId);
+
+        // ASSERT
+        assertTrue("Database should allow extremely large weights", goalId > 0);
+        assertNotNull("Goal should be retrieved", retrieved);
+        assertEquals("Large goal weight should be preserved", 999999.99, retrieved.getGoalWeight(), 0.01);
+        assertEquals("Large start weight should be preserved", 999999.99, retrieved.getStartWeight(), 0.01);
+    }
+
+    @Test
+    public void test_updateGoal_canSetGoalToAchievedAndInactive() {
+        // ARRANGE
+        GoalWeight goal = createTestGoal(testUserId, 150.0, 180.0, true, false);
+        long goalId = goalWeightDAO.insertGoal(goal);
+
+        goal.setGoalId(goalId);
+        goal.setIsAchieved(true);
+        goal.setIsActive(false); // Achieved and inactive
+        goal.setAchievedDate(LocalDate.now());
+
+        // ACT
+        int rowsUpdated = goalWeightDAO.updateGoal(goal);
+        GoalWeight activeGoal = goalWeightDAO.getActiveGoal(testUserId);
+        List<GoalWeight> history = goalWeightDAO.getGoalHistory(testUserId);
+
+        // ASSERT
+        assertEquals("Should update 1 row", 1, rowsUpdated);
+        assertNull("Should have no active goal", activeGoal);
+        assertEquals("Should still be in history", 1, history.size());
+        assertTrue("Goal should be marked as achieved", history.get(0).getIsAchieved());
+        assertFalse("Goal should be inactive", history.get(0).getIsActive());
+    }
+
     // Helper method to create test goals
     private GoalWeight createTestGoal(long userId, double goalWeight, double startWeight, boolean isActive, boolean isAchieved) {
         GoalWeight goal = new GoalWeight();

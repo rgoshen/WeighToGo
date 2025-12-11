@@ -258,6 +258,208 @@ public class WeightEntryDAOTest {
         assertEquals("Deleted entry should not appear in user's list", 0, userEntries.size());
     }
 
+    // ========== EDGE CASE TESTS ==========
+
+    @Test
+    public void test_insertWeightEntry_withDuplicateUserIdAndDate_violatesUniqueConstraint() {
+        // ARRANGE
+        LocalDate sameDate = LocalDate.of(2025, 12, 10);
+        WeightEntry entry1 = createTestEntry(testUserId, 170.0, sameDate, false);
+        WeightEntry entry2 = createTestEntry(testUserId, 175.0, sameDate, false);
+
+        // ACT
+        long firstId = weightEntryDAO.insertWeightEntry(entry1);
+        long secondId = weightEntryDAO.insertWeightEntry(entry2); // Should fail or return -1
+
+        // ASSERT
+        assertTrue("First entry should be inserted successfully", firstId > 0);
+        assertEquals("Second entry with duplicate user_id + date should fail", -1, secondId);
+    }
+
+    @Test
+    public void test_insertWeightEntry_withInvalidUserId_violatesForeignKey() {
+        // ARRANGE
+        long invalidUserId = 99999; // Non-existent user
+        WeightEntry entry = createTestEntry(invalidUserId, 175.0, LocalDate.now(), false);
+
+        // ACT
+        long weightId = weightEntryDAO.insertWeightEntry(entry);
+
+        // ASSERT
+        assertEquals("Insert with invalid user_id should fail due to foreign key constraint", -1, weightId);
+    }
+
+    @Test
+    public void test_updateWeightEntry_withNonExistentEntry_returnsZero() {
+        // ARRANGE
+        WeightEntry nonExistent = createTestEntry(testUserId, 175.0, LocalDate.now(), false);
+        nonExistent.setWeightId(99999); // Non-existent ID
+
+        // ACT
+        int rowsUpdated = weightEntryDAO.updateWeightEntry(nonExistent);
+
+        // ASSERT
+        assertEquals("Updating non-existent entry should return 0 rows updated", 0, rowsUpdated);
+    }
+
+    @Test
+    public void test_deleteWeightEntry_withNonExistentEntry_returnsZero() {
+        // ACT
+        int rowsDeleted = weightEntryDAO.deleteWeightEntry(99999);
+
+        // ASSERT
+        assertEquals("Deleting non-existent entry should return 0 rows updated", 0, rowsDeleted);
+    }
+
+    @Test
+    public void test_insertWeightEntry_withSpecialCharactersInNotes_savesCorrectly() {
+        // ARRANGE
+        WeightEntry entry = createTestEntry(testUserId, 170.0, LocalDate.now(), false);
+        entry.setNotes("SQL injection attempt: '; DROP TABLE daily_weights; -- \nEmojis: 🎉💪🏋️\nUnicode: 你好世界");
+
+        // ACT
+        long weightId = weightEntryDAO.insertWeightEntry(entry);
+        WeightEntry retrieved = weightEntryDAO.getWeightEntryById(weightId);
+
+        // ASSERT
+        assertTrue("Entry should be inserted", weightId > 0);
+        assertNotNull("Entry should be retrieved", retrieved);
+        assertEquals("Special characters should be preserved", entry.getNotes(), retrieved.getNotes());
+    }
+
+    @Test
+    public void test_insertWeightEntry_withVeryLongNotes_savesCorrectly() {
+        // ARRANGE
+        StringBuilder longNotes = new StringBuilder();
+        for (int i = 0; i < 1000; i++) {
+            longNotes.append("This is a very long note. ");
+        }
+        WeightEntry entry = createTestEntry(testUserId, 170.0, LocalDate.now(), false);
+        entry.setNotes(longNotes.toString());
+
+        // ACT
+        long weightId = weightEntryDAO.insertWeightEntry(entry);
+        WeightEntry retrieved = weightEntryDAO.getWeightEntryById(weightId);
+
+        // ASSERT
+        assertTrue("Entry should be inserted", weightId > 0);
+        assertNotNull("Entry should be retrieved", retrieved);
+        assertEquals("Long notes should be preserved", entry.getNotes(), retrieved.getNotes());
+    }
+
+    @Test
+    public void test_insertWeightEntry_withNegativeWeight_insertsSuccessfully() {
+        // ARRANGE - Negative weight is technically valid (database allows it, app should validate)
+        WeightEntry entry = createTestEntry(testUserId, -10.0, LocalDate.now(), false);
+
+        // ACT
+        long weightId = weightEntryDAO.insertWeightEntry(entry);
+        WeightEntry retrieved = weightEntryDAO.getWeightEntryById(weightId);
+
+        // ASSERT
+        assertTrue("Database should allow negative weight (app validation should prevent this)", weightId > 0);
+        assertNotNull("Entry should be retrieved", retrieved);
+        assertEquals("Negative weight should be preserved", -10.0, retrieved.getWeightValue(), 0.01);
+    }
+
+    @Test
+    public void test_insertWeightEntry_withZeroWeight_insertsSuccessfully() {
+        // ARRANGE
+        WeightEntry entry = createTestEntry(testUserId, 0.0, LocalDate.now(), false);
+
+        // ACT
+        long weightId = weightEntryDAO.insertWeightEntry(entry);
+        WeightEntry retrieved = weightEntryDAO.getWeightEntryById(weightId);
+
+        // ASSERT
+        assertTrue("Database should allow zero weight (app validation should prevent this)", weightId > 0);
+        assertNotNull("Entry should be retrieved", retrieved);
+        assertEquals("Zero weight should be preserved", 0.0, retrieved.getWeightValue(), 0.01);
+    }
+
+    @Test
+    public void test_insertWeightEntry_withExtremelyLargeWeight_insertsSuccessfully() {
+        // ARRANGE
+        WeightEntry entry = createTestEntry(testUserId, 999999.99, LocalDate.now(), false);
+
+        // ACT
+        long weightId = weightEntryDAO.insertWeightEntry(entry);
+        WeightEntry retrieved = weightEntryDAO.getWeightEntryById(weightId);
+
+        // ASSERT
+        assertTrue("Database should allow extremely large weight", weightId > 0);
+        assertNotNull("Entry should be retrieved", retrieved);
+        assertEquals("Large weight should be preserved", 999999.99, retrieved.getWeightValue(), 0.01);
+    }
+
+    @Test
+    public void test_insertWeightEntry_withFarPastDate_insertsSuccessfully() {
+        // ARRANGE
+        LocalDate farPast = LocalDate.of(1900, 1, 1);
+        WeightEntry entry = createTestEntry(testUserId, 170.0, farPast, false);
+
+        // ACT
+        long weightId = weightEntryDAO.insertWeightEntry(entry);
+        WeightEntry retrieved = weightEntryDAO.getWeightEntryById(weightId);
+
+        // ASSERT
+        assertTrue("Database should allow far past dates", weightId > 0);
+        assertNotNull("Entry should be retrieved", retrieved);
+        assertEquals("Far past date should be preserved", farPast, retrieved.getWeightDate());
+    }
+
+    @Test
+    public void test_insertWeightEntry_withFarFutureDate_insertsSuccessfully() {
+        // ARRANGE
+        LocalDate farFuture = LocalDate.of(2099, 12, 31);
+        WeightEntry entry = createTestEntry(testUserId, 170.0, farFuture, false);
+
+        // ACT
+        long weightId = weightEntryDAO.insertWeightEntry(entry);
+        WeightEntry retrieved = weightEntryDAO.getWeightEntryById(weightId);
+
+        // ASSERT
+        assertTrue("Database should allow far future dates", weightId > 0);
+        assertNotNull("Entry should be retrieved", retrieved);
+        assertEquals("Far future date should be preserved", farFuture, retrieved.getWeightDate());
+    }
+
+    @Test
+    public void test_insertWeightEntry_withEmptyStringNotes_savesEmpty() {
+        // ARRANGE
+        WeightEntry entry = createTestEntry(testUserId, 170.0, LocalDate.now(), false);
+        entry.setNotes(""); // Empty string (not null)
+
+        // ACT
+        long weightId = weightEntryDAO.insertWeightEntry(entry);
+        WeightEntry retrieved = weightEntryDAO.getWeightEntryById(weightId);
+
+        // ASSERT
+        assertTrue("Entry should be inserted", weightId > 0);
+        assertNotNull("Entry should be retrieved", retrieved);
+        assertEquals("Empty notes should be preserved", "", retrieved.getNotes());
+    }
+
+    @Test
+    public void test_getLatestWeightEntry_excludesDeletedEntries() {
+        // ARRANGE
+        WeightEntry entry1 = createTestEntry(testUserId, 170.0, LocalDate.of(2025, 12, 8), false);
+        WeightEntry entry2 = createTestEntry(testUserId, 171.0, LocalDate.of(2025, 12, 9), false);
+        WeightEntry entry3 = createTestEntry(testUserId, 172.0, LocalDate.of(2025, 12, 10), true); // Most recent but deleted
+
+        weightEntryDAO.insertWeightEntry(entry1);
+        weightEntryDAO.insertWeightEntry(entry2);
+        weightEntryDAO.insertWeightEntry(entry3);
+
+        // ACT
+        WeightEntry latest = weightEntryDAO.getLatestWeightEntry(testUserId);
+
+        // ASSERT
+        assertNotNull("Latest entry should be found", latest);
+        assertEquals("Latest non-deleted entry should be from 12/9", LocalDate.of(2025, 12, 9), latest.getWeightDate());
+        assertEquals("Latest weight should be 171.0", 171.0, latest.getWeightValue(), 0.01);
+    }
+
     // Helper method to create test entries
     private WeightEntry createTestEntry(long userId, double weight, LocalDate date, boolean isDeleted) {
         WeightEntry entry = new WeightEntry();

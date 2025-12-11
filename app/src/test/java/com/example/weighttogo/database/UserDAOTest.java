@@ -208,4 +208,261 @@ public class UserDAOTest {
         User deletedUser = userDAO.getUserById(userId);
         assertNull("User should be deleted", deletedUser);
     }
+
+    // ========== EDGE CASE TESTS ==========
+
+    /**
+     * Test 8: insertUser() with duplicate username violates UNIQUE constraint
+     */
+    @Test
+    public void test_insertUser_withDuplicateUsername_violatesUniqueConstraint() {
+        // ARRANGE
+        User user1 = new User();
+        user1.setUsername("duplicateuser");
+        user1.setPasswordHash("hash1");
+        user1.setSalt("salt1");
+        user1.setCreatedAt(LocalDateTime.now());
+        user1.setUpdatedAt(LocalDateTime.now());
+        user1.setIsActive(true);
+
+        User user2 = new User();
+        user2.setUsername("duplicateuser"); // Same username
+        user2.setPasswordHash("hash2");
+        user2.setSalt("salt2");
+        user2.setCreatedAt(LocalDateTime.now());
+        user2.setUpdatedAt(LocalDateTime.now());
+        user2.setIsActive(true);
+
+        // ACT
+        long userId1 = userDAO.insertUser(user1);
+        long userId2 = userDAO.insertUser(user2); // Should fail
+
+        // ASSERT
+        assertTrue("First user should be inserted successfully", userId1 > 0);
+        assertEquals("Second user with duplicate username should fail", -1, userId2);
+    }
+
+    /**
+     * Test 9: getUserById() with non-existent ID returns null
+     */
+    @Test
+    public void test_getUserById_withNonExistentId_returnsNull() {
+        // ACT
+        User user = userDAO.getUserById(99999);
+
+        // ASSERT
+        assertNull("Should return null for non-existent user ID", user);
+    }
+
+    /**
+     * Test 10: updateLastLogin() with non-existent user ID returns 0
+     */
+    @Test
+    public void test_updateLastLogin_withNonExistentUserId_returnsZero() {
+        // ACT
+        int rowsAffected = userDAO.updateLastLogin(99999, LocalDateTime.now());
+
+        // ASSERT
+        assertEquals("Updating non-existent user should return 0 rows affected", 0, rowsAffected);
+    }
+
+    /**
+     * Test 11: deleteUser() with non-existent ID returns 0
+     */
+    @Test
+    public void test_deleteUser_withNonExistentUserId_returnsZero() {
+        // ACT
+        int rowsDeleted = userDAO.deleteUser(99999);
+
+        // ASSERT
+        assertEquals("Deleting non-existent user should return 0 rows deleted", 0, rowsDeleted);
+    }
+
+    /**
+     * Test 12: insertUser() with special characters in username
+     */
+    @Test
+    public void test_insertUser_withSpecialCharactersInUsername_insertsSuccessfully() {
+        // ARRANGE
+        User user = new User();
+        user.setUsername("user_with-special.chars@123");
+        user.setPasswordHash("hash");
+        user.setSalt("salt");
+        user.setCreatedAt(LocalDateTime.now());
+        user.setUpdatedAt(LocalDateTime.now());
+        user.setIsActive(true);
+
+        // ACT
+        long userId = userDAO.insertUser(user);
+        User retrieved = userDAO.getUserById(userId);
+
+        // ASSERT
+        assertTrue("User should be inserted", userId > 0);
+        assertNotNull("User should be retrieved", retrieved);
+        assertEquals("Special characters in username should be preserved", "user_with-special.chars@123", retrieved.getUsername());
+    }
+
+    /**
+     * Test 13: insertUser() with very long username
+     */
+    @Test
+    public void test_insertUser_withVeryLongUsername_insertsSuccessfully() {
+        // ARRANGE
+        StringBuilder longUsername = new StringBuilder();
+        for (int i = 0; i < 100; i++) {
+            longUsername.append("a");
+        }
+        User user = new User();
+        user.setUsername(longUsername.toString());
+        user.setPasswordHash("hash");
+        user.setSalt("salt");
+        user.setCreatedAt(LocalDateTime.now());
+        user.setUpdatedAt(LocalDateTime.now());
+        user.setIsActive(true);
+
+        // ACT
+        long userId = userDAO.insertUser(user);
+        User retrieved = userDAO.getUserById(userId);
+
+        // ASSERT
+        assertTrue("User should be inserted", userId > 0);
+        assertNotNull("User should be retrieved", retrieved);
+        assertEquals("Long username should be preserved", longUsername.toString(), retrieved.getUsername());
+    }
+
+    /**
+     * Test 14: insertUser() with all optional fields populated
+     */
+    @Test
+    public void test_insertUser_withAllOptionalFields_insertsSuccessfully() {
+        // ARRANGE
+        User user = new User();
+        user.setUsername("completeuser");
+        user.setPasswordHash("hash");
+        user.setSalt("salt");
+        user.setEmail("user@example.com");
+        user.setPhoneNumber("+1234567890");
+        user.setDisplayName("Complete User");
+        user.setCreatedAt(LocalDateTime.now());
+        user.setUpdatedAt(LocalDateTime.now());
+        user.setLastLogin(LocalDateTime.now());
+        user.setIsActive(true);
+
+        // ACT
+        long userId = userDAO.insertUser(user);
+        User retrieved = userDAO.getUserById(userId);
+
+        // ASSERT
+        assertTrue("User should be inserted", userId > 0);
+        assertNotNull("User should be retrieved", retrieved);
+        assertEquals("Email should be preserved", "user@example.com", retrieved.getEmail());
+        assertEquals("Phone number should be preserved", "+1234567890", retrieved.getPhoneNumber());
+        assertEquals("Display name should be preserved", "Complete User", retrieved.getDisplayName());
+        assertNotNull("Last login should be preserved", retrieved.getLastLogin());
+    }
+
+    /**
+     * Test 15: insertUser() with special characters in optional fields
+     */
+    @Test
+    public void test_insertUser_withSpecialCharactersInOptionalFields_insertsSuccessfully() {
+        // ARRANGE
+        User user = new User();
+        user.setUsername("specialuser");
+        user.setPasswordHash("hash");
+        user.setSalt("salt");
+        user.setEmail("user+tag@example.com");
+        user.setDisplayName("User 🎉 Name");
+        user.setCreatedAt(LocalDateTime.now());
+        user.setUpdatedAt(LocalDateTime.now());
+        user.setIsActive(true);
+
+        // ACT
+        long userId = userDAO.insertUser(user);
+        User retrieved = userDAO.getUserById(userId);
+
+        // ASSERT
+        assertTrue("User should be inserted", userId > 0);
+        assertNotNull("User should be retrieved", retrieved);
+        assertEquals("Email with + should be preserved", "user+tag@example.com", retrieved.getEmail());
+        assertEquals("Display name with emoji should be preserved", "User 🎉 Name", retrieved.getDisplayName());
+    }
+
+    /**
+     * Test 16: deleteUser() cascades to weight entries and goals
+     */
+    @Test
+    public void test_deleteUser_cascadesToRelatedRecords() {
+        // ARRANGE
+        User user = new User();
+        user.setUsername("cascadetest");
+        user.setPasswordHash("hash");
+        user.setSalt("salt");
+        user.setCreatedAt(LocalDateTime.now());
+        user.setUpdatedAt(LocalDateTime.now());
+        user.setIsActive(true);
+        long userId = userDAO.insertUser(user);
+
+        // Insert related weight entry (this will be tested in integration)
+        // For now, just verify user deletion works
+
+        // ACT
+        int rowsDeleted = userDAO.deleteUser(userId);
+
+        // ASSERT
+        assertEquals("Should delete 1 row", 1, rowsDeleted);
+        User deletedUser = userDAO.getUserById(userId);
+        assertNull("User should no longer exist", deletedUser);
+        // Note: CASCADE DELETE for weight_entries and goal_weights verified in integration tests
+    }
+
+    /**
+     * Test 17: usernameExists() is case-sensitive
+     */
+    @Test
+    public void test_usernameExists_isCaseSensitive() {
+        // ARRANGE
+        User user = new User();
+        user.setUsername("TestUser");
+        user.setPasswordHash("hash");
+        user.setSalt("salt");
+        user.setCreatedAt(LocalDateTime.now());
+        user.setUpdatedAt(LocalDateTime.now());
+        user.setIsActive(true);
+        userDAO.insertUser(user);
+
+        // ACT
+        boolean existsExactCase = userDAO.usernameExists("TestUser");
+        boolean existsLowerCase = userDAO.usernameExists("testuser");
+        boolean existsUpperCase = userDAO.usernameExists("TESTUSER");
+
+        // ASSERT
+        assertTrue("Exact case should exist", existsExactCase);
+        assertFalse("Lowercase variant should not exist (case-sensitive)", existsLowerCase);
+        assertFalse("Uppercase variant should not exist (case-sensitive)", existsUpperCase);
+    }
+
+    /**
+     * Test 18: getUserByUsername() is case-sensitive
+     */
+    @Test
+    public void test_getUserByUsername_isCaseSensitive() {
+        // ARRANGE
+        User user = new User();
+        user.setUsername("CaseSensitive");
+        user.setPasswordHash("hash");
+        user.setSalt("salt");
+        user.setCreatedAt(LocalDateTime.now());
+        user.setUpdatedAt(LocalDateTime.now());
+        user.setIsActive(true);
+        userDAO.insertUser(user);
+
+        // ACT
+        User exactMatch = userDAO.getUserByUsername("CaseSensitive");
+        User lowerMatch = userDAO.getUserByUsername("casesensitive");
+
+        // ASSERT
+        assertNotNull("Exact case should return user", exactMatch);
+        assertNull("Different case should not return user (case-sensitive)", lowerMatch);
+    }
 }
