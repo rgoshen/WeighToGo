@@ -119,10 +119,10 @@ public class GoalWeightTest {
         boolean expectedFlag = true;
 
         // ACT
-        goal.setIsAchieved(expectedFlag);
+        goal.setAchieved(expectedFlag);
 
         // ASSERT
-        assertEquals("IsAchieved should be set correctly", expectedFlag, goal.getIsAchieved());
+        assertEquals("IsAchieved should be set correctly", expectedFlag, goal.isAchieved());
     }
 
     @Test
@@ -171,10 +171,10 @@ public class GoalWeightTest {
         boolean expectedFlag = true;
 
         // ACT
-        goal.setIsActive(expectedFlag);
+        goal.setActive(expectedFlag);
 
         // ASSERT
-        assertEquals("IsActive should be set correctly", expectedFlag, goal.getIsActive());
+        assertEquals("IsActive should be set correctly", expectedFlag, goal.isActive());
     }
 
     @Test
@@ -185,7 +185,7 @@ public class GoalWeightTest {
         goal.setUserId(123L);
         goal.setGoalWeight(150.0);
         goal.setGoalUnit("lbs");
-        goal.setIsActive(true);
+        goal.setActive(true);
 
         // ACT
         String result = goal.toString();

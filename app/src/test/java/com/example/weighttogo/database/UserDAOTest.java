@@ -32,7 +32,7 @@ public class UserDAOTest {
     private SQLiteDatabase db;
 
     @Before
-    public void setUp() {
+    public void setUp() throws DatabaseException {
         context = RuntimeEnvironment.getApplication();
         dbHelper = WeighToGoDBHelper.getInstance(context);
         db = dbHelper.getWritableDatabase();
@@ -60,7 +60,7 @@ public class UserDAOTest {
      * Test 1: insertUser() should insert a valid user and return user ID > 0
      */
     @Test
-    public void test_insertUser_withValidData_returnsUserId() {
+    public void test_insertUser_withValidData_returnsUserId() throws DatabaseException {
         // ARRANGE
         User user = new User();
         user.setUsername("testuser");
@@ -68,7 +68,7 @@ public class UserDAOTest {
         user.setSalt("random_salt_456");
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
-        user.setIsActive(true);
+        user.setActive(true);
 
         // ACT
         long userId = userDAO.insertUser(user);
@@ -87,7 +87,7 @@ public class UserDAOTest {
      * Test 2: getUserByUsername() should retrieve user by username
      */
     @Test
-    public void test_getUserByUsername_withExistingUser_returnsUser() {
+    public void test_getUserByUsername_withExistingUser_returnsUser() throws DatabaseException {
         // ARRANGE - Insert a user first
         User user = new User();
         user.setUsername("johndoe");
@@ -95,7 +95,7 @@ public class UserDAOTest {
         user.setSalt("salt123");
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
-        user.setIsActive(true);
+        user.setActive(true);
         long userId = userDAO.insertUser(user);
         user.setUserId(userId);
 
@@ -112,7 +112,7 @@ public class UserDAOTest {
      * Test 3: getUserByUsername() returns null for non-existent username
      */
     @Test
-    public void test_getUserByUsername_withNonExistentUser_returnsNull() {
+    public void test_getUserByUsername_withNonExistentUser_returnsNull() throws DatabaseException {
         // ACT
         User user = userDAO.getUserByUsername("nonexistent");
 
@@ -124,7 +124,7 @@ public class UserDAOTest {
      * Test 4: usernameExists() returns true for existing username
      */
     @Test
-    public void test_usernameExists_withExistingUsername_returnsTrue() {
+    public void test_usernameExists_withExistingUsername_returnsTrue() throws DatabaseException {
         // ARRANGE
         User user = new User();
         user.setUsername("existinguser");
@@ -132,7 +132,7 @@ public class UserDAOTest {
         user.setSalt("salt");
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
-        user.setIsActive(true);
+        user.setActive(true);
         userDAO.insertUser(user);
 
         // ACT
@@ -146,7 +146,7 @@ public class UserDAOTest {
      * Test 5: usernameExists() returns false for non-existent username
      */
     @Test
-    public void test_usernameExists_withNonExistentUsername_returnsFalse() {
+    public void test_usernameExists_withNonExistentUsername_returnsFalse() throws DatabaseException {
         // ACT
         boolean exists = userDAO.usernameExists("nonexistent");
 
@@ -158,7 +158,7 @@ public class UserDAOTest {
      * Test 6: updateLastLogin() updates the last_login timestamp
      */
     @Test
-    public void test_updateLastLogin_updatesTimestamp() {
+    public void test_updateLastLogin_updatesTimestamp() throws DatabaseException {
         // ARRANGE - Insert a user
         User user = new User();
         user.setUsername("loginuser");
@@ -166,7 +166,7 @@ public class UserDAOTest {
         user.setSalt("salt");
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
-        user.setIsActive(true);
+        user.setActive(true);
         long userId = userDAO.insertUser(user);
 
         LocalDateTime loginTime = LocalDateTime.now();
@@ -187,7 +187,7 @@ public class UserDAOTest {
      * Test 7: deleteUser() removes user from database
      */
     @Test
-    public void test_deleteUser_removesUser() {
+    public void test_deleteUser_removesUser() throws DatabaseException {
         // ARRANGE
         User user = new User();
         user.setUsername("deletetest");
@@ -195,7 +195,7 @@ public class UserDAOTest {
         user.setSalt("salt");
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
-        user.setIsActive(true);
+        user.setActive(true);
         long userId = userDAO.insertUser(user);
 
         // ACT
@@ -215,7 +215,7 @@ public class UserDAOTest {
      * Test 8: insertUser() with duplicate username violates UNIQUE constraint
      */
     @Test
-    public void test_insertUser_withDuplicateUsername_violatesUniqueConstraint() {
+    public void test_insertUser_withDuplicateUsername_violatesUniqueConstraint() throws DatabaseException {
         // ARRANGE
         User user1 = new User();
         user1.setUsername("duplicateuser");
@@ -223,7 +223,7 @@ public class UserDAOTest {
         user1.setSalt("salt1");
         user1.setCreatedAt(LocalDateTime.now());
         user1.setUpdatedAt(LocalDateTime.now());
-        user1.setIsActive(true);
+        user1.setActive(true);
 
         User user2 = new User();
         user2.setUsername("duplicateuser"); // Same username
@@ -231,22 +231,31 @@ public class UserDAOTest {
         user2.setSalt("salt2");
         user2.setCreatedAt(LocalDateTime.now());
         user2.setUpdatedAt(LocalDateTime.now());
-        user2.setIsActive(true);
+        user2.setActive(true);
 
         // ACT
         long userId1 = userDAO.insertUser(user1);
-        long userId2 = userDAO.insertUser(user2); // Should fail
-
-        // ASSERT
         assertTrue("First user should be inserted successfully", userId1 > 0);
-        assertEquals("Second user with duplicate username should fail", -1, userId2);
+
+        // ACT & ASSERT - second insert should throw DuplicateUsernameException
+        boolean exceptionThrown = false;
+        try {
+            userDAO.insertUser(user2); // Should throw DuplicateUsernameException
+            fail("Expected DuplicateUsernameException to be thrown");
+        } catch (DuplicateUsernameException e) {
+            exceptionThrown = true;
+            assertTrue("Exception message should mention the username",
+                    e.getMessage().contains("duplicateuser"));
+        }
+
+        assertTrue("DuplicateUsernameException should have been thrown", exceptionThrown);
     }
 
     /**
      * Test 9: getUserById() with non-existent ID returns null
      */
     @Test
-    public void test_getUserById_withNonExistentId_returnsNull() {
+    public void test_getUserById_withNonExistentId_returnsNull() throws DatabaseException {
         // ACT
         User user = userDAO.getUserById(99999);
 
@@ -258,7 +267,7 @@ public class UserDAOTest {
      * Test 10: updateLastLogin() with non-existent user ID returns 0
      */
     @Test
-    public void test_updateLastLogin_withNonExistentUserId_returnsZero() {
+    public void test_updateLastLogin_withNonExistentUserId_returnsZero() throws DatabaseException {
         // ACT
         int rowsAffected = userDAO.updateLastLogin(99999, LocalDateTime.now());
 
@@ -270,7 +279,7 @@ public class UserDAOTest {
      * Test 11: deleteUser() with non-existent ID returns 0
      */
     @Test
-    public void test_deleteUser_withNonExistentUserId_returnsZero() {
+    public void test_deleteUser_withNonExistentUserId_returnsZero() throws DatabaseException {
         // ACT
         int rowsDeleted = userDAO.deleteUser(99999);
 
@@ -282,7 +291,7 @@ public class UserDAOTest {
      * Test 12: insertUser() with special characters in username
      */
     @Test
-    public void test_insertUser_withSpecialCharactersInUsername_insertsSuccessfully() {
+    public void test_insertUser_withSpecialCharactersInUsername_insertsSuccessfully() throws DatabaseException {
         // ARRANGE
         User user = new User();
         user.setUsername("user_with-special.chars@123");
@@ -290,7 +299,7 @@ public class UserDAOTest {
         user.setSalt("salt");
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
-        user.setIsActive(true);
+        user.setActive(true);
 
         // ACT
         long userId = userDAO.insertUser(user);
@@ -306,7 +315,7 @@ public class UserDAOTest {
      * Test 13: insertUser() with very long username
      */
     @Test
-    public void test_insertUser_withVeryLongUsername_insertsSuccessfully() {
+    public void test_insertUser_withVeryLongUsername_insertsSuccessfully() throws DatabaseException {
         // ARRANGE
         StringBuilder longUsername = new StringBuilder();
         for (int i = 0; i < 100; i++) {
@@ -318,7 +327,7 @@ public class UserDAOTest {
         user.setSalt("salt");
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
-        user.setIsActive(true);
+        user.setActive(true);
 
         // ACT
         long userId = userDAO.insertUser(user);
@@ -334,7 +343,7 @@ public class UserDAOTest {
      * Test 14: insertUser() with all optional fields populated
      */
     @Test
-    public void test_insertUser_withAllOptionalFields_insertsSuccessfully() {
+    public void test_insertUser_withAllOptionalFields_insertsSuccessfully() throws DatabaseException {
         // ARRANGE
         User user = new User();
         user.setUsername("completeuser");
@@ -346,7 +355,7 @@ public class UserDAOTest {
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
         user.setLastLogin(LocalDateTime.now());
-        user.setIsActive(true);
+        user.setActive(true);
 
         // ACT
         long userId = userDAO.insertUser(user);
@@ -365,7 +374,7 @@ public class UserDAOTest {
      * Test 15: insertUser() with special characters in optional fields
      */
     @Test
-    public void test_insertUser_withSpecialCharactersInOptionalFields_insertsSuccessfully() {
+    public void test_insertUser_withSpecialCharactersInOptionalFields_insertsSuccessfully() throws DatabaseException {
         // ARRANGE
         User user = new User();
         user.setUsername("specialuser");
@@ -375,7 +384,7 @@ public class UserDAOTest {
         user.setDisplayName("User 🎉 Name");
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
-        user.setIsActive(true);
+        user.setActive(true);
 
         // ACT
         long userId = userDAO.insertUser(user);
@@ -392,7 +401,7 @@ public class UserDAOTest {
      * Test 16: deleteUser() cascades to weight entries and goals
      */
     @Test
-    public void test_deleteUser_cascadesToRelatedRecords() {
+    public void test_deleteUser_cascadesToRelatedRecords() throws DatabaseException {
         // ARRANGE
         User user = new User();
         user.setUsername("cascadetest");
@@ -400,7 +409,7 @@ public class UserDAOTest {
         user.setSalt("salt");
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
-        user.setIsActive(true);
+        user.setActive(true);
         long userId = userDAO.insertUser(user);
 
         // Insert related weight entry (this will be tested in integration)
@@ -420,7 +429,7 @@ public class UserDAOTest {
      * Test 17: usernameExists() is case-sensitive
      */
     @Test
-    public void test_usernameExists_isCaseSensitive() {
+    public void test_usernameExists_isCaseSensitive() throws DatabaseException {
         // ARRANGE
         User user = new User();
         user.setUsername("TestUser");
@@ -428,7 +437,7 @@ public class UserDAOTest {
         user.setSalt("salt");
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
-        user.setIsActive(true);
+        user.setActive(true);
         userDAO.insertUser(user);
 
         // ACT
@@ -446,7 +455,7 @@ public class UserDAOTest {
      * Test 18: getUserByUsername() is case-sensitive
      */
     @Test
-    public void test_getUserByUsername_isCaseSensitive() {
+    public void test_getUserByUsername_isCaseSensitive() throws DatabaseException {
         // ARRANGE
         User user = new User();
         user.setUsername("CaseSensitive");
@@ -454,7 +463,7 @@ public class UserDAOTest {
         user.setSalt("salt");
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
-        user.setIsActive(true);
+        user.setActive(true);
         userDAO.insertUser(user);
 
         // ACT

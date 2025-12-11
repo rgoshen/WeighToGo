@@ -145,10 +145,10 @@ public class WeightEntryTest {
         boolean expectedFlag = true;
 
         // ACT
-        entry.setIsDeleted(expectedFlag);
+        entry.setDeleted(expectedFlag);
 
         // ASSERT
-        assertEquals("IsDeleted should be set correctly", expectedFlag, entry.getIsDeleted());
+        assertEquals("IsDeleted should be set correctly", expectedFlag, entry.isDeleted());
     }
 
     @Test

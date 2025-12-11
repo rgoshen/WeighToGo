@@ -60,7 +60,7 @@ public class WeightEntryDAO {
         values.put("weight_date", entry.getWeightDate().format(ISO_DATE_FORMATTER));
         values.put("created_at", entry.getCreatedAt().format(ISO_DATETIME_FORMATTER));
         values.put("updated_at", entry.getUpdatedAt().format(ISO_DATETIME_FORMATTER));
-        values.put("is_deleted", entry.getIsDeleted() ? 1 : 0);
+        values.put("is_deleted", entry.isDeleted() ? 1 : 0);
 
         if (entry.getNotes() != null) {
             values.put("notes", entry.getNotes());
@@ -248,7 +248,7 @@ public class WeightEntryDAO {
         String updatedStr = cursor.getString(cursor.getColumnIndexOrThrow("updated_at"));
         entry.setUpdatedAt(LocalDateTime.parse(updatedStr, ISO_DATETIME_FORMATTER));
 
-        entry.setIsDeleted(cursor.getInt(cursor.getColumnIndexOrThrow("is_deleted")) == 1);
+        entry.setDeleted(cursor.getInt(cursor.getColumnIndexOrThrow("is_deleted")) == 1);
 
         int notesIndex = cursor.getColumnIndexOrThrow("notes");
         if (!cursor.isNull(notesIndex)) {

@@ -201,10 +201,10 @@ public class UserTest {
         boolean expectedFlag = true;
 
         // ACT
-        user.setIsActive(expectedFlag);
+        user.setActive(expectedFlag);
 
         // ASSERT
-        assertEquals("IsActive should be set correctly", expectedFlag, user.getIsActive());
+        assertEquals("IsActive should be set correctly", expectedFlag, user.isActive());
     }
 
     @Test

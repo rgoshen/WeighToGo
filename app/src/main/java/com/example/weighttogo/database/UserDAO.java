@@ -2,6 +2,8 @@ package com.example.weighttogo.database;
 
 import android.content.ContentValues;
 import android.database.Cursor;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
@@ -45,10 +47,19 @@ public class UserDAO {
      * Inserts a new user into the database.
      *
      * @param user User object to insert (user_id will be ignored, auto-generated)
-     * @return user_id of inserted user, or -1 if insert failed
+     * @return user_id of inserted user
+     * @throws DuplicateUsernameException if username already exists
+     * @throws DatabaseException if database operation fails
      */
-    public long insertUser(@NonNull User user) {
+    public long insertUser(@NonNull User user) throws DuplicateUsernameException, DatabaseException {
         Log.d(TAG, "insertUser: Inserting user with username=" + user.getUsername());
+
+        // Check for duplicate username first
+        if (usernameExists(user.getUsername())) {
+            String msg = "Username '" + user.getUsername() + "' already exists";
+            Log.e(TAG, "insertUser: " + msg);
+            throw new DuplicateUsernameException(msg);
+        }
 
         SQLiteDatabase db = dbHelper.getWritableDatabase();
 
@@ -58,7 +69,7 @@ public class UserDAO {
         values.put("salt", user.getSalt());
         values.put("created_at", user.getCreatedAt().format(ISO_FORMATTER));
         values.put("updated_at", LocalDateTime.now().format(ISO_FORMATTER));
-        values.put("is_active", user.getIsActive() ? 1 : 0);
+        values.put("is_active", user.isActive() ? 1 : 0);
 
         // Optional fields
         if (user.getEmail() != null) {
@@ -79,15 +90,22 @@ public class UserDAO {
 
             if (userId > 0) {
                 Log.i(TAG, "insertUser: Successfully inserted user with user_id=" + userId);
+                return userId;
             } else {
-                Log.e(TAG, "insertUser: Failed to insert user - insert returned -1");
+                throw new DatabaseException("Insert failed - database returned -1");
             }
 
-            return userId;
-
-        } catch (Exception e) {
-            Log.e(TAG, "insertUser: Exception inserting user", e);
-            return -1;
+        } catch (SQLiteConstraintException e) {
+            if (e.getMessage() != null && e.getMessage().contains("UNIQUE")) {
+                String msg = "Username '" + user.getUsername() + "' already exists";
+                Log.e(TAG, "insertUser: " + msg, e);
+                throw new DuplicateUsernameException(msg, e);
+            }
+            Log.e(TAG, "insertUser: Constraint violation", e);
+            throw new DatabaseException("Constraint violation", e);
+        } catch (SQLException e) {
+            Log.e(TAG, "insertUser: Database error", e);
+            throw new DatabaseException("Database error during insert", e);
         }
     }
 
@@ -144,7 +162,7 @@ public class UserDAO {
         String updatedAtStr = cursor.getString(cursor.getColumnIndexOrThrow("updated_at"));
         user.setUpdatedAt(LocalDateTime.parse(updatedAtStr, ISO_FORMATTER));
 
-        user.setIsActive(cursor.getInt(cursor.getColumnIndexOrThrow("is_active")) == 1);
+        user.setActive(cursor.getInt(cursor.getColumnIndexOrThrow("is_active")) == 1);
 
         // Optional fields - check for null
         int emailIndex = cursor.getColumnIndexOrThrow("email");

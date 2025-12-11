@@ -37,7 +37,7 @@ public class GoalWeightDAOTest {
     private long testUserId;
 
     @Before
-    public void setUp() {
+    public void setUp() throws DatabaseException {
         Context context = RuntimeEnvironment.getApplication();
         dbHelper = WeighToGoDBHelper.getInstance(context);
         goalWeightDAO = new GoalWeightDAO(dbHelper);
@@ -50,7 +50,7 @@ public class GoalWeightDAOTest {
         testUser.setSalt("salt123");
         testUser.setCreatedAt(LocalDateTime.now());
         testUser.setUpdatedAt(LocalDateTime.now());
-        testUser.setIsActive(true);
+        testUser.setActive(true);
 
         testUserId = userDAO.insertUser(testUser);
         assertTrue("Test user should be created", testUserId > 0);
@@ -75,8 +75,8 @@ public class GoalWeightDAOTest {
         goal.setStartWeight(180.0);
         goal.setCreatedAt(LocalDateTime.now());
         goal.setUpdatedAt(LocalDateTime.now());
-        goal.setIsActive(true);
-        goal.setIsAchieved(false);
+        goal.setActive(true);
+        goal.setAchieved(false);
 
         // ACT
         long goalId = goalWeightDAO.insertGoal(goal);
@@ -96,8 +96,8 @@ public class GoalWeightDAOTest {
         goal.setTargetDate(LocalDate.of(2026, 6, 1));
         goal.setCreatedAt(LocalDateTime.now());
         goal.setUpdatedAt(LocalDateTime.now());
-        goal.setIsActive(true);
-        goal.setIsAchieved(false);
+        goal.setActive(true);
+        goal.setAchieved(false);
 
         // ACT
         long goalId = goalWeightDAO.insertGoal(goal);
@@ -121,8 +121,8 @@ public class GoalWeightDAOTest {
         assertNotNull("Active goal should be found", activeGoal);
         assertEquals("Goal weight should match", 150.0, activeGoal.getGoalWeight(), 0.01);
         assertEquals("Start weight should match", 180.0, activeGoal.getStartWeight(), 0.01);
-        assertTrue("Goal should be active", activeGoal.getIsActive());
-        assertFalse("Goal should not be achieved", activeGoal.getIsAchieved());
+        assertTrue("Goal should be active", activeGoal.isActive());
+        assertFalse("Goal should not be achieved", activeGoal.isAchieved());
     }
 
     @Test
@@ -181,7 +181,7 @@ public class GoalWeightDAOTest {
     }
 
     @Test
-    public void test_getGoalHistory_withNoGoals_returnsEmptyList() {
+    public void test_getGoalHistory_withNoGoals_returnsEmptyList() throws DatabaseException {
         // Create a second user with no goals
         User user2 = new User();
         user2.setUsername("user2");
@@ -189,7 +189,7 @@ public class GoalWeightDAOTest {
         user2.setSalt("salt");
         user2.setCreatedAt(LocalDateTime.now());
         user2.setUpdatedAt(LocalDateTime.now());
-        user2.setIsActive(true);
+        user2.setActive(true);
         long user2Id = userDAO.insertUser(user2);
 
         // ACT
@@ -208,7 +208,7 @@ public class GoalWeightDAOTest {
 
         goal.setGoalId(goalId);
         goal.setGoalWeight(145.0);
-        goal.setIsAchieved(true);
+        goal.setAchieved(true);
         goal.setAchievedDate(LocalDate.now());
 
         // ACT
@@ -219,7 +219,7 @@ public class GoalWeightDAOTest {
         assertEquals("Should update 1 row", 1, rowsUpdated);
         assertNotNull("Goal should still exist", activeGoal);
         assertEquals("Goal weight should be updated", 145.0, activeGoal.getGoalWeight(), 0.01);
-        assertTrue("Goal should be marked as achieved", activeGoal.getIsAchieved());
+        assertTrue("Goal should be marked as achieved", activeGoal.isAchieved());
         assertNotNull("Achieved date should be set", activeGoal.getAchievedDate());
     }
 
@@ -400,7 +400,7 @@ public class GoalWeightDAOTest {
         // ASSERT
         assertTrue("Database should allow inconsistent achieved data", goalId > 0);
         assertNotNull("Goal should be retrieved", retrieved);
-        assertFalse("Goal should not be marked as achieved", retrieved.getIsAchieved());
+        assertFalse("Goal should not be marked as achieved", retrieved.isAchieved());
         assertNotNull("Achieved date should still be present (inconsistent state)", retrieved.getAchievedDate());
     }
 
@@ -417,7 +417,7 @@ public class GoalWeightDAOTest {
         // ASSERT
         assertTrue("Database should allow inconsistent achieved data", goalId > 0);
         assertNotNull("Goal should be retrieved", retrieved);
-        assertTrue("Goal should be marked as achieved", retrieved.getIsAchieved());
+        assertTrue("Goal should be marked as achieved", retrieved.isAchieved());
         assertNull("Achieved date should be null (inconsistent state)", retrieved.getAchievedDate());
     }
 
@@ -481,8 +481,8 @@ public class GoalWeightDAOTest {
         long goalId = goalWeightDAO.insertGoal(goal);
 
         goal.setGoalId(goalId);
-        goal.setIsAchieved(true);
-        goal.setIsActive(false); // Achieved and inactive
+        goal.setAchieved(true);
+        goal.setActive(false); // Achieved and inactive
         goal.setAchievedDate(LocalDate.now());
 
         // ACT
@@ -494,8 +494,8 @@ public class GoalWeightDAOTest {
         assertEquals("Should update 1 row", 1, rowsUpdated);
         assertNull("Should have no active goal", activeGoal);
         assertEquals("Should still be in history", 1, history.size());
-        assertTrue("Goal should be marked as achieved", history.get(0).getIsAchieved());
-        assertFalse("Goal should be inactive", history.get(0).getIsActive());
+        assertTrue("Goal should be marked as achieved", history.get(0).isAchieved());
+        assertFalse("Goal should be inactive", history.get(0).isActive());
     }
 
     // Helper method to create test goals
@@ -507,8 +507,8 @@ public class GoalWeightDAOTest {
         goal.setStartWeight(startWeight);
         goal.setCreatedAt(LocalDateTime.now());
         goal.setUpdatedAt(LocalDateTime.now());
-        goal.setIsActive(isActive);
-        goal.setIsAchieved(isAchieved);
+        goal.setActive(isActive);
+        goal.setAchieved(isAchieved);
         return goal;
     }
 }

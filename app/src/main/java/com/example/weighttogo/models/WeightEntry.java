@@ -114,12 +114,12 @@ public class WeightEntry {
         this.updatedAt = updatedAt;
     }
 
-    public boolean getIsDeleted() {
+    public boolean isDeleted() {
         return isDeleted;
     }
 
-    public void setIsDeleted(boolean isDeleted) {
-        this.isDeleted = isDeleted;
+    public void setDeleted(boolean deleted) {
+        this.isDeleted = deleted;
     }
 
     /**

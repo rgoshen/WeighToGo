@@ -58,8 +58,8 @@ public class GoalWeightDAO {
         values.put("start_weight", goal.getStartWeight());
         values.put("created_at", goal.getCreatedAt().format(ISO_DATETIME_FORMATTER));
         values.put("updated_at", goal.getUpdatedAt().format(ISO_DATETIME_FORMATTER));
-        values.put("is_active", goal.getIsActive() ? 1 : 0);
-        values.put("is_achieved", goal.getIsAchieved() ? 1 : 0);
+        values.put("is_active", goal.isActive() ? 1 : 0);
+        values.put("is_achieved", goal.isAchieved() ? 1 : 0);
 
         if (goal.getTargetDate() != null) {
             values.put("target_date", goal.getTargetDate().format(ISO_DATE_FORMATTER));
@@ -157,8 +157,8 @@ public class GoalWeightDAO {
         values.put("goal_unit", goal.getGoalUnit());
         values.put("start_weight", goal.getStartWeight());
         values.put("updated_at", LocalDateTime.now().format(ISO_DATETIME_FORMATTER));
-        values.put("is_active", goal.getIsActive() ? 1 : 0);
-        values.put("is_achieved", goal.getIsAchieved() ? 1 : 0);
+        values.put("is_active", goal.isActive() ? 1 : 0);
+        values.put("is_achieved", goal.isAchieved() ? 1 : 0);
 
         // Allow explicit NULL for optional date fields
         if (goal.getTargetDate() != null) {
@@ -244,6 +244,49 @@ public class GoalWeightDAO {
     }
 
     /**
+     * Sets a new active goal for a user, automatically deactivating any existing active goals.
+     *
+     * <p><strong>Transaction Support:</strong> This operation uses a database transaction to ensure
+     * atomicity. Either both the deactivation and insertion succeed, or neither does (rollback).</p>
+     *
+     * <p>This prevents race conditions where a user might temporarily have multiple active goals
+     * or no active goal due to partial operation failure.</p>
+     *
+     * @param newGoal The new goal to set as active (must have isActive=true)
+     * @return goal_id of the newly inserted goal, or -1 if transaction failed
+     */
+    public long setNewActiveGoal(@NonNull GoalWeight newGoal) {
+        Log.d(TAG, "setNewActiveGoal: Setting new goal for user_id=" + newGoal.getUserId());
+
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        db.beginTransaction();
+
+        try {
+            // Step 1: Deactivate all existing goals for this user
+            int deactivated = deactivateAllGoalsForUser(newGoal.getUserId());
+            Log.d(TAG, "setNewActiveGoal: Deactivated " + deactivated + " existing goals");
+
+            // Step 2: Insert the new goal
+            long goalId = insertGoal(newGoal);
+
+            if (goalId > 0) {
+                db.setTransactionSuccessful();
+                Log.i(TAG, "setNewActiveGoal: Transaction successful, new goal_id=" + goalId);
+                return goalId;
+            } else {
+                Log.e(TAG, "setNewActiveGoal: Insert failed, transaction will rollback");
+                return -1;
+            }
+
+        } catch (Exception e) {
+            Log.e(TAG, "setNewActiveGoal: Exception during transaction, rolling back", e);
+            return -1;
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    /**
      * Maps cursor to GoalWeight object.
      */
     private GoalWeight mapCursorToGoal(@NonNull Cursor cursor) {
@@ -261,8 +304,8 @@ public class GoalWeightDAO {
         String updatedStr = cursor.getString(cursor.getColumnIndexOrThrow("updated_at"));
         goal.setUpdatedAt(LocalDateTime.parse(updatedStr, ISO_DATETIME_FORMATTER));
 
-        goal.setIsActive(cursor.getInt(cursor.getColumnIndexOrThrow("is_active")) == 1);
-        goal.setIsAchieved(cursor.getInt(cursor.getColumnIndexOrThrow("is_achieved")) == 1);
+        goal.setActive(cursor.getInt(cursor.getColumnIndexOrThrow("is_active")) == 1);
+        goal.setAchieved(cursor.getInt(cursor.getColumnIndexOrThrow("is_achieved")) == 1);
 
         int targetDateIndex = cursor.getColumnIndexOrThrow("target_date");
         if (!cursor.isNull(targetDateIndex)) {

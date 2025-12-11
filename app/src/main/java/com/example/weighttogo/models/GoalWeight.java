@@ -101,12 +101,12 @@ public class GoalWeight {
         this.targetDate = targetDate;
     }
 
-    public boolean getIsAchieved() {
+    public boolean isAchieved() {
         return isAchieved;
     }
 
-    public void setIsAchieved(boolean isAchieved) {
-        this.isAchieved = isAchieved;
+    public void setAchieved(boolean achieved) {
+        this.isAchieved = achieved;
     }
 
     @Nullable
@@ -136,12 +136,12 @@ public class GoalWeight {
         this.updatedAt = updatedAt;
     }
 
-    public boolean getIsActive() {
+    public boolean isActive() {
         return isActive;
     }
 
-    public void setIsActive(boolean isActive) {
-        this.isActive = isActive;
+    public void setActive(boolean active) {
+        this.isActive = active;
     }
 
     /**

@@ -147,12 +147,12 @@ public class User {
         this.lastLogin = lastLogin;
     }
 
-    public boolean getIsActive() {
+    public boolean isActive() {
         return isActive;
     }
 
-    public void setIsActive(boolean isActive) {
-        this.isActive = isActive;
+    public void setActive(boolean active) {
+        this.isActive = active;
     }
 
     /**

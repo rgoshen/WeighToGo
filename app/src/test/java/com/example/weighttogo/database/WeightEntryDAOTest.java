@@ -36,7 +36,7 @@ public class WeightEntryDAOTest {
     private long testUserId;
 
     @Before
-    public void setUp() {
+    public void setUp() throws DatabaseException {
         Context context = RuntimeEnvironment.getApplication();
         dbHelper = WeighToGoDBHelper.getInstance(context);
         weightEntryDAO = new WeightEntryDAO(dbHelper);
@@ -49,7 +49,7 @@ public class WeightEntryDAOTest {
         testUser.setSalt("salt123");
         testUser.setCreatedAt(LocalDateTime.now());
         testUser.setUpdatedAt(LocalDateTime.now());
-        testUser.setIsActive(true);
+        testUser.setActive(true);
 
         testUserId = userDAO.insertUser(testUser);
         assertTrue("Test user should be created", testUserId > 0);
@@ -74,7 +74,7 @@ public class WeightEntryDAOTest {
         entry.setWeightDate(LocalDate.now());
         entry.setCreatedAt(LocalDateTime.now());
         entry.setUpdatedAt(LocalDateTime.now());
-        entry.setIsDeleted(false);
+        entry.setDeleted(false);
 
         // ACT
         long weightId = weightEntryDAO.insertWeightEntry(entry);
@@ -94,7 +94,7 @@ public class WeightEntryDAOTest {
         entry.setNotes("Feeling great today!");
         entry.setCreatedAt(LocalDateTime.now());
         entry.setUpdatedAt(LocalDateTime.now());
-        entry.setIsDeleted(false);
+        entry.setDeleted(false);
 
         // ACT
         long weightId = weightEntryDAO.insertWeightEntry(entry);
@@ -115,7 +115,7 @@ public class WeightEntryDAOTest {
         entry.setWeightDate(LocalDate.of(2025, 12, 10));
         entry.setCreatedAt(LocalDateTime.now());
         entry.setUpdatedAt(LocalDateTime.now());
-        entry.setIsDeleted(false);
+        entry.setDeleted(false);
 
         long weightId = weightEntryDAO.insertWeightEntry(entry);
 
@@ -161,15 +161,15 @@ public class WeightEntryDAOTest {
     }
 
     @Test
-    public void test_getWeightEntriesForUser_withNoEntries_returnsEmptyList() {
+    public void test_getWeightEntriesForUser_withNoEntries_returnsEmptyList() throws DatabaseException {
         // Create a second user with no entries
         User user2 = new User();
-        user2.setUsername("user2");
+        user2.setUsername("user2_entries_" + System.currentTimeMillis());
         user2.setPasswordHash("hash");
         user2.setSalt("salt");
         user2.setCreatedAt(LocalDateTime.now());
         user2.setUpdatedAt(LocalDateTime.now());
-        user2.setIsActive(true);
+        user2.setActive(true);
         long user2Id = userDAO.insertUser(user2);
 
         // ACT
@@ -201,15 +201,15 @@ public class WeightEntryDAOTest {
     }
 
     @Test
-    public void test_getLatestWeightEntry_withNoEntries_returnsNull() {
+    public void test_getLatestWeightEntry_withNoEntries_returnsNull() throws DatabaseException {
         // Create a second user with no entries
         User user2 = new User();
-        user2.setUsername("user2");
+        user2.setUsername("user2_latest_" + System.currentTimeMillis());
         user2.setPasswordHash("hash");
         user2.setSalt("salt");
         user2.setCreatedAt(LocalDateTime.now());
         user2.setUpdatedAt(LocalDateTime.now());
-        user2.setIsActive(true);
+        user2.setActive(true);
         long user2Id = userDAO.insertUser(user2);
 
         // ACT
@@ -254,7 +254,7 @@ public class WeightEntryDAOTest {
         // ASSERT
         assertEquals("Should update 1 row", 1, rowsDeleted);
         assertNotNull("Entry should still exist in database", retrieved);
-        assertTrue("Entry should be marked as deleted", retrieved.getIsDeleted());
+        assertTrue("Entry should be marked as deleted", retrieved.isDeleted());
         assertEquals("Deleted entry should not appear in user's list", 0, userEntries.size());
     }
 
@@ -469,7 +469,7 @@ public class WeightEntryDAOTest {
         entry.setWeightDate(date);
         entry.setCreatedAt(LocalDateTime.now());
         entry.setUpdatedAt(LocalDateTime.now());
-        entry.setIsDeleted(isDeleted);
+        entry.setDeleted(isDeleted);
         return entry;
     }
 }
