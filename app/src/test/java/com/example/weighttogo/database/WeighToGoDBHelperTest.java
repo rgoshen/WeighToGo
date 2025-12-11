@@ -83,28 +83,28 @@ public class WeighToGoDBHelperTest {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
 
         // ASSERT - Check table exists
-        Cursor cursor = db.rawQuery(
+        try (Cursor cursor = db.rawQuery(
             "SELECT name FROM sqlite_master WHERE type='table' AND name='users'",
             null
-        );
-        assertTrue("users table should exist", cursor.moveToFirst());
-        cursor.close();
+        )) {
+            assertTrue("users table should exist", cursor.moveToFirst());
+        }
 
         // ASSERT - Check table schema
-        cursor = db.rawQuery("PRAGMA table_info(users)", null);
-        int columnCount = cursor.getCount();
-        assertEquals("users table should have 11 columns", 11, columnCount);
+        try (Cursor cursor = db.rawQuery("PRAGMA table_info(users)", null)) {
+            int columnCount = cursor.getCount();
+            assertEquals("users table should have 11 columns", 11, columnCount);
 
-        // Verify column names (order matters in PRAGMA table_info)
-        String[] expectedColumns = {"id", "username", "password_hash", "salt", "created_at", "last_login", "email", "phone_number", "display_name", "updated_at", "is_active"};
-        int index = 0;
-        while (cursor.moveToNext()) {
-            String columnName = cursor.getString(cursor.getColumnIndexOrThrow("name"));
-            assertEquals("Column " + index + " should be " + expectedColumns[index],
-                expectedColumns[index], columnName);
-            index++;
+            // Verify column names (order matters in PRAGMA table_info)
+            String[] expectedColumns = {"id", "username", "password_hash", "salt", "created_at", "last_login", "email", "phone_number", "display_name", "updated_at", "is_active"};
+            int index = 0;
+            while (cursor.moveToNext()) {
+                String columnName = cursor.getString(cursor.getColumnIndexOrThrow("name"));
+                assertEquals("Column " + index + " should be " + expectedColumns[index],
+                    expectedColumns[index], columnName);
+                index++;
+            }
         }
-        cursor.close();
     }
 
     /**
@@ -116,40 +116,40 @@ public class WeighToGoDBHelperTest {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
 
         // ASSERT - Check table exists
-        Cursor cursor = db.rawQuery(
+        try (Cursor cursor = db.rawQuery(
             "SELECT name FROM sqlite_master WHERE type='table' AND name='weight_entries'",
             null
-        );
-        assertTrue("weight_entries table should exist", cursor.moveToFirst());
-        cursor.close();
+        )) {
+            assertTrue("weight_entries table should exist", cursor.moveToFirst());
+        }
 
         // ASSERT - Check table schema
-        cursor = db.rawQuery("PRAGMA table_info(weight_entries)", null);
-        int columnCount = cursor.getCount();
-        assertEquals("weight_entries table should have 9 columns", 9, columnCount);
+        try (Cursor cursor = db.rawQuery("PRAGMA table_info(weight_entries)", null)) {
+            int columnCount = cursor.getCount();
+            assertEquals("weight_entries table should have 9 columns", 9, columnCount);
 
-        // Verify required columns exist
-        boolean hasWeightId = false;
-        boolean hasUserId = false;
-        boolean hasWeightValue = false;
-        boolean hasWeightDate = false;
-        boolean hasIsDeleted = false;
+            // Verify required columns exist
+            boolean hasWeightId = false;
+            boolean hasUserId = false;
+            boolean hasWeightValue = false;
+            boolean hasWeightDate = false;
+            boolean hasIsDeleted = false;
 
-        while (cursor.moveToNext()) {
-            String columnName = cursor.getString(cursor.getColumnIndexOrThrow("name"));
-            if (columnName.equals("id")) hasWeightId = true;
-            if (columnName.equals("user_id")) hasUserId = true;
-            if (columnName.equals("weight_value")) hasWeightValue = true;
-            if (columnName.equals("weight_date")) hasWeightDate = true;
-            if (columnName.equals("is_deleted")) hasIsDeleted = true;
+            while (cursor.moveToNext()) {
+                String columnName = cursor.getString(cursor.getColumnIndexOrThrow("name"));
+                if (columnName.equals("id")) hasWeightId = true;
+                if (columnName.equals("user_id")) hasUserId = true;
+                if (columnName.equals("weight_value")) hasWeightValue = true;
+                if (columnName.equals("weight_date")) hasWeightDate = true;
+                if (columnName.equals("is_deleted")) hasIsDeleted = true;
+            }
+
+            assertTrue("weight_entries should have id column", hasWeightId);
+            assertTrue("weight_entries should have user_id column", hasUserId);
+            assertTrue("weight_entries should have weight_value column", hasWeightValue);
+            assertTrue("weight_entries should have weight_date column", hasWeightDate);
+            assertTrue("weight_entries should have is_deleted column", hasIsDeleted);
         }
-        cursor.close();
-
-        assertTrue("weight_entries should have id column", hasWeightId);
-        assertTrue("weight_entries should have user_id column", hasUserId);
-        assertTrue("weight_entries should have weight_value column", hasWeightValue);
-        assertTrue("weight_entries should have weight_date column", hasWeightDate);
-        assertTrue("weight_entries should have is_deleted column", hasIsDeleted);
     }
 
     /**
@@ -161,37 +161,37 @@ public class WeighToGoDBHelperTest {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
 
         // ASSERT - Check table exists
-        Cursor cursor = db.rawQuery(
+        try (Cursor cursor = db.rawQuery(
             "SELECT name FROM sqlite_master WHERE type='table' AND name='goal_weights'",
             null
-        );
-        assertTrue("goal_weights table should exist", cursor.moveToFirst());
-        cursor.close();
+        )) {
+            assertTrue("goal_weights table should exist", cursor.moveToFirst());
+        }
 
         // ASSERT - Check table schema
-        cursor = db.rawQuery("PRAGMA table_info(goal_weights)", null);
-        int columnCount = cursor.getCount();
-        assertEquals("goal_weights table should have 11 columns", 11, columnCount);
+        try (Cursor cursor = db.rawQuery("PRAGMA table_info(goal_weights)", null)) {
+            int columnCount = cursor.getCount();
+            assertEquals("goal_weights table should have 11 columns", 11, columnCount);
 
-        // Verify required columns exist
-        boolean hasGoalId = false;
-        boolean hasUserId = false;
-        boolean hasGoalWeight = false;
-        boolean hasIsActive = false;
+            // Verify required columns exist
+            boolean hasGoalId = false;
+            boolean hasUserId = false;
+            boolean hasGoalWeight = false;
+            boolean hasIsActive = false;
 
-        while (cursor.moveToNext()) {
-            String columnName = cursor.getString(cursor.getColumnIndexOrThrow("name"));
-            if (columnName.equals("id")) hasGoalId = true;
-            if (columnName.equals("user_id")) hasUserId = true;
-            if (columnName.equals("goal_weight")) hasGoalWeight = true;
-            if (columnName.equals("is_active")) hasIsActive = true;
+            while (cursor.moveToNext()) {
+                String columnName = cursor.getString(cursor.getColumnIndexOrThrow("name"));
+                if (columnName.equals("id")) hasGoalId = true;
+                if (columnName.equals("user_id")) hasUserId = true;
+                if (columnName.equals("goal_weight")) hasGoalWeight = true;
+                if (columnName.equals("is_active")) hasIsActive = true;
+            }
+
+            assertTrue("goal_weights should have id column", hasGoalId);
+            assertTrue("goal_weights should have user_id column", hasUserId);
+            assertTrue("goal_weights should have goal_weight column", hasGoalWeight);
+            assertTrue("goal_weights should have is_active column", hasIsActive);
         }
-        cursor.close();
-
-        assertTrue("goal_weights should have id column", hasGoalId);
-        assertTrue("goal_weights should have user_id column", hasUserId);
-        assertTrue("goal_weights should have goal_weight column", hasGoalWeight);
-        assertTrue("goal_weights should have is_active column", hasIsActive);
     }
 
     /**
@@ -203,12 +203,11 @@ public class WeighToGoDBHelperTest {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
 
         // ASSERT - Check foreign_keys pragma is ON
-        Cursor cursor = db.rawQuery("PRAGMA foreign_keys", null);
-        assertTrue("PRAGMA foreign_keys should return a result", cursor.moveToFirst());
-        int foreignKeysEnabled = cursor.getInt(0);
-        cursor.close();
-
-        assertEquals("Foreign keys should be enabled (1)", 1, foreignKeysEnabled);
+        try (Cursor cursor = db.rawQuery("PRAGMA foreign_keys", null)) {
+            assertTrue("PRAGMA foreign_keys should return a result", cursor.moveToFirst());
+            int foreignKeysEnabled = cursor.getInt(0);
+            assertEquals("Foreign keys should be enabled (1)", 1, foreignKeysEnabled);
+        }
     }
 
     // ========== EDGE CASE TESTS ==========
@@ -302,12 +301,12 @@ public class WeighToGoDBHelperTest {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
 
         // ASSERT - Check index exists
-        Cursor cursor = db.rawQuery(
+        try (Cursor cursor = db.rawQuery(
             "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_weight_entries_user_id'",
             null
-        );
-        assertTrue("Index idx_weight_entries_user_id should exist", cursor.moveToFirst());
-        cursor.close();
+        )) {
+            assertTrue("Index idx_weight_entries_user_id should exist", cursor.moveToFirst());
+        }
     }
 
     /**
@@ -320,12 +319,12 @@ public class WeighToGoDBHelperTest {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
 
         // ASSERT - Check index exists
-        Cursor cursor = db.rawQuery(
+        try (Cursor cursor = db.rawQuery(
             "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_goal_weights_user_id'",
             null
-        );
-        assertTrue("Index idx_goal_weights_user_id should exist", cursor.moveToFirst());
-        cursor.close();
+        )) {
+            assertTrue("Index idx_goal_weights_user_id should exist", cursor.moveToFirst());
+        }
     }
 
     /**
@@ -338,22 +337,22 @@ public class WeighToGoDBHelperTest {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
 
         // ASSERT - Check index exists
-        Cursor cursor = db.rawQuery(
+        try (Cursor cursor = db.rawQuery(
             "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_users_username'",
             null
-        );
-        assertTrue("Index idx_users_username should exist", cursor.moveToFirst());
-        cursor.close();
+        )) {
+            assertTrue("Index idx_users_username should exist", cursor.moveToFirst());
+        }
 
         // ASSERT - Verify it's a unique index by checking sql column
-        cursor = db.rawQuery(
+        try (Cursor cursor = db.rawQuery(
             "SELECT sql FROM sqlite_master WHERE type='index' AND name='idx_users_username'",
             null
-        );
-        assertTrue("Should find index definition", cursor.moveToFirst());
-        String sql = cursor.getString(0);
-        assertTrue("Index should be UNIQUE", sql.toUpperCase().contains("UNIQUE"));
-        cursor.close();
+        )) {
+            assertTrue("Should find index definition", cursor.moveToFirst());
+            String sql = cursor.getString(0);
+            assertTrue("Index should be UNIQUE", sql.toUpperCase().contains("UNIQUE"));
+        }
     }
 
     /**
@@ -366,12 +365,12 @@ public class WeighToGoDBHelperTest {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
 
         // ASSERT - Check index exists
-        Cursor cursor = db.rawQuery(
+        try (Cursor cursor = db.rawQuery(
             "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_weight_entries_weight_date'",
             null
-        );
-        assertTrue("Index idx_weight_entries_weight_date should exist", cursor.moveToFirst());
-        cursor.close();
+        )) {
+            assertTrue("Index idx_weight_entries_weight_date should exist", cursor.moveToFirst());
+        }
     }
 
     /**
@@ -384,12 +383,12 @@ public class WeighToGoDBHelperTest {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
 
         // ASSERT - Check index exists
-        Cursor cursor = db.rawQuery(
+        try (Cursor cursor = db.rawQuery(
             "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_goal_weights_is_active'",
             null
-        );
-        assertTrue("Index idx_goal_weights_is_active should exist", cursor.moveToFirst());
-        cursor.close();
+        )) {
+            assertTrue("Index idx_goal_weights_is_active should exist", cursor.moveToFirst());
+        }
     }
 
     /**
@@ -402,12 +401,12 @@ public class WeighToGoDBHelperTest {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
 
         // ASSERT - Check index exists
-        Cursor cursor = db.rawQuery(
+        try (Cursor cursor = db.rawQuery(
             "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_weight_entries_is_deleted'",
             null
-        );
-        assertTrue("Index idx_weight_entries_is_deleted should exist", cursor.moveToFirst());
-        cursor.close();
+        )) {
+            assertTrue("Index idx_weight_entries_is_deleted should exist", cursor.moveToFirst());
+        }
     }
 
     // ========== EDGE CASE TESTS ==========
@@ -428,37 +427,37 @@ public class WeighToGoDBHelperTest {
         );
 
         // Verify data exists
-        Cursor cursor = db.rawQuery("SELECT COUNT(*) FROM users", null);
-        cursor.moveToFirst();
-        int userCountBefore = cursor.getInt(0);
-        cursor.close();
-        assertEquals("Should have 1 user before upgrade", 1, userCountBefore);
+        try (Cursor cursor = db.rawQuery("SELECT COUNT(*) FROM users", null)) {
+            cursor.moveToFirst();
+            int userCountBefore = cursor.getInt(0);
+            assertEquals("Should have 1 user before upgrade", 1, userCountBefore);
+        }
 
         // ACT - Trigger onUpgrade (simulates version 1 -> 2)
         dbHelper.onUpgrade(db, 1, 2);
 
         // ASSERT - Tables should be recreated (data lost, but tables exist)
         // Check users table exists and is empty
-        cursor = db.rawQuery("SELECT COUNT(*) FROM users", null);
-        cursor.moveToFirst();
-        int userCountAfter = cursor.getInt(0);
-        cursor.close();
-        assertEquals("Users table should be empty after upgrade", 0, userCountAfter);
+        try (Cursor cursor = db.rawQuery("SELECT COUNT(*) FROM users", null)) {
+            cursor.moveToFirst();
+            int userCountAfter = cursor.getInt(0);
+            assertEquals("Users table should be empty after upgrade", 0, userCountAfter);
+        }
 
         // Check weight_entries table exists
-        cursor = db.rawQuery(
+        try (Cursor cursor = db.rawQuery(
             "SELECT name FROM sqlite_master WHERE type='table' AND name='weight_entries'",
             null
-        );
-        assertTrue("weight_entries table should exist after upgrade", cursor.moveToFirst());
-        cursor.close();
+        )) {
+            assertTrue("weight_entries table should exist after upgrade", cursor.moveToFirst());
+        }
 
         // Check goal_weights table exists
-        cursor = db.rawQuery(
+        try (Cursor cursor = db.rawQuery(
             "SELECT name FROM sqlite_master WHERE type='table' AND name='goal_weights'",
             null
-        );
-        assertTrue("goal_weights table should exist after upgrade", cursor.moveToFirst());
-        cursor.close();
+        )) {
+            assertTrue("goal_weights table should exist after upgrade", cursor.moveToFirst());
+        }
     }
 }

@@ -133,4 +133,44 @@ public final class DateTimeConverter {
             return null;
         }
     }
+
+    /**
+     * Validates if a string matches the expected timestamp format.
+     * Useful for DAO layer to quickly check format before parsing.
+     *
+     * @param timestamp the timestamp string to validate
+     * @return true if timestamp matches "yyyy-MM-dd HH:mm:ss" format, false otherwise
+     */
+    public static boolean isValidTimestamp(String timestamp) {
+        if (timestamp == null || timestamp.trim().isEmpty()) {
+            return false;
+        }
+
+        try {
+            LocalDateTime.parse(timestamp, TIMESTAMP_FORMATTER);
+            return true;
+        } catch (DateTimeParseException e) {
+            return false;
+        }
+    }
+
+    /**
+     * Validates if a string matches the expected date format.
+     * Useful for DAO layer to quickly check format before parsing.
+     *
+     * @param dateString the date string to validate
+     * @return true if dateString matches "yyyy-MM-dd" format, false otherwise
+     */
+    public static boolean isValidDateString(String dateString) {
+        if (dateString == null || dateString.trim().isEmpty()) {
+            return false;
+        }
+
+        try {
+            LocalDate.parse(dateString, DATE_FORMATTER);
+            return true;
+        } catch (DateTimeParseException e) {
+            return false;
+        }
+    }
 }
