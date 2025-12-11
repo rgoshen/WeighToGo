@@ -9,8 +9,10 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.example.weighttogo.R;
+import com.example.weighttogo.adapters.WeightEntryAdapter;
+import com.example.weighttogo.models.WeightEntry;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements WeightEntryAdapter.OnItemClickListener {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -22,5 +24,15 @@ public class MainActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+    }
+
+    @Override
+    public void onEditClick(WeightEntry entry) {
+        // TODO: Implement in GREEN phase
+    }
+
+    @Override
+    public void onDeleteClick(WeightEntry entry) {
+        // TODO: Implement in GREEN phase
     }
 }
