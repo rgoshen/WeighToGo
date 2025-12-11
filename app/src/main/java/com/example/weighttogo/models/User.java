@@ -66,75 +66,84 @@ public class User {
         this.userId = userId;
     }
 
+    @NonNull
     public String getUsername() {
         return username;
     }
 
-    public void setUsername(String username) {
+    public void setUsername(@NonNull String username) {
         this.username = username;
     }
 
+    @Nullable
     public String getEmail() {
         return email;
     }
 
-    public void setEmail(String email) {
+    public void setEmail(@Nullable String email) {
         this.email = email;
     }
 
+    @Nullable
     public String getPhoneNumber() {
         return phoneNumber;
     }
 
-    public void setPhoneNumber(String phoneNumber) {
+    public void setPhoneNumber(@Nullable String phoneNumber) {
         this.phoneNumber = phoneNumber;
     }
 
+    @Nullable
     public String getDisplayName() {
         return displayName;
     }
 
-    public void setDisplayName(String displayName) {
+    public void setDisplayName(@Nullable String displayName) {
         this.displayName = displayName;
     }
 
+    @NonNull
     public String getPasswordHash() {
         return passwordHash;
     }
 
-    public void setPasswordHash(String passwordHash) {
+    public void setPasswordHash(@NonNull String passwordHash) {
         this.passwordHash = passwordHash;
     }
 
+    @NonNull
     public String getSalt() {
         return salt;
     }
 
-    public void setSalt(String salt) {
+    public void setSalt(@NonNull String salt) {
         this.salt = salt;
     }
 
+    @NonNull
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
+    public void setCreatedAt(@NonNull LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
 
+    @NonNull
     public LocalDateTime getUpdatedAt() {
         return updatedAt;
     }
 
-    public void setUpdatedAt(LocalDateTime updatedAt) {
+    public void setUpdatedAt(@NonNull LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
     }
 
+    @Nullable
     public LocalDateTime getLastLogin() {
         return lastLogin;
     }
 
-    public void setLastLogin(LocalDateTime lastLogin) {
+    public void setLastLogin(@Nullable LocalDateTime lastLogin) {
         this.lastLogin = lastLogin;
     }
 
@@ -165,6 +174,7 @@ public class User {
         return Long.hashCode(userId);
     }
 
+    @NonNull
     @Override
     public String toString() {
         return "User{" +

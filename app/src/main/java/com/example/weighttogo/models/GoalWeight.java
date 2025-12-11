@@ -75,11 +75,12 @@ public class GoalWeight {
         this.goalWeight = goalWeight;
     }
 
+    @NonNull
     public String getGoalUnit() {
         return goalUnit;
     }
 
-    public void setGoalUnit(String goalUnit) {
+    public void setGoalUnit(@NonNull String goalUnit) {
         this.goalUnit = goalUnit;
     }
 
@@ -91,11 +92,12 @@ public class GoalWeight {
         this.startWeight = startWeight;
     }
 
+    @Nullable
     public LocalDate getTargetDate() {
         return targetDate;
     }
 
-    public void setTargetDate(LocalDate targetDate) {
+    public void setTargetDate(@Nullable LocalDate targetDate) {
         this.targetDate = targetDate;
     }
 
@@ -107,27 +109,30 @@ public class GoalWeight {
         this.isAchieved = isAchieved;
     }
 
+    @Nullable
     public LocalDate getAchievedDate() {
         return achievedDate;
     }
 
-    public void setAchievedDate(LocalDate achievedDate) {
+    public void setAchievedDate(@Nullable LocalDate achievedDate) {
         this.achievedDate = achievedDate;
     }
 
+    @NonNull
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
+    public void setCreatedAt(@NonNull LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
 
+    @NonNull
     public LocalDateTime getUpdatedAt() {
         return updatedAt;
     }
 
-    public void setUpdatedAt(LocalDateTime updatedAt) {
+    public void setUpdatedAt(@NonNull LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
     }
 
@@ -158,6 +163,7 @@ public class GoalWeight {
         return Long.hashCode(goalId);
     }
 
+    @NonNull
     @Override
     public String toString() {
         return "GoalWeight{" +

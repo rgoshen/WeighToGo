@@ -69,43 +69,48 @@ public class WeightEntry {
         this.weightValue = weightValue;
     }
 
+    @NonNull
     public String getWeightUnit() {
         return weightUnit;
     }
 
-    public void setWeightUnit(String weightUnit) {
+    public void setWeightUnit(@NonNull String weightUnit) {
         this.weightUnit = weightUnit;
     }
 
+    @NonNull
     public LocalDate getWeightDate() {
         return weightDate;
     }
 
-    public void setWeightDate(LocalDate weightDate) {
+    public void setWeightDate(@NonNull LocalDate weightDate) {
         this.weightDate = weightDate;
     }
 
+    @Nullable
     public String getNotes() {
         return notes;
     }
 
-    public void setNotes(String notes) {
+    public void setNotes(@Nullable String notes) {
         this.notes = notes;
     }
 
+    @NonNull
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
+    public void setCreatedAt(@NonNull LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
 
+    @NonNull
     public LocalDateTime getUpdatedAt() {
         return updatedAt;
     }
 
-    public void setUpdatedAt(LocalDateTime updatedAt) {
+    public void setUpdatedAt(@NonNull LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
     }
 
@@ -136,6 +141,7 @@ public class WeightEntry {
         return Long.hashCode(weightId);
     }
 
+    @NonNull
     @Override
     public String toString() {
         return "WeightEntry{" +

@@ -1034,3 +1034,135 @@ All model classes implemented with TDD and fully compliant with database schema:
 - ✅ GoalWeight (17 tests) - 11 fields, equals/hashCode, Javadoc, nullability annotations
 - ✅ All packages created (activities, adapters, database, models, utils, constants)
 - **Total: 55 tests, 100% model coverage, Phase 1.1 + 1.2 complete**
+
+---
+
+## [2025-12-10] Fix: Add Nullability Annotations to Getters/Setters - Completed
+
+### Work Completed
+**Added @Nullable/@NonNull annotations to:**
+- All getter return types (must match field nullability)
+- All setter parameters (must match field nullability)
+- All toString() methods (always @NonNull)
+
+**User.java - 9 annotated methods:**
+- @NonNull getters/setters: username, passwordHash, salt, createdAt, updatedAt
+- @Nullable getters/setters: email, phoneNumber, displayName, lastLogin
+- @NonNull toString()
+
+**WeightEntry.java - 5 annotated methods:**
+- @NonNull getters/setters: weightUnit, weightDate, createdAt, updatedAt
+- @Nullable getters/setters: notes
+- @NonNull toString()
+
+**GoalWeight.java - 5 annotated methods:**
+- @NonNull getters/setters: goalUnit, createdAt, updatedAt
+- @Nullable getters/setters: targetDate, achievedDate
+- @NonNull toString()
+
+### Rationale
+
+#### 1. IDE Warnings About Missing Annotations
+**Issue**: Android Studio showed warnings on getters/setters for fields with @Nullable/@NonNull
+- Fields had nullability annotations, but getters/setters did not
+- This creates inconsistency - field is marked @Nullable but getter returns un-annotated String
+- Android Lint couldn't provide proper null-safety warnings for method calls
+
+**Solution**: Added matching annotations to getters/setters
+```java
+// BEFORE (incomplete)
+@Nullable private String email;
+public String getEmail() { return email; }  // Missing @Nullable!
+public void setEmail(String email) { this.email = email; }  // Missing @Nullable!
+
+// AFTER (complete)
+@Nullable private String email;
+@Nullable public String getEmail() { return email; }  // Now annotated
+public void setEmail(@Nullable String email) { this.email = email; }  // Now annotated
+```
+
+#### 2. Why Getters Need Annotations
+**Getter return type must match field nullability:**
+- If field is @Nullable, getter can return null → getter must be @Nullable
+- If field is @NonNull, getter never returns null → getter must be @NonNull
+
+**Benefits:**
+- Android Lint warns when nullable result is used without null check:
+  ```java
+  String email = user.getEmail();  // Warning: may be null
+  email.toLowerCase();  // Potential NullPointerException!
+  ```
+- IDE shows better hints: "Method may return null" or "Method never returns null"
+- Kotlin interop: @Nullable → String?, @NonNull → String
+
+#### 3. Why Setters Need Annotations
+**Setter parameter must match field nullability:**
+- If field is @Nullable, setter can accept null → parameter must be @Nullable
+- If field is @NonNull, setter must reject null → parameter must be @NonNull
+
+**Benefits:**
+- Android Lint warns when passing null to @NonNull parameter:
+  ```java
+  user.setUsername(null);  // Error: @NonNull parameter expects non-null
+  user.setEmail(null);     // OK: @Nullable parameter accepts null
+  ```
+- Documents API contract: which setters accept null, which require non-null
+- Runtime validation opportunity: @NonNull setters could check for null (future)
+
+#### 4. Why toString() Needs @NonNull
+**Issue**: toString() overrides Object.toString() which is marked @RecentlyNonNull in Android SDK
+- IDE warning: "Not annotated method overrides method annotated with @RecentlyNonNull"
+
+**Solution**: Added @NonNull to all toString() methods
+```java
+@NonNull
+@Override
+public String toString() {
+    return "User{...}";  // Always returns non-null String
+}
+```
+
+**Why @NonNull?**
+- toString() contract: always returns a non-null String
+- Useful for debugging, logging - should never throw NullPointerException
+- Consistent with Object.toString() nullability
+
+#### 5. Complete Nullability Contract
+**Before**: Partial nullability - only fields annotated
+**After**: Complete nullability - fields, getters, setters, toString all annotated
+
+**Coverage:**
+- ✅ Fields: @Nullable/@NonNull on declarations
+- ✅ Getters: @Nullable/@NonNull on return types
+- ✅ Setters: @Nullable/@NonNull on parameters
+- ✅ toString(): @NonNull on return type
+- ✅ equals(): No annotation needed (boolean never null)
+- ✅ hashCode(): No annotation needed (int never null)
+
+### Lessons Learned
+1. **Field annotations are not enough** - Getters/setters also need annotations for complete null safety
+2. **Match field nullability** - Getter return type and setter parameter must match field annotation
+3. **toString() is always @NonNull** - Part of Java contract, should document it
+4. **IDE warnings are helpful** - They catch incomplete nullability annotations
+5. **Annotations improve API clarity** - Developers immediately see which methods accept/return null
+6. **Kotlin interop benefits** - @Nullable/@NonNull map directly to Kotlin's nullable types
+7. **Android Lint uses annotations** - Better static analysis with complete nullability information
+
+### Technical Debt
+None identified
+
+### Test Coverage
+- All 55 tests still passing (no test changes needed)
+- Annotations are compile-time metadata, don't affect runtime behavior
+- Lint check passes with no warnings
+
+### IDE Warnings Resolved
+✅ **Getter/setter missing nullability annotations** - All resolved
+✅ **toString() missing @NonNull annotation** - All resolved
+
+### Benefits Achieved
+- ✅ Complete null-safety documentation on all model methods
+- ✅ Android Lint can warn about improper null handling
+- ✅ Better IDE auto-completion and hints
+- ✅ Kotlin interop ready (nullable types map correctly)
+- ✅ API contract clarity (which methods accept/return null)
