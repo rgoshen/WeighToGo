@@ -1,5 +1,61 @@
 # Project Summary - Weigh to Go!
 
+## [2025-12-11] Phase 3: Main Dashboard - DateUtils and WeightEntryAdapter (In Progress)
+
+### Work Completed
+**Phase 3.1: DateUtils (Completed 2025-12-11)**
+- Created `DateUtilsTest.java` with 9 comprehensive unit tests
+- Implemented `DateUtils.java` utility class with 4 methods:
+  - `formatDateShort(date)` - Returns "d MMM" format (e.g., "26 Nov")
+  - `formatDateFull(date)` - Returns "EEEE, MMMM d, yyyy" format (e.g., "Wednesday, November 26, 2025")
+  - `isToday(date)` - Boolean comparison with LocalDate.now()
+  - `calculateDayStreak(entries)` - Counts consecutive days from latest entry, stops at first gap
+- All 9 tests passing, null-safe implementation
+- 2 commits: test suite (RED) + implementation (GREEN)
+
+**Phase 3.2: WeightEntryAdapter (Completed 2025-12-11)**
+- Created `WeightEntryAdapterTest.java` with 2 basic tests (layout tests deferred to MainActivity integration)
+- Implemented `WeightEntryAdapter.java` RecyclerView adapter with full functionality:
+  - ViewHolder pattern for `item_weight_entry.xml` layout
+  - OnItemClickListener interface (onEditClick, onDeleteClick)
+  - Date badge formatting: splits "26 Nov" into "26" + "NOV"
+  - Weight value formatting: 1 decimal place (e.g., "172.0")
+  - Smart time display: "Today, 7:32 AM" / "Yesterday, 7:32 AM" / Full date
+  - Trend badge calculation: compares current entry with previous, displays ↑/↓/− with colored backgrounds
+  - Edit/Delete button click listeners wired up
+  - Hides trend badge for last entry (no previous entry to compare)
+- 1 commit: combined test + implementation (Robolectric layout inflation complexity)
+
+### Issues Encountered
+1. **Robolectric Layout Inflation**: Attempted to create ViewHolder inflation tests but encountered Resources$NotFoundException despite layout existing. Layout functionality will be validated through MainActivity integration tests instead.
+
+2. **Drawable Resource Names**: Initial implementation referenced `bg_badge_trend_neutral` but actual resource is `bg_badge_trend_same`. Fixed during implementation.
+
+### Lessons Learned
+- **DateUtils Pattern**: Final utility class with private constructor prevents instantiation. Static methods only.
+- **Streak Calculation Logic**: List sorted DESC (newest first), so we compare each entry with entry at position+1. First entry has no previous, so we hide trend badge.
+- **Trend Calculation**: `diff = previous.weight - current.weight`. If diff > 0, weight decreased (lost weight, green ↓). If diff < 0, weight increased (gained weight, red ↑). If abs(diff) < 0.1, no change (gray −).
+- **Adapter Testing Trade-offs**: Basic adapter tests (constructor, getItemCount) are sufficient for unit testing. Full adapter validation through MainActivity integration tests provides better coverage with less Robolectric complexity.
+
+### Test Summary
+- **DateUtils**: 9 tests (all passing)
+- **WeightEntryAdapter**: 2 tests (constructor, item count)
+- **Total New Tests**: 11 tests
+- **Project Total**: 132 tests (91 Phase 1 + 28 Phase 2 + 2 integration + 11 Phase 3)
+
+### Next Steps
+- **Phase 3.3**: Implement MainActivity with 18 integration tests
+  - Authentication guard (redirect if not logged in)
+  - RecyclerView setup with WeightEntryAdapter
+  - Load weight entries from DAO for current user
+  - Progress card calculations (current/start/goal, percentage)
+  - Quick stats (total lost, lbs to goal, day streak using DateUtils)
+  - Delete entry with confirmation dialog
+  - Empty state handling
+  - FAB and bottom navigation placeholders
+
+---
+
 ## [2025-12-11] Phase 2 PR Review Fixes: Security & Technical Debt
 
 ### Decision

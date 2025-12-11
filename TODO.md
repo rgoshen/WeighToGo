@@ -533,21 +533,32 @@ WeighToGo_Database_Architecture.md is the source of truth specification document
 ---
 
 ## Phase 3: Main Dashboard
-**Branch:** `feature/FR2.0-dashboard`
+**Branch:** `feature/FR2.0-dashboard` ✅ **IN PROGRESS (Completed 3.1, 3.2, 3.3)**
 
-### 3.1 Implement WeightEntryAdapter
-- [ ] Write `WeightEntryAdapterTest.java`
-- [ ] Implement `adapters/WeightEntryAdapter.java`
+### 3.1 Implement DateUtils (Completed 2025-12-11)
+- [x] Write `DateUtilsTest.java` (9 tests)
+- [x] Implement `utils/DateUtils.java`
+  - formatDateShort(date) - "26 Nov"
+  - formatDateFull(date) - "Wednesday, November 26, 2025"
+  - isToday(date) - boolean
+  - calculateDayStreak(entries) - consecutive days with gap handling
+  - Null-safe implementation (returns empty string, false, or 0)
+  - All 9 tests passing
+
+### 3.2 Implement WeightEntryAdapter (Completed 2025-12-11)
+- [x] Write `WeightEntryAdapterTest.java` (2 basic tests, layout tests deferred)
+- [x] Implement `adapters/WeightEntryAdapter.java`
   - ViewHolder pattern for item_weight_entry.xml
   - OnItemClickListener interface (onEditClick, onDeleteClick)
-  - Bind weight data with formatting
-  - Format date as "26 Nov" style
-  - Format weight with 1 decimal place
-  - Calculate and display trend (↑/↓/−)
+  - Bind weight data with 1 decimal formatting
+  - Format date badge as "26 NOV" style (day + month)
+  - Calculate and display trend (↑/↓/− with color backgrounds)
   - Wire up edit button click
   - Wire up delete button click (CRITICAL REQUIREMENT)
+  - Smart time display (Today/Yesterday/Full date + time)
+  - Hides trend badge for last entry (no previous to compare)
 
-### 3.2 Update MainActivity
+### 3.3 Update MainActivity (PENDING)
 - [ ] Write `MainActivityTest.java` (Robolectric)
 - [ ] Update `activities/MainActivity.java`
   - checkAuthentication() - redirect if not logged in
@@ -560,14 +571,6 @@ WeighToGo_Database_Architecture.md is the source of truth specification document
   - handleDeleteEntry(entry) - confirm and delete
   - setupBottomNavigation() - handle nav clicks
   - setupFAB() - navigate to WeightEntryActivity
-
-### 3.3 Implement DateUtils
-- [ ] Write `DateUtilsTest.java`
-- [ ] Implement `utils/DateUtils.java`
-  - formatDateShort(date) - "26 Nov"
-  - formatDateFull(date) - "Tuesday, November 26, 2025"
-  - isToday(date) - boolean
-  - calculateDayStreak(entries) - consecutive days
 
 ### 3.4 Implement Password Reset Feature (DEFERRED from Phase 2)
 - [ ] Create forgot password dialog/activity
