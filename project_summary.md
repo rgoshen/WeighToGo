@@ -90,20 +90,72 @@ Addressed PR review feedback for Phase 2 authentication with immediate security 
   - PasswordUtils.java:94 - Salt generation log (no sensitive data, kept as-is)
 - **Production Behavior:** Release builds only log user ID, not username
 
-### Testing Impact
-- **No new tests required** (documentation and code quality fixes only)
-- **All existing tests passing:** 119 tests (91 Phase 1 + 28 Phase 2)
-- **Lint status:** Clean
+### Integration Tests Added
+**LoginActivityIntegrationTest.java (2 tests):**
+1. **test_registrationFlow_createsUserAndNavigates**
+   - End-to-end registration: ValidationUtils → PasswordUtils → UserDAO → SessionManager
+   - Verifies complete handleRegister() flow from LoginActivity
+   - Asserts: user inserted, session created, userId correct
 
-### Commit Plan
-1. **Commit 1:** Security fix (timing attack) + bcrypt technical debt documentation
-2. **Commit 2:** Code quality fixes (error messages, visibility, logging, password trimming docs) + SessionManager technical debt documentation
-3. **Commit 3:** Integration tests per TODO.md section 2.4.1 (2 tests)
+2. **test_loginFlow_authenticatesAndNavigates**
+   - End-to-end login: ValidationUtils → UserDAO → PasswordUtils.verifyPassword() → SessionManager
+   - Updates last_login timestamp
+   - Verifies complete handleSignIn() flow from LoginActivity
+   - Asserts: password verified, session created, last_login updated
+
+**Test Framework:**
+- Robolectric for Android component testing
+- RuntimeEnvironment.getApplication() for context
+- WeighToGoDBHelper.getInstance() for real SQLite in-memory database
+
+### Testing Impact
+- **New tests added:** 2 integration tests (critical authentication flows)
+- **All tests passing:** 121 tests (91 Phase 1 + 28 Phase 2 + 2 integration)
+- **Lint status:** Clean
+- **Test pyramid:** unit (119) → integration (2) → UI (deferred to Phase 2.4.2)
+
+### Commits Created
+1. **fix: address PR review security and code quality issues** (2655e1e)
+   - Timing attack fix (MessageDigest.isEqual())
+   - Code quality improvements (error messages, visibility, logging)
+   - Technical debt documentation (TODO.md Phase 7.6, 7.7)
+   - Enhanced SessionManager Javadoc
+
+2. **test: add integration tests for authentication flows** (08e18ad)
+   - LoginActivityIntegrationTest.java with 2 end-to-end tests
+   - Hybrid testing strategy implementation
+   - All 121 tests passing
+
+3. **docs: mark integration tests complete in TODO.md** (15eb0aa)
+   - Updated section 2.4.1 as completed (2025-12-11)
+   - Test count: 121 tests
+
+4. **docs: move comprehensive authentication tests to Phase 8.4** (51983f9)
+   - Added detailed implementation tasks for 12 additional tests
+   - Organized deferred comprehensive testing in Phase 8.4
+   - Ensures deferred work not forgotten
+
+### Comprehensive Testing Deferred to Phase 8.4
+**Why Deferred:**
+- Phase 2.4 implemented minimal integration tests (2 tests) for critical happy paths
+- Comprehensive scenario testing requires ~12 additional tests
+- Belongs in Final Testing phase with full scenario coverage
+
+**Deferred Tests (Phase 8.4):**
+- Edge cases: duplicate username, weak passwords, invalid credentials, inactive user (4 tests)
+- Error scenarios: database exceptions, graceful error handling (2 tests)
+- Session persistence: app restart simulation, logout persistence (2 tests)
+- UI scenarios: screen rotation, tab switching, error clearing (3 tests)
+- Expected total after Phase 8.4: ~133 tests (121 current + 12 comprehensive)
 
 ### Follow-Up Work
-- **Phase 2.4:** Add integration tests (LoginActivityIntegrationTest.java with 2 tests)
-- **Phase 7.6:** Implement bcrypt migration
+- **Phase 2.4.2:** Espresso UI tests (deferred - not critical for Phase 2 completion)
+- **Phase 3.4:** Password reset feature implementation
+- **Phase 6.2:** Phone number validation implementation
+- **Phase 7.5:** Move password hashing to background thread
+- **Phase 7.6:** Implement bcrypt/Argon2 migration
 - **Phase 7.7:** Refactor SessionManager to use SessionUser class
+- **Phase 8.4:** Implement comprehensive authentication testing (~12 tests)
 
 ---
 
@@ -118,38 +170,38 @@ Adopted a **hybrid testing approach** for Phase 2 authentication flow instead of
 - **Balance:** Adding minimal integration/UI tests now (4 tests) provides safety net without derailing schedule
 - **Defer Comprehensive Testing:** Edge cases, error scenarios, and exhaustive testing remain in Phase 8 per original plan
 
-### Implementation Plan
-**Add Now (Phase 2.4):**
+### Implementation Status
+**✅ Completed (Phase 2.4.1):**
 1. **Integration Tests (2 tests):**
-   - `test_registrationFlow_createsUserAndNavigates` - Verifies end-to-end registration flow across ValidationUtils → PasswordUtils → UserDAO → SessionManager → Navigation
-   - `test_loginFlow_authenticatesAndNavigates` - Verifies end-to-end login flow with password verification and session creation
+   - `test_registrationFlow_createsUserAndNavigates` - Verifies end-to-end registration flow
+   - `test_loginFlow_authenticatesAndNavigates` - Verifies end-to-end login flow
+   - File: LoginActivityIntegrationTest.java
 
+**⏸ Deferred (Phase 2.4.2):**
 2. **Espresso UI Tests (2 tests):**
-   - `test_userCanRegisterAndSeeMainActivity` - User clicks Register tab, enters credentials, creates account, sees MainActivity
-   - `test_userCanLoginAndSeeMainActivity` - User enters existing credentials, logs in, sees MainActivity
+   - `test_userCanRegisterAndSeeMainActivity` - UI test for registration
+   - `test_userCanLoginAndSeeMainActivity` - UI test for login
+   - Rationale: Integration tests provide sufficient coverage for Phase 2 completion
 
-**Defer to Phase 8 (Comprehensive):**
-- Edge cases (invalid credentials, duplicate username, weak passwords)
-- Error scenarios (database errors, network issues)
-- Session persistence across app restart
-- Logout flow
-- Screen rotation during authentication
+**⏸ Deferred to Phase 8.4 (Comprehensive):**
+- Edge cases (invalid credentials, duplicate username, weak passwords) - 4 tests
+- Error scenarios (database errors, graceful error handling) - 2 tests
+- Session persistence (app restart simulation, logout persistence) - 2 tests
+- UI scenarios (screen rotation, tab switching, error clearing) - 3 tests
+- Expected additional tests: ~12 tests
 - All other scenario testing per original plan
 
-### Benefits
+### Benefits Achieved
 - ✅ Immediate confidence in Phase 2 integration
 - ✅ Catch integration bugs early (before Phase 3 builds on top)
 - ✅ Safety net for refactoring
-- ✅ Minimal scope (4 tests vs comprehensive testing in Phase 8)
+- ✅ Minimal scope (2 tests implemented vs 4 planned, Espresso deferred)
 - ✅ Follows Android testing best practices (test pyramid)
 
-### Trade-offs
-- ⚠️ Small delay in starting Phase 3 (estimated ~1-2 hours for 4 tests)
-- ⚠️ Some duplication with Phase 8 scenario tests (acceptable for critical flows)
-
-### Expected Test Count After Phase 2.4
-- Phase 2 total: 32 tests (28 unit + 2 integration + 2 UI)
-- Project total: 123 tests (91 Phase 1 + 32 Phase 2)
+### Actual Test Count After Phase 2.4.1
+- Phase 2 total: 30 tests (28 unit + 2 integration)
+- Project total: 121 tests (91 Phase 1 + 30 Phase 2)
+- Espresso UI tests deferred to Phase 2.4.2 (not blocking Phase 2 completion)
 
 ---
 
@@ -179,13 +231,24 @@ Adopted a **hybrid testing approach** for Phase 2 authentication flow instead of
 - **Auto-Login UX:** Automatically logging in user after registration (handleRegister → createSession → navigate) provides seamless user experience
 - **Tab Switching Pattern:** Using boolean flag (isSignInMode) and switching methods with visual feedback (background, text color) provides clear mode indication without page navigation
 
-### Technical Debt
-- **Activity UI Tests Skipped:** LoginActivityTest was not completed due to Robolectric configuration issues. Consider adding Espresso UI tests in future or revisiting Robolectric configuration.
-- **Phone Number Validation:** isValidPhoneNumber() method was not implemented (deferred to Phase 5 - SMS notifications when actually needed)
+### Technical Debt & Deferred Work
+**Documented in TODO.md:**
+- **Phase 2.4.2:** Espresso UI tests (2 tests) - Integration tests provide sufficient coverage for now
+- **Phase 3.4:** Password reset feature implementation
+- **Phase 6.2:** Phone number validation (isValidPhoneNumber) - Deferred to SMS notifications phase
+- **Phase 7.5:** Move password hashing to background thread (performance optimization)
+- **Phase 7.6:** Migrate from SHA-256 to bcrypt/Argon2 (CRITICAL - not production-ready)
+- **Phase 7.7:** Refactor SessionManager to use SessionUser class (eliminate dummy fields)
+- **Phase 8.4:** Comprehensive authentication testing (~12 additional tests)
+
+**Original Phase 2 Technical Debt:**
+- **LoginActivityTest Skipped:** Robolectric configuration complexity - Integration tests provide coverage instead
 
 ### Test Coverage
-- **Phase 2 New Tests:** 28 unit tests (6 PasswordUtils + 12 ValidationUtils + 10 SessionManager)
-- **Total Tests:** 119 tests passing (91 Phase 1 + 28 Phase 2)
+- **Phase 2 New Tests:** 30 tests
+  - 28 unit tests (6 PasswordUtils + 12 ValidationUtils + 10 SessionManager)
+  - 2 integration tests (LoginActivityIntegrationTest)
+- **Total Tests:** 121 tests passing (91 Phase 1 + 30 Phase 2)
 - **Lint Status:** Clean, no warnings
 - **All tests:** Passing with ./gradlew test
 
