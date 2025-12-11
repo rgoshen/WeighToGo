@@ -921,13 +921,83 @@ WeighToGo_Database_Architecture.md is the source of truth specification document
 - [ ] Screen rotation
 - [ ] App kill and restart
 
-### 8.4 Final Test Suite
+### 8.4 Comprehensive Authentication Testing (DEFERRED from Phase 2.4)
+**Rationale:** Phase 2.4 implemented minimal integration tests (2 tests) for critical happy paths. This section implements comprehensive scenario testing for authentication flows.
+
+**Integration Tests (LoginActivityIntegrationTest.java):**
+- [ ] test_registration_withDuplicateUsername_showsError
+  - Verify duplicate username detection
+  - Assert error message displayed
+  - Assert user not created in database
+  - Assert session not created
+- [ ] test_registration_withWeakPassword_showsError
+  - Test password with no digits (should fail validation)
+  - Test password too short (< 6 chars)
+  - Assert appropriate error messages
+- [ ] test_login_withInvalidCredentials_showsError
+  - Test with non-existent username
+  - Test with correct username but wrong password
+  - Assert generic error message (no username enumeration)
+  - Assert session not created
+- [ ] test_login_withInactiveUser_showsError
+  - Create user with isActive=false
+  - Attempt login
+  - Assert error message displayed
+  - Assert session not created
+
+**Error Scenario Tests:**
+- [ ] test_registration_whenDatabaseError_showsError
+  - Mock database exception during insertUser()
+  - Verify graceful error handling
+  - Assert user-friendly error message
+- [ ] test_login_whenDatabaseError_showsError
+  - Mock database exception during getUserByUsername()
+  - Verify graceful error handling
+  - Assert user-friendly error message
+
+**Session Persistence Tests (SessionManagerTest.java):**
+- [ ] test_session_persistsAcrossAppRestart
+  - Create session
+  - Clear singleton instance (simulate app restart)
+  - Get new SessionManager instance
+  - Assert session still exists
+  - Assert userId matches
+- [ ] test_logout_clearsSessionPersistence
+  - Create session
+  - Call logout()
+  - Clear singleton instance (simulate app restart)
+  - Get new SessionManager instance
+  - Assert session does not exist
+
+**UI Tests (Espresso - LoginActivityUITest.java):**
+- [ ] test_screenRotation_duringRegistration_preservesInput
+  - Enter username and password
+  - Rotate screen
+  - Assert input fields retain values
+  - Complete registration successfully
+- [ ] test_screenRotation_duringLogin_preservesInput
+  - Enter username and password
+  - Rotate screen
+  - Assert input fields retain values
+  - Complete login successfully
+- [ ] test_tabSwitch_clearsErrors
+  - Trigger validation error in Sign In mode
+  - Switch to Register tab
+  - Assert errors cleared
+  - Switch back to Sign In tab
+  - Assert errors still cleared
+
+**Expected Test Count After Phase 8.4:**
+- Comprehensive authentication tests: ~12 additional tests
+- Total project tests: ~133 tests (121 current + 12 comprehensive)
+
+### 8.5 Final Test Suite
 - [ ] Run `./gradlew clean test`
 - [ ] Run `./gradlew connectedAndroidTest` (if device available)
 - [ ] Run `./gradlew lint`
 - [ ] Fix any failures
 
-### 8.5 Phase 8 Validation
+### 8.6 Phase 8 Validation
 - [ ] All tests pass
 - [ ] No crashes in any scenario
 - [ ] Lint clean
