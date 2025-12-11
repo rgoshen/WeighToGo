@@ -1,17 +1,26 @@
 package com.example.weighttogo.activities;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.weighttogo.R;
+import com.example.weighttogo.database.UserDAO;
+import com.example.weighttogo.database.WeighToGoDBHelper;
+import com.example.weighttogo.models.User;
+import com.example.weighttogo.utils.PasswordUtils;
+import com.example.weighttogo.utils.SessionManager;
 import com.example.weighttogo.utils.ValidationUtils;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
+
+import java.time.LocalDateTime;
 
 /**
  * LoginActivity handles user authentication (sign in and registration).
@@ -59,6 +68,13 @@ public class LoginActivity extends AppCompatActivity {
     private TextView forgotPasswordText;
 
     // =============================================================================================
+    // DATA ACCESS AND SESSION
+    // =============================================================================================
+
+    private UserDAO userDAO;
+    private SessionManager sessionManager;
+
+    // =============================================================================================
     // LIFECYCLE METHODS
     // =============================================================================================
 
@@ -72,6 +88,11 @@ public class LoginActivity extends AppCompatActivity {
 
         // Set content view
         setContentView(R.layout.activity_login);
+
+        // Initialize data access and session management
+        WeighToGoDBHelper dbHelper = WeighToGoDBHelper.getInstance(this);
+        userDAO = new UserDAO(dbHelper);
+        sessionManager = SessionManager.getInstance(this);
 
         // Initialize UI components
         initViews();
@@ -131,7 +152,6 @@ public class LoginActivity extends AppCompatActivity {
     /**
      * Handle Sign In button click.
      * Validates input and proceeds with authentication if valid.
-     * Authentication logic implemented in Commit 5.
      */
     private void handleSignInClick() {
         Log.d(TAG, "handleSignInClick: Sign In button clicked");
@@ -146,8 +166,8 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
-        Log.d(TAG, "handleSignInClick: Input validation passed");
-        // TODO: Implement authentication logic in Commit 5
+        Log.d(TAG, "handleSignInClick: Input validation passed, proceeding with authentication");
+        handleSignIn();
     }
 
     /**
@@ -185,5 +205,61 @@ public class LoginActivity extends AppCompatActivity {
         }
 
         return isValid;
+    }
+
+    // =============================================================================================
+    // AUTHENTICATION (Commit 5)
+    // =============================================================================================
+
+    /**
+     * Handle sign-in authentication flow.
+     * Queries database, verifies password, creates session, and navigates to MainActivity.
+     */
+    private void handleSignIn() {
+        String username = usernameEditText.getText().toString().trim();
+        String password = passwordEditText.getText().toString();
+
+        Log.d(TAG, "handleSignIn: Attempting authentication for username: " + username);
+
+        // Query user from database
+        User user = userDAO.getUserByUsername(username);
+
+        if (user == null) {
+            // User doesn't exist
+            Log.w(TAG, "handleSignIn: User not found with username: " + username);
+            Toast.makeText(this, "Invalid username or password", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Verify password
+        boolean passwordMatches = PasswordUtils.verifyPassword(password, user.getSalt(), user.getPasswordHash());
+
+        if (!passwordMatches) {
+            // Wrong password
+            Log.w(TAG, "handleSignIn: Password verification failed for username: " + username);
+            Toast.makeText(this, "Invalid username or password", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Authentication successful
+        Log.i(TAG, "handleSignIn: Authentication successful for user_id: " + user.getUserId());
+
+        // Update last_login timestamp
+        int rowsUpdated = userDAO.updateLastLogin(user.getUserId(), LocalDateTime.now());
+        if (rowsUpdated > 0) {
+            Log.d(TAG, "handleSignIn: Updated last_login for user_id: " + user.getUserId());
+        }
+
+        // Create session
+        sessionManager.createSession(user);
+        Log.d(TAG, "handleSignIn: Session created for user_id: " + user.getUserId());
+
+        // Navigate to MainActivity
+        Intent intent = new Intent(this, MainActivity.class);
+        startActivity(intent);
+        finish();  // Prevent back button from returning to login
+
+        Toast.makeText(this, "Welcome, " + (user.getDisplayName() != null ? user.getDisplayName() : user.getUsername()) + "!", Toast.LENGTH_SHORT).show();
+        Log.i(TAG, "handleSignIn: Navigated to MainActivity");
     }
 }
