@@ -257,18 +257,94 @@ Follow strict TDD methodology (Red-Green-Refactor), MVC architecture, and GitFlo
   - toString() method
   - All 13 tests passing
 
-### 1.3 Implement Database Helper
-- [ ] Write `WeighToGoDBHelperTest.java` - test database creation
-- [ ] Implement `database/WeighToGoDBHelper.java`
-  - Singleton pattern
+### 1.3 Implement Database Helper (Completed 2025-12-10)
+- [x] Add Robolectric 4.13 testing framework for database tests (2025-12-10)
+- [x] Write `DateTimeConverterTest.java` - test LocalDateTime/LocalDate conversions (TDD) (2025-12-10)
+  - test_toTimestamp_withValidLocalDateTime_returnsISO8601String
+  - test_fromTimestamp_withValidString_returnsLocalDateTime
+  - test_toDateString_withValidLocalDate_returnsISO8601String
+  - test_fromDateString_withValidString_returnsLocalDate
+  - test_roundTrip_preservesDateTime
+  - All 5 tests passing
+- [x] Implement `utils/DateTimeConverter.java` (2025-12-10)
+  - toTimestamp(LocalDateTime) - converts to "yyyy-MM-dd HH:mm:ss" format for SQLite
+  - fromTimestamp(String) - parses timestamp string to LocalDateTime
+  - toDateString(LocalDate) - converts to "yyyy-MM-dd" format for SQLite
+  - fromDateString(String) - parses date string to LocalDate
+  - **Security**: Validate input strings, handle null/empty cases
+  - **Logging**: Add TAG constant, log conversion errors (Log.e with exception)
+  - All methods implemented with comprehensive error handling
+- [x] Write `WeighToGoDBHelperTest.java` - test database creation (TDD) (2025-12-10)
+  - test_getInstance_returnsSingletonInstance
+  - test_getInstance_calledTwice_returnsSameInstance
+  - test_onCreate_createsUsersTable
+  - test_onCreate_createsWeightEntriesTable
+  - test_onCreate_createsGoalWeightsTable
+  - test_onConfigure_enablesForeignKeys
+  - All 6 tests passing using Robolectric
+- [x] Implement `database/WeighToGoDBHelper.java` (2025-12-10)
+  - Singleton pattern (thread-safe with synchronized getInstance)
   - DATABASE_NAME = "weigh_to_go.db"
   - DATABASE_VERSION = 1
-  - onCreate() - create users, weight_entries, goal_weights tables
-  - onUpgrade() - handle migrations
-  - onConfigure() - enable foreign keys
+  - onCreate() - create users, weight_entries, goal_weights tables with proper schema
+  - onUpgrade() - handle migrations (drops and recreates tables for v1)
+  - onConfigure() - enable foreign keys (setForeignKeyConstraintsEnabled)
+  - **Security**: Foreign key constraints enabled, parameterized queries ready for DAOs
+  - **Security**: Passwords stored as salted hashes (schema supports salt column)
   - **Logging**: Add TAG constant, log onCreate (Log.i), table creation (Log.d), onUpgrade (Log.w), errors (Log.e with exception)
+  - **Logging**: Include database name and version in onCreate log
+  - **Logging**: Log foreign key enforcement status
+  - All 6 tests passing, lint clean
+- [x] Add comprehensive edge case tests (2025-12-10)
+  - DateTimeConverterTest: 12 edge case tests (null, empty, whitespace, invalid formats, malformed dates)
+  - WeighToGoDBHelperTest: 3 edge case tests (foreign key constraints, cascade delete, onUpgrade)
+  - Configured `testOptions.unitTests.returnDefaultValues = true` for Android Log mocking
+  - All 84 tests passing (55 models + 17 DateTimeConverter + 9 WeighToGoDBHelper + 2 examples + 1 other)
 
 ### 1.4 Implement DAO Classes
+
+**⚠️ CRITICAL: Schema Corrections Required Before DAO Implementation**
+
+Current implementation (Phase 1.3) does NOT match WeighToGo_Database_Architecture.md specification. The following corrections must be made before implementing DAOs:
+
+**Schema Mismatches to Fix:**
+- [ ] Rename table: `weight_entries` → `daily_weights` (per spec line 196)
+- [ ] Rename column: `weight_entries.id` → `daily_weights.weight_id` (per spec line 197)
+- [ ] Rename column: `users.id` → `users.user_id` (per spec line 169)
+- [ ] Rename column: `goal_weights.id` → `goal_weights.goal_id` (per spec line 225)
+- [ ] Implement missing table: `achievements` (spec lines 250-276)
+  - Columns: achievement_id, user_id, achievement_type, achieved_date, is_notified, created_at
+  - Foreign key: user_id → users(user_id) ON DELETE CASCADE
+- [ ] Implement missing table: `user_preferences` (spec lines 279-304)
+  - Columns: preference_id, user_id, preference_key, preference_value, created_at, updated_at
+  - Foreign key: user_id → users(user_id) ON DELETE CASCADE
+- [ ] Add missing indexes (6 additional, total 12 per spec lines 308-336):
+  - idx_daily_weights_user_id_weight_date (composite for date range queries)
+  - idx_daily_weights_is_deleted_user_id (composite for active entries)
+  - idx_goal_weights_user_id_is_active (composite for finding active goal)
+  - idx_achievements_user_id (foreign key performance)
+  - idx_achievements_achievement_type (filtering by type)
+  - idx_user_preferences_user_id (foreign key performance)
+
+**Files to Update:**
+- [ ] `WeighToGoDBHelper.java` - Update all CREATE TABLE statements
+- [ ] `WeighToGoDBHelperTest.java` - Update all schema verification tests
+- [ ] Model classes (User.java, WeightEntry.java, GoalWeight.java) - Update field names to match DB columns
+- [ ] Create new model classes: `Achievement.java`, `UserPreference.java`
+- [ ] Update `ADR-0001` to reflect specification (not current incorrect implementation)
+- [ ] Update `project_summary.md` with schema correction details
+
+**Rationale:**
+WeighToGo_Database_Architecture.md is the source of truth specification document that our implementation should have followed from the start. This document (2195 lines) defines:
+- 5 normalized tables (not 3)
+- Specific naming conventions (weight_id, not id)
+- 12 strategic indexes (not 6)
+- Complete column specifications
+
+---
+
+**DAO Implementation (After Schema Corrections):**
+
 - [ ] Write `UserDAOTest.java` - all CRUD operations
 - [ ] Implement `database/UserDAO.java`
   - insertUser(), getUserById(), getUserByUsername()
