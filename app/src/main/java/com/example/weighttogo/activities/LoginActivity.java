@@ -77,6 +77,12 @@ public class LoginActivity extends AppCompatActivity {
     private SessionManager sessionManager;
 
     // =============================================================================================
+    // STATE
+    // =============================================================================================
+
+    private boolean isSignInMode = true;  // Start in Sign In mode
+
+    // =============================================================================================
     // LIFECYCLE METHODS
     // =============================================================================================
 
@@ -134,12 +140,12 @@ public class LoginActivity extends AppCompatActivity {
      * Wires up UI interactions.
      */
     private void setupClickListeners() {
-        // Sign In button
-        signInButton.setOnClickListener(v -> handleSignInClick());
+        // Sign In / Register button (changes based on mode)
+        signInButton.setOnClickListener(v -> handleButtonClick());
 
-        // Tab switching (Commit 7)
-        // tabSignIn.setOnClickListener(v -> switchToSignInMode());
-        // tabRegister.setOnClickListener(v -> switchToRegisterMode());
+        // Tab switching
+        tabSignIn.setOnClickListener(v -> switchToSignInMode());
+        tabRegister.setOnClickListener(v -> switchToRegisterMode());
 
         // Forgot password (Phase 3 feature)
         // forgotPasswordText.setOnClickListener(v -> handleForgotPassword());
@@ -152,11 +158,12 @@ public class LoginActivity extends AppCompatActivity {
     // =============================================================================================
 
     /**
-     * Handle Sign In button click.
-     * Validates input and proceeds with authentication if valid.
+     * Handle button click (Sign In or Register based on current mode).
+     * Validates input and proceeds with authentication or registration.
      */
-    private void handleSignInClick() {
-        Log.d(TAG, "handleSignInClick: Sign In button clicked");
+    private void handleButtonClick() {
+        String action = isSignInMode ? "Sign In" : "Register";
+        Log.d(TAG, "handleButtonClick: " + action + " button clicked");
 
         // Clear previous errors
         usernameInputLayout.setError(null);
@@ -164,12 +171,18 @@ public class LoginActivity extends AppCompatActivity {
 
         // Validate input
         if (!validateInput()) {
-            Log.w(TAG, "handleSignInClick: Input validation failed");
+            Log.w(TAG, "handleButtonClick: Input validation failed");
             return;
         }
 
-        Log.d(TAG, "handleSignInClick: Input validation passed, proceeding with authentication");
-        handleSignIn();
+        Log.d(TAG, "handleButtonClick: Input validation passed, proceeding with " + action);
+
+        // Call appropriate handler based on mode
+        if (isSignInMode) {
+            handleSignIn();
+        } else {
+            handleRegister();
+        }
     }
 
     /**
@@ -344,5 +357,69 @@ public class LoginActivity extends AppCompatActivity {
             Log.e(TAG, "handleRegister: Database error during registration", e);
             Toast.makeText(this, "Registration failed. Please try again.", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    // =============================================================================================
+    // TAB SWITCHING (Commit 7)
+    // =============================================================================================
+
+    /**
+     * Switch to Sign In mode.
+     * Updates UI to show sign-in form and visual tab indication.
+     */
+    private void switchToSignInMode() {
+        if (isSignInMode) {
+            return;  // Already in sign-in mode
+        }
+
+        Log.d(TAG, "switchToSignInMode: Switching to Sign In mode");
+
+        isSignInMode = true;
+
+        // Update button text
+        signInButton.setText(R.string.btn_sign_in);
+
+        // Update tab visual indication
+        tabSignIn.setBackgroundResource(R.drawable.bg_tab_active);
+        tabSignIn.setTextColor(getResources().getColor(R.color.primary_teal, null));
+
+        tabRegister.setBackgroundResource(android.R.color.transparent);
+        tabRegister.setTextColor(getResources().getColor(R.color.text_secondary, null));
+
+        // Clear any error messages
+        usernameInputLayout.setError(null);
+        passwordInputLayout.setError(null);
+
+        Log.d(TAG, "switchToSignInMode: Switched to Sign In mode");
+    }
+
+    /**
+     * Switch to Register mode.
+     * Updates UI to show registration form and visual tab indication.
+     */
+    private void switchToRegisterMode() {
+        if (!isSignInMode) {
+            return;  // Already in register mode
+        }
+
+        Log.d(TAG, "switchToRegisterMode: Switching to Register mode");
+
+        isSignInMode = false;
+
+        // Update button text
+        signInButton.setText(R.string.btn_create_account);
+
+        // Update tab visual indication
+        tabRegister.setBackgroundResource(R.drawable.bg_tab_active);
+        tabRegister.setTextColor(getResources().getColor(R.color.primary_teal, null));
+
+        tabSignIn.setBackgroundResource(android.R.color.transparent);
+        tabSignIn.setTextColor(getResources().getColor(R.color.text_secondary, null));
+
+        // Clear any error messages
+        usernameInputLayout.setError(null);
+        passwordInputLayout.setError(null);
+
+        Log.d(TAG, "switchToRegisterMode: Switched to Register mode");
     }
 }
