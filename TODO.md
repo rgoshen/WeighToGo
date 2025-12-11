@@ -351,13 +351,13 @@ WeighToGo_Database_Architecture.md is the source of truth specification document
   - usernameExists(), updateLastLogin(), deleteUser()
   - **Logging**: Add TAG constant, log method entry (Log.d), successful operations (Log.i), warnings (Log.w), errors (Log.e with exception)
   - **Security**: NEVER log passwords, passwordHash, or salt values
-- [ ] Write `WeightEntryDAOTest.java` - all CRUD operations
+- [x] Write `WeightEntryDAOTest.java` - all CRUD operations - Completed 2025-12-10 (11 tests, retroactive)
 - [x] Implement `database/WeightEntryDAO.java` - Completed 2025-12-10
   - insertWeightEntry(), getWeightEntriesForUser()
   - getWeightEntryById(), getLatestWeightEntry()
   - updateWeightEntry(), deleteWeightEntry() (soft delete)
   - **Logging**: Add TAG constant, log CRUD operations (Log.d/Log.i), errors (Log.e with exception)
-- [ ] Write `GoalWeightDAOTest.java` - all CRUD operations
+- [x] Write `GoalWeightDAOTest.java` - all CRUD operations - Completed 2025-12-10 (11 tests, retroactive)
 - [x] Implement `database/GoalWeightDAO.java` - Completed 2025-12-10
   - insertGoal(), getActiveGoal(), getGoalHistory()
   - updateGoal(), deactivateGoal(), deactivateAllGoalsForUser()
