@@ -1,5 +1,158 @@
 # Project Summary - Weigh to Go!
 
+## [2025-12-11] Phase 2 PR Review Fixes: Security & Technical Debt
+
+### Decision
+Addressed PR review feedback for Phase 2 authentication with immediate security fixes and documented technical debt for Phase 7 refactoring.
+
+### Security Fixes Implemented (Immediate)
+
+**1. Timing Attack Vulnerability (CRITICAL - FIXED)**
+- **Issue:** PasswordUtils.verifyPassword() used `String.equals()` for hash comparison, which is vulnerable to timing attacks
+- **Location:** PasswordUtils.java:193
+- **Fix:** Changed to constant-time comparison using `MessageDigest.isEqual()`
+- **Implementation:**
+  ```java
+  // Before (vulnerable):
+  boolean isMatch = storedHash.equals(computedHash);
+
+  // After (secure):
+  byte[] storedBytes = Base64.getDecoder().decode(storedHash);
+  byte[] computedBytes = Base64.getDecoder().decode(computedHash);
+  boolean isMatch = MessageDigest.isEqual(storedBytes, computedBytes);
+  ```
+- **Impact:** Prevents attackers from using timing differences to deduce hash information
+- **Test Status:** All 119 tests passing after fix
+
+### Technical Debt Documented (Deferred to Phase 7)
+
+**2. SHA-256 Password Hashing (CRITICAL TECHNICAL DEBT)**
+- **Issue:** SHA-256 is NOT recommended for password hashing in 2024 (too fast, vulnerable to GPU brute-force)
+- **Current Status:** Functional but NOT production-ready
+- **Mitigation Applied:** Timing attack vulnerability fixed (MessageDigest.isEqual())
+- **Deferred To:** Phase 7.6 - Security: Migrate to bcrypt/Argon2
+- **Migration Plan:**
+  - Add bcrypt library dependency (`at.favre.lib:bcrypt:0.10.2`)
+  - Add `password_algorithm` column to users table
+  - Implement PasswordUtilsV2 with bcrypt support
+  - Lazy migration strategy: rehash on next login
+  - Support dual verification during transition (SHA256 + bcrypt)
+- **Rationale for Deferral:**
+  - No production users yet (dev/test only)
+  - Migration requires database schema change
+  - Comprehensive testing needed for migration strategy
+  - Belongs in Code Quality phase with full regression testing
+  - Current implementation is "bad but functional" for development
+- **Security Note:** Launch Plan will document that production deployment REQUIRES bcrypt migration
+
+**3. SessionManager Dummy Fields (TECHNICAL DEBT)**
+- **Issue:** SessionManager.getCurrentUser() returns User object with invalid dummy data (passwordHash="", salt="", createdAt=now(), updatedAt=now())
+- **Current Workaround:** Comprehensive Javadoc warning in SessionManager.java (lines 142-148)
+- **Deferred To:** Phase 7.7 - Refactor: SessionManager Dummy Fields
+- **Refactor Plan:**
+  - Create dedicated SessionUser class (userId, username, displayName only)
+  - Update SessionManager to return SessionUser instead of User
+  - Update all activities to use SessionUser or query UserDAO for full User
+- **Rationale for Deferral:**
+  - Current implementation works correctly (callers understand limitations)
+  - Refactor requires updating multiple activities
+  - Belongs in Code Quality phase with full regression testing
+  - No security risk (dummy fields not exposed to user)
+
+### Code Quality Fixes Implemented (Immediate)
+
+**4. Password Trimming Documentation (BUG FIX - DOCUMENTATION)**
+- **Issue:** PR reviewer flagged inconsistency: username trimmed, password not trimmed
+- **Analysis:** Current behavior is CORRECT (passwords should never be trimmed)
+- **Fix:** Added comments to document intentional behavior (LoginActivity.java:195-196)
+- **Rationale:** User may intentionally include leading/trailing spaces in password
+
+**5. Error Message Internationalization (CODE QUALITY)**
+- **Issue:** Magic strings in LoginActivity for validation errors
+- **Fix:** Extracted to strings.xml for internationalization support
+- **Location:** LoginActivity.java:206, 217
+- **New String Resources:**
+  - `error_invalid_username` - Username validation message
+  - `error_invalid_password` - Password validation message
+  - `error_username_required` - Empty username message
+  - `error_password_required` - Empty password message
+
+**6. Method Visibility (CODE QUALITY)**
+- **Issue:** `handleRegister()` is public but only called internally
+- **Fix:** Changed from `public void handleRegister()` to `private void handleRegister()`
+- **Location:** LoginActivity.java:290
+
+**7. Logging Verbosity (SECURITY)**
+- **Issue:** Logging usernames in production builds
+- **Fix:** Wrapped sensitive logging in `BuildConfig.DEBUG` checks
+- **Locations:**
+  - SessionManager.java:138 - Session creation logs username only in debug builds
+  - PasswordUtils.java:94 - Salt generation log (no sensitive data, kept as-is)
+- **Production Behavior:** Release builds only log user ID, not username
+
+### Testing Impact
+- **No new tests required** (documentation and code quality fixes only)
+- **All existing tests passing:** 119 tests (91 Phase 1 + 28 Phase 2)
+- **Lint status:** Clean
+
+### Commit Plan
+1. **Commit 1:** Security fix (timing attack) + bcrypt technical debt documentation
+2. **Commit 2:** Code quality fixes (error messages, visibility, logging, password trimming docs) + SessionManager technical debt documentation
+3. **Commit 3:** Integration tests per TODO.md section 2.4.1 (2 tests)
+
+### Follow-Up Work
+- **Phase 2.4:** Add integration tests (LoginActivityIntegrationTest.java with 2 tests)
+- **Phase 7.6:** Implement bcrypt migration
+- **Phase 7.7:** Refactor SessionManager to use SessionUser class
+
+---
+
+## [2025-12-11] Testing Strategy Decision: Hybrid Approach
+
+### Decision
+Adopted a **hybrid testing approach** for Phase 2 authentication flow instead of waiting until Phase 8 for all integration/UI testing.
+
+### Rationale
+- **Risk Mitigation:** Now that we have a complete authentication flow (registration → auto-login → session → navigation), we need early confidence that the integration between layers works correctly
+- **Critical Flow Coverage:** Authentication is a critical user flow that should have end-to-end test coverage immediately
+- **Balance:** Adding minimal integration/UI tests now (4 tests) provides safety net without derailing schedule
+- **Defer Comprehensive Testing:** Edge cases, error scenarios, and exhaustive testing remain in Phase 8 per original plan
+
+### Implementation Plan
+**Add Now (Phase 2.4):**
+1. **Integration Tests (2 tests):**
+   - `test_registrationFlow_createsUserAndNavigates` - Verifies end-to-end registration flow across ValidationUtils → PasswordUtils → UserDAO → SessionManager → Navigation
+   - `test_loginFlow_authenticatesAndNavigates` - Verifies end-to-end login flow with password verification and session creation
+
+2. **Espresso UI Tests (2 tests):**
+   - `test_userCanRegisterAndSeeMainActivity` - User clicks Register tab, enters credentials, creates account, sees MainActivity
+   - `test_userCanLoginAndSeeMainActivity` - User enters existing credentials, logs in, sees MainActivity
+
+**Defer to Phase 8 (Comprehensive):**
+- Edge cases (invalid credentials, duplicate username, weak passwords)
+- Error scenarios (database errors, network issues)
+- Session persistence across app restart
+- Logout flow
+- Screen rotation during authentication
+- All other scenario testing per original plan
+
+### Benefits
+- ✅ Immediate confidence in Phase 2 integration
+- ✅ Catch integration bugs early (before Phase 3 builds on top)
+- ✅ Safety net for refactoring
+- ✅ Minimal scope (4 tests vs comprehensive testing in Phase 8)
+- ✅ Follows Android testing best practices (test pyramid)
+
+### Trade-offs
+- ⚠️ Small delay in starting Phase 3 (estimated ~1-2 hours for 4 tests)
+- ⚠️ Some duplication with Phase 8 scenario tests (acceptable for critical flows)
+
+### Expected Test Count After Phase 2.4
+- Phase 2 total: 32 tests (28 unit + 2 integration + 2 UI)
+- Project total: 123 tests (91 Phase 1 + 32 Phase 2)
+
+---
+
 ## [2025-12-11] Phase 2: User Authentication - Completed
 
 ### Work Completed

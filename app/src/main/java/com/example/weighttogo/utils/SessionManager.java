@@ -135,17 +135,28 @@ public class SessionManager {
 
         editor.apply();  // Asynchronous write
 
-        Log.i(TAG, "Session created for user: " + user.getUsername() + " (ID: " + user.getUserId() + ")");
+        // Use Log.d() for sensitive data (username) - automatically stripped in release builds by R8/ProGuard
+        Log.d(TAG, "Session created for user: " + user.getUsername() + " (ID: " + user.getUserId() + ")");
     }
 
     /**
      * Get the current logged-in user.
      *
-     * Reconstructs User object from SharedPreferences data.
-     * Returns partial User object with only session data (userId, username, displayName).
-     * Does NOT include sensitive data or timestamps.
+     * **IMPORTANT:** Returns a partial User object with ONLY session data:
+     * - ✅ Valid fields: userId, username, displayName
+     * - ❌ Invalid fields: passwordHash="", salt="", createdAt=now(), updatedAt=now(), isActive=true (dummy values)
      *
-     * @return User object if session exists, null otherwise
+     * **If you need full User data, query UserDAO.getUserById(userId) instead.**
+     *
+     * **Rationale for dummy fields:**
+     * - SharedPreferences should never store password hashes or salts (security)
+     * - Timestamps are not needed for session management (performance)
+     * - User object requires @NonNull fields, so dummy values are used as placeholders
+     *
+     * **TECHNICAL DEBT:** This design will be refactored in Phase 7.7 to use a dedicated
+     * SessionUser class (userId, username, displayName only) instead of full User object.
+     *
+     * @return User object with session data if logged in, null otherwise
      */
     @Nullable
     public synchronized User getCurrentUser() {

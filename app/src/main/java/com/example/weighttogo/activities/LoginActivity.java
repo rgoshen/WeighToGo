@@ -192,29 +192,32 @@ public class LoginActivity extends AppCompatActivity {
      * @return true if all inputs are valid, false otherwise
      */
     private boolean validateInput() {
+        // Username is trimmed to prevent accidental leading/trailing spaces
         String username = usernameEditText.getText() != null ? usernameEditText.getText().toString().trim() : "";
+
+        // Password is NOT trimmed - user may intentionally include leading/trailing spaces
         String password = passwordEditText.getText() != null ? passwordEditText.getText().toString() : "";
 
         boolean isValid = true;
 
         // Validate username
         if (username.isEmpty()) {
-            usernameInputLayout.setError("Username is required");
+            usernameInputLayout.setError(getString(R.string.error_username_required));
             isValid = false;
             Log.w(TAG, "validateInput: Username is empty");
         } else if (!ValidationUtils.isValidUsername(username)) {
-            usernameInputLayout.setError("Username is invalid (3-20 chars, alphanumeric + underscore)");
+            usernameInputLayout.setError(getString(R.string.error_invalid_username));
             isValid = false;
             Log.w(TAG, "validateInput: Username is invalid");
         }
 
         // Validate password
         if (password.isEmpty()) {
-            passwordInputLayout.setError("Password is required");
+            passwordInputLayout.setError(getString(R.string.error_password_required));
             isValid = false;
             Log.w(TAG, "validateInput: Password is empty");
         } else if (!ValidationUtils.isValidPassword(password)) {
-            passwordInputLayout.setError("Password is invalid (6+ chars, at least 1 digit)");
+            passwordInputLayout.setError(getString(R.string.error_invalid_password));
             isValid = false;
             Log.w(TAG, "validateInput: Password is invalid");
         }
@@ -285,9 +288,9 @@ public class LoginActivity extends AppCompatActivity {
     /**
      * Handle user registration flow.
      * Creates new user account with hashed password and auto-login.
-     * Will be called from tab switching in Commit 7.
+     * Called internally from handleButtonClick() when in registration mode.
      */
-    public void handleRegister() {
+    private void handleRegister() {
         String username = usernameEditText.getText().toString().trim();
         String password = passwordEditText.getText().toString();
 

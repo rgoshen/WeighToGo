@@ -147,6 +147,12 @@
     <string name="error_invalid_weight">Please enter a valid weight</string>
     <string name="error_login_failed">Invalid username or password</string>
 
+    <!-- Validation Error Messages -->
+    <string name="error_username_required">Username is required</string>
+    <string name="error_password_required">Password is required</string>
+    <string name="error_invalid_username">Username is invalid (3-20 chars, alphanumeric + underscore)</string>
+    <string name="error_invalid_password">Password is invalid (6+ chars, at least 1 digit)</string>
+
     <!-- Success Messages -->
     <string name="success_account_created">Account created successfully!</string>
     <string name="success_weight_saved">Weight entry saved!</string>

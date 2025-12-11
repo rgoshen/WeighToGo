@@ -189,8 +189,14 @@ public final class PasswordUtils {
                 return false;
             }
 
-            // Compare hashes (constant-time comparison via equals)
-            boolean isMatch = storedHash.equals(computedHash);
+            // Decode both hashes to byte arrays for constant-time comparison
+            // This prevents timing attacks that could leak hash information
+            byte[] storedBytes = Base64.getDecoder().decode(storedHash);
+            byte[] computedBytes = Base64.getDecoder().decode(computedHash);
+
+            // Use MessageDigest.isEqual() for constant-time comparison
+            // String.equals() is vulnerable to timing attacks
+            boolean isMatch = MessageDigest.isEqual(storedBytes, computedBytes);
 
             // Log result (never log the actual password or hashes)
             if (isMatch) {

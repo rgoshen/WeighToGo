@@ -466,7 +466,49 @@ WeighToGo_Database_Architecture.md is the source of truth specification document
 - [x] Set LoginActivity as launcher activity (Commit 7)
 - [x] Update MainActivity declaration (Commit 7)
 
-### 2.4 Phase 2 Validation (2025-12-11)
+### 2.4 Integration & UI Tests (Critical Flows) - HYBRID APPROACH
+**Rationale:** Now that we have a complete authentication flow, add minimal integration/UI tests for critical coverage. Comprehensive scenario testing deferred to Phase 8.
+
+#### 2.4.1 Integration Tests (End-to-End Flow)
+- [ ] Write `LoginActivityIntegrationTest.java`
+  - test_registrationFlow_createsUserAndNavigates
+    - Validates input via ValidationUtils
+    - Generates salt/hash via PasswordUtils
+    - Inserts user via UserDAO
+    - Creates session via SessionManager
+    - Verifies navigation to MainActivity
+  - test_loginFlow_authenticatesAndNavigates
+    - Queries user via UserDAO
+    - Verifies password via PasswordUtils
+    - Creates session via SessionManager
+    - Updates last_login timestamp
+    - Verifies navigation to MainActivity
+- [ ] Run integration tests (`./gradlew test`)
+- [ ] Verify both flows pass with real database (Robolectric)
+
+#### 2.4.2 UI Tests (Espresso - Critical Paths)
+- [ ] Write `LoginActivityUITest.java` (Espresso)
+  - test_userCanRegisterAndSeeMainActivity
+    - Click Register tab
+    - Type valid username and password
+    - Click Create Account button
+    - Verify MainActivity is displayed
+  - test_userCanLoginAndSeeMainActivity
+    - Type existing username and password
+    - Click Sign In button
+    - Verify MainActivity is displayed
+- [ ] Run UI tests on emulator (`./gradlew connectedAndroidTest`)
+- [ ] Verify both critical flows pass
+
+**Deferred to Phase 8 (Comprehensive Testing):**
+- Edge cases (invalid credentials, duplicate username, weak passwords)
+- Error scenarios (network issues, database errors)
+- Session persistence across app restart
+- Logout flow
+- Screen rotation during authentication
+- Permission denial scenarios
+
+### 2.5 Phase 2 Validation (2025-12-11)
 - [x] User can create new account (handleRegister with auto-login)
 - [x] Passwords are hashed (SHA-256 with SecureRandom salt, never plain text)
 - [x] User can login with valid credentials (handleSignIn with PasswordUtils.verifyPassword)
@@ -527,7 +569,14 @@ WeighToGo_Database_Architecture.md is the source of truth specification document
   - isToday(date) - boolean
   - calculateDayStreak(entries) - consecutive days
 
-### 3.4 Phase 3 Validation
+### 3.4 Implement Password Reset Feature (DEFERRED from Phase 2)
+- [ ] Create forgot password dialog/activity
+- [ ] Implement password reset logic
+- [ ] Update LoginActivity to enable "Forgot Password" link (currently commented out)
+- [ ] Add email/phone verification for password reset (security requirement)
+- [ ] Update tests to cover password reset flow
+
+### 3.5 Phase 3 Validation
 - [ ] Dashboard shows only current user's data
 - [ ] Weight entries display in RecyclerView
 - [ ] Delete button works on each row
@@ -639,7 +688,18 @@ WeighToGo_Database_Architecture.md is the source of truth specification document
   - handleNotificationToggles() - save preferences
   - sendTestMessage() - test SMS functionality
 
-### 6.2 Implement SMSNotificationManager
+### 6.2 Implement Phone Number Validation (DEFERRED from Phase 2)
+- [ ] Write tests for ValidationUtils.isValidPhoneNumber()
+  - test_isValidPhoneNumber_withValidE164_returnsTrue
+  - test_isValidPhoneNumber_withInvalidFormat_returnsFalse
+  - test_isValidPhoneNumber_withNull_returnsFalse
+  - test_isValidPhoneNumber_withEmpty_returnsFalse
+- [ ] Implement ValidationUtils.isValidPhoneNumber()
+  - E.164 format: ^\+[1-9]\d{1,14}$
+  - Null-safe validation
+  - Update Phase 2 placeholder (currently returns false)
+
+### 6.3 Implement SMSNotificationManager
 - [ ] Write `SMSNotificationManagerTest.java`
 - [ ] Implement `utils/SMSNotificationManager.java`
   - hasPermission(context) - check SEND_SMS
@@ -702,12 +762,114 @@ WeighToGo_Database_Architecture.md is the source of truth specification document
 - [ ] Show user-friendly error messages
 - [ ] Log errors for debugging
 
-### 7.5 Lint Check
+### 7.5 Performance Optimization (DEFERRED from Phase 2)
+- [ ] Move password hashing to background thread
+  - Currently synchronous on UI thread (PasswordUtils.hashPassword in LoginActivity)
+  - Use AsyncTask, HandlerThread, or Kotlin Coroutines
+  - Update LoginActivity registration/login flows
+  - Show loading indicator during hash computation
+  - Test with realistic device (not just emulator)
+- [ ] Profile app performance on older devices (API 28)
+- [ ] Optimize any other blocking UI operations identified
+
+### 7.6 Security: Migrate to bcrypt/Argon2 (CRITICAL TECHNICAL DEBT from Phase 2)
+**Issue:** SHA-256 is NOT recommended for password hashing (too fast, vulnerable to GPU brute-force)
+
+**Current Implementation (Phase 2):**
+- PasswordUtils uses SHA-256 with SecureRandom 16-byte salts
+- Timing attack vulnerability FIXED (MessageDigest.isEqual() for constant-time comparison)
+- Functional but NOT production-ready
+
+**Migration Plan:**
+- [ ] Add bcrypt library dependency: `at.favre.lib:bcrypt:0.10.2` (best Android support)
+  - Alternative: `org.springframework.security:spring-security-crypto` (PBKDF2)
+  - Alternative: `de.mkammerer:argon2-jvm` (Argon2id - most secure, higher memory requirements)
+- [ ] Add `password_algorithm` TEXT column to `users` table (values: 'SHA256', 'BCRYPT', 'ARGON2')
+- [ ] Update UserDAO schema migration (onUpgrade v1 → v2)
+- [ ] Implement PasswordUtilsV2 with bcrypt support
+  - generateSalt() - bcrypt handles salt internally
+  - hashPassword(password) - bcrypt.hashToString(12, password.toCharArray()) // cost factor 12
+  - verifyPassword(password, hash) - bcrypt.verify(password.toCharArray(), hash)
+- [ ] Implement lazy migration strategy (hybrid verification)
+  - On login: check password_algorithm field
+  - If SHA256: verify with PasswordUtils.verifyPassword()
+  - If match: rehash with bcrypt, update user record, set algorithm='BCRYPT'
+  - If BCRYPT/ARGON2: verify with PasswordUtilsV2.verifyPassword()
+- [ ] Update LoginActivity to handle migration transparently
+- [ ] Add migration tests (PasswordUtilsMigrationTest.java)
+  - test_sha256User_onLogin_migratedToBcrypt
+  - test_bcryptUser_loginWorks
+  - test_mixedAlgorithms_bothWorkDuringTransition
+- [ ] Manual testing: existing SHA256 users can still login
+- [ ] Monitor migration progress (log algorithm distribution)
+- [ ] Optional: Add admin tool to force-migrate all users (requires password reset)
+
+**Why Defer to Phase 7:**
+- No production users yet (dev/test environment only)
+- Current SHA256 implementation is "bad but functional" for development
+- Migration requires database schema change + comprehensive testing
+- Proper migration belongs in Code Quality phase with full test coverage
+- Timing attack vulnerability already fixed (constant-time comparison)
+
+**Security Note:**
+- Document in Launch Plan that production deployment REQUIRES bcrypt migration
+- Clearly mark app as "NOT production-ready" until migration complete
+
+### 7.7 Refactor: SessionManager Dummy Fields (TECHNICAL DEBT from Phase 2)
+**Issue:** SessionManager.getCurrentUser() returns User object with invalid dummy data:
+- `passwordHash` = "" (empty string, not secure)
+- `salt` = "" (empty string, not secure)
+- `createdAt` = LocalDateTime.now() (incorrect timestamp)
+- `updatedAt` = LocalDateTime.now() (incorrect timestamp)
+
+**Current Workaround (Phase 2):**
+- Documented in SessionManager.java Javadoc (lines 142-148)
+- Warning: "Returns partial User object with ONLY session data"
+- Valid fields: userId, username, displayName
+- Invalid fields: passwordHash, salt, createdAt, updatedAt (dummy values)
+- Callers should use UserDAO.getUserById() for full User data
+
+**Refactor Plan:**
+- [ ] Create dedicated SessionUser class (lightweight session data)
+  - Fields: userId, username, displayName
+  - No password/timestamp fields (no dummy data needed)
+  - Serializable for SharedPreferences
+- [ ] Update SessionManager methods
+  - createSession(User user) → Extract session data only
+  - getCurrentUser() → SessionUser (not User)
+  - Update callers to use SessionUser or query DAO for full User
+- [ ] Update LoginActivity
+  - After authentication: sessionManager.createSession(user)
+  - Dashboard: SessionUser sessionUser = sessionManager.getCurrentUser()
+  - For full user data: User user = userDAO.getUserById(sessionUser.getUserId())
+- [ ] Update MainActivity and other activities
+  - Replace User with SessionUser for session-based operations
+  - Use UserDAO when full User data needed (profile screen, etc.)
+- [ ] Add SessionUserTest.java (basic POJO tests)
+- [ ] Update SessionManagerTest.java
+  - test_createSession_withUser_storesSessionUser
+  - test_getCurrentUser_returnsSessionUser (not full User)
+- [ ] Remove dummy field workaround from SessionManager.getCurrentUser()
+
+**Why Defer to Phase 7:**
+- Current implementation works correctly (callers understand limitations)
+- Comprehensive Javadoc warns about dummy fields
+- Refactor requires updating multiple activities (LoginActivity, MainActivity, etc.)
+- Belongs in Code Quality phase with full regression testing
+- No security risk (dummy fields are not exposed to user)
+
+**Alternative (Lower Priority):**
+- Make User fields nullable (@Nullable passwordHash, salt, createdAt, updatedAt)
+- Breaks existing code that assumes @NonNull
+- Requires null checks throughout codebase
+- SessionUser approach is cleaner separation of concerns
+
+### 7.8 Lint Check
 - [ ] Run Android Lint
 - [ ] Fix all errors
 - [ ] Address warnings where appropriate
 
-### 7.6 Phase 7 Validation
+### 7.9 Phase 7 Validation
 - [ ] All code follows naming conventions
 - [ ] All classes documented
 - [ ] No lint errors
