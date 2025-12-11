@@ -393,7 +393,7 @@ WeighToGo_Database_Architecture.md is the source of truth specification document
 - [x] Run `./gradlew lint` - clean, no warnings
 - [x] Update TODO.md (2025-12-11)
 - [x] Update project_summary.md (2025-12-11)
-- [ ] Merge to develop branch
+- [x] Merge to develop branch
 
 ---
 

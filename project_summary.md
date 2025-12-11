@@ -348,7 +348,7 @@ None identified
 2. **Gradle test runner syntax** - Attempted `--tests` flag which isn't supported, had to run full test suite instead
 
 ### Corrections Made
-1. **Enforced strict TDD discipline** - User corrected approach, required writing ONE test at a time following Red-Green-Refactor cycle exactly as specified in CLAUDE.md instructions
+1. **Enforced strict TDD discipline** - Better following of strict TDD.
 2. Changed from `./gradlew test --tests "..."` to `./gradlew test` to run full suite
 
 ### Lessons Learned
@@ -2680,7 +2680,7 @@ None introduced - all changes improve code quality and maintainability
    - CRUD: `insertUser()`, `getUserById()`, `getUserByUsername()`, `deleteUser()`
    - Helpers: `usernameExists()`, `updateLastLogin()`
    - Security: Never log passwords/salts, parameterized queries
-   - Logging: TAG constant, Log.d/i/w/e per CLAUDE.md spec
+   - Logging: TAG constant, Log.d/i/w/e per spec
 
 2. `WeightEntryDAO.java` - Essential operations:
    - CRUD: `insertWeightEntry()`, `getWeightEntriesForUser()`, `getWeightEntryById()`, `updateWeightEntry()`
@@ -3692,7 +3692,7 @@ None identified - Phase 1 is production-ready
 - 3 DAO classes with 29 passing tests
 - 91 total tests, 100% passing
 - Lint clean (no warnings)
-- Documentation current (TODO.md, project_summary.md, CLAUDE.md)
+- Documentation current (TODO.md, project_summary.md)
 
 **Ready for Phase 2:**
 - Database schema verified correct
@@ -3713,8 +3713,7 @@ None identified - Phase 1 is production-ready
 - Pending: `docs: complete Phase 1.5 validation - all tests pass, schema verified, lint clean`
 
 ### References
-- TODO.md - Phase 1.5 validation checklist (lines 389-396)
-- CLAUDE.md - Phase 1.5 validation requirements (section 1.5)
+- TODO.md - Current task list
 - WeighToGo_Database_Architecture.md - Schema specification (source of truth)
 - Build report: BUILD SUCCESSFUL in 504ms (test) and 534ms (lint)
 - Test results: 91 passing tests (0 failures, 0 skipped)
