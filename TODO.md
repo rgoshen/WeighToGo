@@ -295,6 +295,11 @@ Follow strict TDD methodology (Red-Green-Refactor), MVC architecture, and GitFlo
   - **Logging**: Include database name and version in onCreate log
   - **Logging**: Log foreign key enforcement status
   - All 6 tests passing, lint clean
+- [x] Add comprehensive edge case tests (2025-12-10)
+  - DateTimeConverterTest: 12 edge case tests (null, empty, whitespace, invalid formats, malformed dates)
+  - WeighToGoDBHelperTest: 3 edge case tests (foreign key constraints, cascade delete, onUpgrade)
+  - Configured `testOptions.unitTests.returnDefaultValues = true` for Android Log mocking
+  - All 84 tests passing (55 models + 17 DateTimeConverter + 9 WeighToGoDBHelper + 2 examples + 1 other)
 
 ### 1.4 Implement DAO Classes
 - [ ] Write `UserDAOTest.java` - all CRUD operations

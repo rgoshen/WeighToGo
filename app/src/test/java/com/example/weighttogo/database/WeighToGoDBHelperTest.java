@@ -202,4 +202,135 @@ public class WeighToGoDBHelperTest {
 
         assertEquals("Foreign keys should be enabled (1)", 1, foreignKeysEnabled);
     }
+
+    // ========== EDGE CASE TESTS ==========
+
+    /**
+     * Test 7: Foreign key constraint prevents orphaned weight entries
+     * Attempting to insert weight_entry with non-existent user_id should fail
+     */
+    @Test(expected = android.database.sqlite.SQLiteConstraintException.class)
+    public void test_foreignKey_preventOrphanedRecords() {
+        // ARRANGE
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        int nonExistentUserId = 999;
+
+        // ACT - Try to insert weight_entry with invalid user_id
+        // This should throw SQLiteConstraintException due to FOREIGN KEY constraint
+        db.execSQL(
+            "INSERT INTO weight_entries (user_id, weight_value, weight_unit, weight_date, created_at, updated_at, is_deleted) " +
+            "VALUES (" + nonExistentUserId + ", 175.5, 'lbs', '2025-12-10', '2025-12-10 10:00:00', '2025-12-10 10:00:00', 0)"
+        );
+
+        // ASSERT - Exception should be thrown (test passes if exception is thrown)
+    }
+
+    /**
+     * Test 8: Foreign key CASCADE DELETE removes child records when parent is deleted
+     * Deleting a user should automatically delete their weight_entries and goal_weights
+     */
+    @Test
+    public void test_foreignKey_cascadeDelete() {
+        // ARRANGE
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+
+        // Insert test user
+        db.execSQL(
+            "INSERT INTO users (username, password_hash, salt, created_at) " +
+            "VALUES ('testuser', 'hash123', 'salt456', '2025-12-10 10:00:00')"
+        );
+
+        // Get the inserted user ID
+        Cursor userCursor = db.rawQuery("SELECT id FROM users WHERE username = 'testuser'", null);
+        assertTrue("User should be inserted", userCursor.moveToFirst());
+        int userId = userCursor.getInt(0);
+        userCursor.close();
+
+        // Insert weight_entry for this user
+        db.execSQL(
+            "INSERT INTO weight_entries (user_id, weight_value, weight_unit, weight_date, created_at, updated_at, is_deleted) " +
+            "VALUES (" + userId + ", 175.5, 'lbs', '2025-12-10', '2025-12-10 10:00:00', '2025-12-10 10:00:00', 0)"
+        );
+
+        // Insert goal_weight for this user
+        db.execSQL(
+            "INSERT INTO goal_weights (user_id, goal_weight, goal_unit, start_weight, created_at, updated_at, is_active) " +
+            "VALUES (" + userId + ", 160.0, 'lbs', 175.5, '2025-12-10 10:00:00', '2025-12-10 10:00:00', 1)"
+        );
+
+        // Verify records exist before deletion
+        Cursor entryCursor = db.rawQuery("SELECT COUNT(*) FROM weight_entries WHERE user_id = " + userId, null);
+        entryCursor.moveToFirst();
+        assertEquals("Should have 1 weight entry", 1, entryCursor.getInt(0));
+        entryCursor.close();
+
+        Cursor goalCursor = db.rawQuery("SELECT COUNT(*) FROM goal_weights WHERE user_id = " + userId, null);
+        goalCursor.moveToFirst();
+        assertEquals("Should have 1 goal weight", 1, goalCursor.getInt(0));
+        goalCursor.close();
+
+        // ACT - Delete the user
+        db.execSQL("DELETE FROM users WHERE id = " + userId);
+
+        // ASSERT - Child records should be automatically deleted via CASCADE DELETE
+        entryCursor = db.rawQuery("SELECT COUNT(*) FROM weight_entries WHERE user_id = " + userId, null);
+        entryCursor.moveToFirst();
+        assertEquals("Weight entries should be cascade deleted", 0, entryCursor.getInt(0));
+        entryCursor.close();
+
+        goalCursor = db.rawQuery("SELECT COUNT(*) FROM goal_weights WHERE user_id = " + userId, null);
+        goalCursor.moveToFirst();
+        assertEquals("Goal weights should be cascade deleted", 0, goalCursor.getInt(0));
+        goalCursor.close();
+    }
+
+    /**
+     * Test 9: onUpgrade drops and recreates all tables
+     * Simulates database upgrade scenario
+     */
+    @Test
+    public void test_onUpgrade_dropsAndRecreatesTables() {
+        // ARRANGE
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+
+        // Insert test data
+        db.execSQL(
+            "INSERT INTO users (username, password_hash, salt, created_at) " +
+            "VALUES ('testuser', 'hash123', 'salt456', '2025-12-10 10:00:00')"
+        );
+
+        // Verify data exists
+        Cursor cursor = db.rawQuery("SELECT COUNT(*) FROM users", null);
+        cursor.moveToFirst();
+        int userCountBefore = cursor.getInt(0);
+        cursor.close();
+        assertEquals("Should have 1 user before upgrade", 1, userCountBefore);
+
+        // ACT - Trigger onUpgrade (simulates version 1 -> 2)
+        dbHelper.onUpgrade(db, 1, 2);
+
+        // ASSERT - Tables should be recreated (data lost, but tables exist)
+        // Check users table exists and is empty
+        cursor = db.rawQuery("SELECT COUNT(*) FROM users", null);
+        cursor.moveToFirst();
+        int userCountAfter = cursor.getInt(0);
+        cursor.close();
+        assertEquals("Users table should be empty after upgrade", 0, userCountAfter);
+
+        // Check weight_entries table exists
+        cursor = db.rawQuery(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='weight_entries'",
+            null
+        );
+        assertTrue("weight_entries table should exist after upgrade", cursor.moveToFirst());
+        cursor.close();
+
+        // Check goal_weights table exists
+        cursor = db.rawQuery(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='goal_weights'",
+            null
+        );
+        assertTrue("goal_weights table should exist after upgrade", cursor.moveToFirst());
+        cursor.close();
+    }
 }
