@@ -24,12 +24,24 @@ public final class DateTimeConverter {
 
     private static final String TAG = "DateTimeConverter";
 
-    // SQLite-compatible timestamp format
-    private static final String TIMESTAMP_FORMAT = "yyyy-MM-dd HH:mm:ss";
+    /**
+     * SQLite-compatible timestamp format (ISO-8601 compliant).
+     * Public for DAO layer documentation and validation.
+     *
+     * Format: "yyyy-MM-dd HH:mm:ss" (24-hour time, no timezone)
+     * Example: "2025-12-10 14:30:00"
+     */
+    public static final String TIMESTAMP_FORMAT = "yyyy-MM-dd HH:mm:ss";
     private static final DateTimeFormatter TIMESTAMP_FORMATTER = DateTimeFormatter.ofPattern(TIMESTAMP_FORMAT);
 
-    // SQLite-compatible date format
-    private static final String DATE_FORMAT = "yyyy-MM-dd";
+    /**
+     * SQLite-compatible date format (ISO-8601 compliant).
+     * Public for DAO layer documentation and validation.
+     *
+     * Format: "yyyy-MM-dd"
+     * Example: "2025-12-10"
+     */
+    public static final String DATE_FORMAT = "yyyy-MM-dd";
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern(DATE_FORMAT);
 
     /**

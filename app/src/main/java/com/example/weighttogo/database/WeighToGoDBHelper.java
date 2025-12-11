@@ -108,7 +108,17 @@ public class WeighToGoDBHelper extends SQLiteOpenHelper {
     /**
      * Get singleton instance of database helper (thread-safe).
      *
-     * @param context application context
+     * Thread Safety:
+     * - Method is synchronized to prevent race conditions during initialization
+     * - Safe to call from multiple threads concurrently
+     * - Always returns same instance regardless of calling thread
+     *
+     * Context Handling:
+     * - Automatically uses Application context via context.getApplicationContext()
+     * - Prevents memory leaks from Activity context references
+     * - Safe to pass Activity or Application context - both work correctly
+     *
+     * @param context any Context (Activity or Application) - will use Application context internally
      * @return singleton WeighToGoDBHelper instance
      */
     public static synchronized WeighToGoDBHelper getInstance(Context context) {
@@ -180,6 +190,10 @@ public class WeighToGoDBHelper extends SQLiteOpenHelper {
             // Create index on weight_date for date-based queries (recent entries, date ranges, sorting)
             db.execSQL("CREATE INDEX idx_weight_entries_weight_date ON " + TABLE_WEIGHT_ENTRIES + "(weight_date)");
             Log.d(TAG, "Created index: idx_weight_entries_weight_date");
+
+            // Create index on is_deleted for soft delete queries (WHERE is_deleted = 0)
+            db.execSQL("CREATE INDEX idx_weight_entries_is_deleted ON " + TABLE_WEIGHT_ENTRIES + "(is_deleted)");
+            Log.d(TAG, "Created index: idx_weight_entries_is_deleted");
 
             // Create index on is_active for finding active goal (common dashboard query)
             db.execSQL("CREATE INDEX idx_goal_weights_is_active ON " + TABLE_GOAL_WEIGHTS + "(is_active)");

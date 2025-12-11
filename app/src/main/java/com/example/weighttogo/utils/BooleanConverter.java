@@ -1,5 +1,7 @@
 package com.example.weighttogo.utils;
 
+import android.util.Log;
+
 /**
  * Utility class for converting between Java boolean and SQLite INTEGER (0/1).
  *
@@ -19,6 +21,8 @@ package com.example.weighttogo.utils;
  * @see <a href="https://www.sqlite.org/datatype3.html">SQLite Datatypes</a>
  */
 public final class BooleanConverter {
+
+    private static final String TAG = "BooleanConverter";
 
     /**
      * Private constructor to prevent instantiation.
@@ -44,11 +48,15 @@ public final class BooleanConverter {
      * Converts a SQLite INTEGER to Java boolean.
      *
      * Follows SQLite convention: 0 is false, any non-zero value is true.
+     * Logs a warning if value is not the expected 0 or 1 (defensive validation).
      *
      * @param value the INTEGER value from database (typically 0 or 1)
      * @return false if value is 0, true otherwise
      */
     public static boolean fromInteger(int value) {
+        if (value < 0 || value > 1) {
+            Log.w(TAG, "fromInteger: unexpected value '" + value + "' (expected 0 or 1), treating as boolean");
+        }
         return value != 0;
     }
 }

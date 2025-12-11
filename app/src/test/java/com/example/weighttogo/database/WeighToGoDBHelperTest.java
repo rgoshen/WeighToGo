@@ -34,16 +34,19 @@ public class WeighToGoDBHelperTest {
 
     @After
     public void tearDown() {
-        if (dbHelper != null) {
-            dbHelper.close();
+        try {
+            if (dbHelper != null) {
+                dbHelper.close();
+            }
+        } finally {
             dbHelper = null;  // Explicit null assignment to prevent accidental reuse
-        }
-        // Clean up database file
-        context.deleteDatabase("weigh_to_go.db");
+            // Clean up database file (guaranteed to run even if close() fails)
+            context.deleteDatabase("weigh_to_go.db");
 
-        // Reset singleton instance for test isolation
-        // This ensures each test gets a fresh database instance
-        WeighToGoDBHelper.resetInstance();
+            // Reset singleton instance for test isolation
+            // This ensures each test gets a fresh database instance
+            WeighToGoDBHelper.resetInstance();
+        }
     }
 
     /**
@@ -389,10 +392,28 @@ public class WeighToGoDBHelperTest {
         cursor.close();
     }
 
+    /**
+     * Test 14: onCreate creates index on weight_entries.is_deleted
+     * Soft delete queries (WHERE is_deleted = 0) should be optimized
+     */
+    @Test
+    public void test_onCreate_createsIndexOnIsDeleted() {
+        // ACT
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+
+        // ASSERT - Check index exists
+        Cursor cursor = db.rawQuery(
+            "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_weight_entries_is_deleted'",
+            null
+        );
+        assertTrue("Index idx_weight_entries_is_deleted should exist", cursor.moveToFirst());
+        cursor.close();
+    }
+
     // ========== EDGE CASE TESTS ==========
 
     /**
-     * Test 14: onUpgrade drops and recreates all tables
+     * Test 15: onUpgrade drops and recreates all tables
      * Simulates database upgrade scenario
      */
     @Test
