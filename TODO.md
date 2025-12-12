@@ -907,25 +907,25 @@ WeighToGo_Database_Architecture.md is the source of truth specification document
 - [x] Manual testing: screen shows, stats calculate correctly (deferred to Phase 5.9)
 - [x] Commit: `feat: implement GoalsActivity with goal history adapter`
 
-### 5.6 Commit 6: Achievement Detection Logic
-- [ ] Write `AchievementManagerTest.java` (12 tests)
-  - [ ] GOAL_REACHED, FIRST_ENTRY, STREAK_7, STREAK_30
-  - [ ] MILESTONE_5, MILESTONE_10, MILESTONE_25
-  - [ ] NEW_LOW
-  - [ ] Duplicate prevention
-- [ ] Implement `utils/AchievementManager.java`
-  - [ ] checkAchievements() - main entry point
-  - [ ] checkGoalReached() - detect goal completion
-  - [ ] checkFirstEntry() - first weight log
-  - [ ] checkStreaks() - 7-day and 30-day streaks
-  - [ ] checkMilestones() - 5, 10, 25 lbs lost
-  - [ ] checkNewLow() - new lowest weight
-- [ ] Modify `activities/MainActivity.java`
+### 5.6 Commit 6: Achievement Detection Logic ✅ Completed 2025-12-12 (partial)
+- [x] Write `AchievementManagerTest.java` (12 tests)
+  - [x] GOAL_REACHED, FIRST_ENTRY, STREAK_7, STREAK_30
+  - [x] MILESTONE_5, MILESTONE_10, MILESTONE_25
+  - [x] NEW_LOW
+  - [x] Duplicate prevention
+- [x] Implement `utils/AchievementManager.java`
+  - [x] checkAchievements() - main entry point
+  - [x] checkGoalReached() - detect goal completion
+  - [x] checkFirstEntry() - first weight log
+  - [x] checkStreaks() - 7-day and 30-day streaks
+  - [x] checkMilestones() - 5, 10, 25 lbs lost
+  - [x] checkNewLow() - new lowest weight
+- [ ] Modify `activities/MainActivity.java` (deferred to Phase 5.7+)
   - [ ] Call AchievementManager.checkAchievements() in onActivityResult()
   - [ ] Add showAchievementDialog() method
   - [ ] Mark goal as achieved when GOAL_REACHED detected
-- [ ] All 12 tests passing (total: 258 tests)
-- [ ] Commit: `feat: implement achievement detection with AchievementManager`
+- [x] All 12 tests passing (total: 270 tests - 246 + 12 + 12 existing)
+- [x] Commit: `test: add AchievementManager tests and implementation`
 
 ### 5.7 Commit 7: Wire Bottom Nav to GoalsActivity
 - [ ] Modify `activities/MainActivity.java`
