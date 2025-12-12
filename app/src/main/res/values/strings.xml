@@ -89,6 +89,17 @@
     <!-- Content Descriptions for Weight Entry -->
     <string name="cd_previous_date">Go to previous date</string>
     <string name="cd_next_date">Go to next date</string>
+    <string name="cd_numpad_zero">Number zero</string>
+    <string name="cd_numpad_one">Number one</string>
+    <string name="cd_numpad_two">Number two</string>
+    <string name="cd_numpad_three">Number three</string>
+    <string name="cd_numpad_four">Number four</string>
+    <string name="cd_numpad_five">Number five</string>
+    <string name="cd_numpad_six">Number six</string>
+    <string name="cd_numpad_seven">Number seven</string>
+    <string name="cd_numpad_eight">Number eight</string>
+    <string name="cd_numpad_nine">Number nine</string>
+    <string name="cd_numpad_decimal">Decimal point</string>
     <string name="cd_numpad_backspace">Delete last digit</string>
     <string name="cd_adjust_weight">Adjust weight by %s</string>
     <string name="cd_unit_lbs">Select pounds</string>
