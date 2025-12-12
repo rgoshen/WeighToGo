@@ -134,8 +134,8 @@ public class WeightEntryActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_weight_entry);
 
-        // Initialize weight input
-        weightInput = new StringBuilder();
+        // Initialize weight input to "0.0" (allows saving immediately in add mode)
+        weightInput = new StringBuilder("0.0");
 
         // Get intent extras
         getIntentExtras();
