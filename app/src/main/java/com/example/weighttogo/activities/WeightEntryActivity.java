@@ -256,12 +256,88 @@ public class WeightEntryActivity extends AppCompatActivity {
         prevDateButton.setOnClickListener(v -> Log.d(TAG, "Previous date - coming in Commit 5"));
         nextDateButton.setOnClickListener(v -> Log.d(TAG, "Next date - coming in Commit 5"));
 
-        // Number pad (stubbed - will implement in Commit 2)
+        // Number pad
+        setupNumberPadListeners();
+
         // Quick adjust (stubbed - will implement in Commit 3)
         // Unit toggle (stubbed - will implement in Commit 4)
         // Save button (stubbed - will implement in Commit 6)
 
         Log.d(TAG, "setupClickListeners: Click listeners configured");
+    }
+
+    // =============================================================================================
+    // NUMBER PAD INPUT (Commit 2)
+    // =============================================================================================
+
+    /**
+     * Setup number pad button click listeners (0-9, decimal, backspace).
+     */
+    private void setupNumberPadListeners() {
+        // Array of number pad button IDs
+        int[] numpadIds = {
+                R.id.numpad0, R.id.numpad1, R.id.numpad2, R.id.numpad3, R.id.numpad4,
+                R.id.numpad5, R.id.numpad6, R.id.numpad7, R.id.numpad8, R.id.numpad9
+        };
+
+        // Wire up digit buttons (0-9)
+        for (int i = 0; i < numpadIds.length; i++) {
+            final int digit = i;
+            findViewById(numpadIds[i]).setOnClickListener(v -> handleNumberInput(String.valueOf(digit)));
+        }
+
+        // Wire up decimal and backspace
+        numpadDecimal.setOnClickListener(v -> handleDecimalPoint());
+        numpadBackspace.setOnClickListener(v -> handleBackspace());
+
+        Log.d(TAG, "setupNumberPadListeners: Number pad configured");
+    }
+
+    /**
+     * Handle digit button press (0-9).
+     * Prevents leading zeros (except "0.") and enforces max digit limit.
+     *
+     * @param digit the digit to append (0-9)
+     */
+    private void handleNumberInput(String digit) {
+        String current = weightInput.toString();
+
+        // Prevent leading zeros (except "0.")
+        if (current.equals("0") && !digit.equals("0")) {
+            weightInput = new StringBuilder(digit);
+        } else if (current.length() < MAX_DIGITS + 1) {  // +1 for decimal point
+            weightInput.append(digit);
+        }
+
+        updateWeightDisplay();
+        Log.d(TAG, "handleNumberInput: Input = " + weightInput.toString());
+    }
+
+    /**
+     * Handle decimal point button press.
+     * Only adds decimal if not already present and input is not empty.
+     */
+    private void handleDecimalPoint() {
+        String current = weightInput.toString();
+
+        // Only add decimal if not already present and not empty
+        if (!current.contains(DECIMAL_POINT) && current.length() > 0) {
+            weightInput.append(DECIMAL_POINT);
+            updateWeightDisplay();
+            Log.d(TAG, "handleDecimalPoint: Input = " + weightInput.toString());
+        }
+    }
+
+    /**
+     * Handle backspace button press.
+     * Removes the last character from input.
+     */
+    private void handleBackspace() {
+        if (weightInput.length() > 0) {
+            weightInput.deleteCharAt(weightInput.length() - 1);
+            updateWeightDisplay();
+            Log.d(TAG, "handleBackspace: Input = " + weightInput.toString());
+        }
     }
 
     /**
