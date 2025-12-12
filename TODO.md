@@ -872,20 +872,24 @@ WeighToGo_Database_Architecture.md is the source of truth specification document
 - [x] Manual testing: Deferred to Phase 5.8 (when edit button wired up)
 - [x] Commit: `feat: wire goal setting dialog to MainActivity`
 
-### 5.4 Commit 4: Goals Screen Layout
-- [ ] Create `res/layout/activity_goals.xml`
-  - [ ] Header with back button
-  - [ ] Current goal card (expanded stats: days, pace, projection, avg weekly loss)
-  - [ ] Edit/Delete goal buttons
-  - [ ] Empty state (when no goal)
-  - [ ] Goal history RecyclerView
-  - [ ] FAB to add goal
-- [ ] Create `res/layout/item_goal_history.xml`
-  - [ ] Achievement badge (if achieved)
-  - [ ] Goal weight, dates, stats
-- [ ] Add ~20 new strings to `res/values/strings.xml`
-- [ ] Layout only (no Java logic yet)
-- [ ] Commit: `feat: create Goals screen layout (activity + history item)`
+### 5.4 Commit 4: Goals Screen Layout - COMPLETED 2025-12-12
+- [x] Create `res/layout/activity_goals.xml`
+  - [x] Header with back button
+  - [x] Current goal card (expanded stats: days, pace, projection, avg weekly loss)
+  - [x] Edit/Delete goal buttons (32dp icons in header)
+  - [x] Empty state (when no goal exists)
+  - [x] Goal history RecyclerView section
+  - [x] FAB to add goal (bottom right)
+- [x] Create `res/layout/item_goal_history.xml`
+  - [x] Achievement badge (40dp circle, visible if achieved)
+  - [x] Goal weight display with "✓ Achieved" label
+  - [x] Stats (lbs lost, duration)
+  - [x] Date range display, optional target date
+- [x] Add 27 new strings to `res/values/strings.xml`
+- [x] Create missing drawables (ic_achievement, bg_achievement_badge, ic_add)
+- [x] Layout only (no Java logic yet)
+- [x] All layouts compile, tests pass (246 passing), lint clean
+- [x] Commit: `feat: create Goals screen layout (activity + history item)`
 
 ### 5.5 Commit 5: GoalsActivity Implementation
 - [ ] Create `activities/GoalsActivity.java` (skeleton → full implementation)

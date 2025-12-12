@@ -1,0 +1,466 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background_secondary"
+    android:fitsSystemWindows="true">
+
+    <!-- Scrollable Content -->
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:clipToPadding="false">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="96dp">
+
+            <!-- Navigation Header -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="@dimen/spacing_medium"
+                android:background="@color/card_background"
+                android:elevation="2dp">
+
+                <!-- Back Button -->
+                <ImageButton
+                    android:id="@+id/btn_back"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_back"
+                    android:scaleType="centerInside"
+                    android:padding="8dp"
+                    android:contentDescription="@string/cd_back_button"
+                    app:tint="@color/text_primary" />
+
+                <!-- Title -->
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/goals_title"
+                    android:textColor="@color/text_primary"
+                    android:textSize="18sp"
+                    android:fontFamily="sans-serif-medium"
+                    android:gravity="center"
+                    android:layout_marginEnd="40dp" />
+
+            </LinearLayout>
+
+            <!-- Content Area -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="@dimen/spacing_large">
+
+                <!-- Current Goal Card (visible when active goal exists) -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/card_current_goal"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/spacing_large"
+                    android:visibility="gone"
+                    app:cardCornerRadius="@dimen/corner_radius_xl"
+                    app:cardElevation="@dimen/elevation_raised"
+                    app:cardBackgroundColor="@color/card_background"
+                    tools:visibility="visible">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="@dimen/spacing_xl">
+
+                        <!-- Card Header -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:layout_marginBottom="@dimen/spacing_large">
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="@string/current_goal"
+                                android:textColor="@color/text_primary"
+                                android:textSize="@dimen/text_size_input"
+                                android:textStyle="bold"
+                                android:fontFamily="sans-serif-medium" />
+
+                            <!-- Edit Button -->
+                            <ImageButton
+                                android:id="@+id/btn_edit_goal"
+                                android:layout_width="32dp"
+                                android:layout_height="32dp"
+                                android:layout_marginEnd="@dimen/spacing_small"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:src="@drawable/ic_edit"
+                                android:contentDescription="@string/cd_edit_goal"
+                                app:tint="@color/primary_teal" />
+
+                            <!-- Delete Button -->
+                            <ImageButton
+                                android:id="@+id/btn_delete_goal"
+                                android:layout_width="32dp"
+                                android:layout_height="32dp"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:src="@drawable/ic_delete"
+                                android:contentDescription="@string/cd_delete_goal"
+                                app:tint="@color/error" />
+
+                        </LinearLayout>
+
+                        <!-- Weight Stats Row -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:layout_marginBottom="@dimen/spacing_large">
+
+                            <!-- Start Weight -->
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical"
+                                android:gravity="center">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/start_weight"
+                                    android:textColor="@color/text_secondary"
+                                    android:textSize="@dimen/text_size_small"
+                                    android:textAllCaps="true"
+                                    android:letterSpacing="0.05" />
+
+                                <TextView
+                                    android:id="@+id/text_start_weight"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:textColor="@color/text_primary"
+                                    android:textSize="24sp"
+                                    android:fontFamily="sans-serif-medium"
+                                    tools:text="180.0" />
+
+                                <TextView
+                                    android:id="@+id/text_start_unit"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:textColor="@color/text_secondary"
+                                    android:textSize="@dimen/text_size_small"
+                                    tools:text="lbs" />
+
+                            </LinearLayout>
+
+                            <!-- Current Weight -->
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical"
+                                android:gravity="center">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/current_weight"
+                                    android:textColor="@color/text_secondary"
+                                    android:textSize="@dimen/text_size_small"
+                                    android:textAllCaps="true"
+                                    android:letterSpacing="0.05" />
+
+                                <TextView
+                                    android:id="@+id/text_current_weight_value"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:textColor="@color/primary_teal"
+                                    android:textSize="28sp"
+                                    android:fontFamily="sans-serif-medium"
+                                    android:textStyle="bold"
+                                    tools:text="172.0" />
+
+                                <TextView
+                                    android:id="@+id/text_current_unit"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:textColor="@color/text_secondary"
+                                    android:textSize="@dimen/text_size_small"
+                                    tools:text="lbs" />
+
+                            </LinearLayout>
+
+                            <!-- Goal Weight -->
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical"
+                                android:gravity="center">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/goal_weight"
+                                    android:textColor="@color/text_secondary"
+                                    android:textSize="@dimen/text_size_small"
+                                    android:textAllCaps="true"
+                                    android:letterSpacing="0.05" />
+
+                                <TextView
+                                    android:id="@+id/text_goal_weight"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:textColor="@color/text_primary"
+                                    android:textSize="24sp"
+                                    android:fontFamily="sans-serif-medium"
+                                    tools:text="150.0" />
+
+                                <TextView
+                                    android:id="@+id/text_goal_unit"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:textColor="@color/text_secondary"
+                                    android:textSize="@dimen/text_size_small"
+                                    tools:text="lbs" />
+
+                            </LinearLayout>
+
+                        </LinearLayout>
+
+                        <!-- Divider -->
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:background="@color/divider"
+                            android:layout_marginBottom="@dimen/spacing_large" />
+
+                        <!-- Expanded Stats Grid (2x2) -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical">
+
+                            <!-- Row 1: Days Since Start + Pace -->
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:layout_marginBottom="@dimen/spacing_medium">
+
+                                <!-- Days Since Start -->
+                                <LinearLayout
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:orientation="vertical">
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="@string/days_since_start"
+                                        android:textColor="@color/text_secondary"
+                                        android:textSize="@dimen/text_size_small"
+                                        android:textAllCaps="true"
+                                        android:letterSpacing="0.05" />
+
+                                    <TextView
+                                        android:id="@+id/text_days_since_start"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:textColor="@color/text_primary"
+                                        android:textSize="18sp"
+                                        android:fontFamily="sans-serif-medium"
+                                        tools:text="45 days" />
+
+                                </LinearLayout>
+
+                                <!-- Pace (lbs/week) -->
+                                <LinearLayout
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:orientation="vertical">
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="@string/pace"
+                                        android:textColor="@color/text_secondary"
+                                        android:textSize="@dimen/text_size_small"
+                                        android:textAllCaps="true"
+                                        android:letterSpacing="0.05" />
+
+                                    <TextView
+                                        android:id="@+id/text_pace"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:textColor="@color/text_primary"
+                                        android:textSize="18sp"
+                                        android:fontFamily="sans-serif-medium"
+                                        tools:text="1.2 lbs/week" />
+
+                                </LinearLayout>
+
+                            </LinearLayout>
+
+                            <!-- Row 2: Projection + Avg Weekly Loss -->
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal">
+
+                                <!-- Projection -->
+                                <LinearLayout
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:orientation="vertical">
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="@string/projection"
+                                        android:textColor="@color/text_secondary"
+                                        android:textSize="@dimen/text_size_small"
+                                        android:textAllCaps="true"
+                                        android:letterSpacing="0.05" />
+
+                                    <TextView
+                                        android:id="@+id/text_projection"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:textColor="@color/text_primary"
+                                        android:textSize="18sp"
+                                        android:fontFamily="sans-serif-medium"
+                                        tools:text="Feb 15, 2026" />
+
+                                </LinearLayout>
+
+                                <!-- Avg Weekly Loss -->
+                                <LinearLayout
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:orientation="vertical">
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="@string/avg_weekly_loss"
+                                        android:textColor="@color/text_secondary"
+                                        android:textSize="@dimen/text_size_small"
+                                        android:textAllCaps="true"
+                                        android:letterSpacing="0.05" />
+
+                                    <TextView
+                                        android:id="@+id/text_avg_weekly_loss"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:textColor="@color/accent_green"
+                                        android:textSize="18sp"
+                                        android:fontFamily="sans-serif-medium"
+                                        tools:text="-1.8 lbs" />
+
+                                </LinearLayout>
+
+                            </LinearLayout>
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Empty State (visible when no active goal) -->
+                <LinearLayout
+                    android:id="@+id/empty_state_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:padding="@dimen/spacing_xxl"
+                    android:visibility="visible"
+                    tools:visibility="gone">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/no_active_goal"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="18sp"
+                        android:fontFamily="sans-serif-medium"
+                        android:layout_marginBottom="@dimen/spacing_small" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/set_goal_to_track_progress"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="@dimen/text_size_body"
+                        android:gravity="center" />
+
+                </LinearLayout>
+
+                <!-- Goal History Section -->
+                <LinearLayout
+                    android:id="@+id/goal_history_section"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone"
+                    tools:visibility="visible">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/goal_history"
+                        android:textColor="@color/text_primary"
+                        android:textSize="@dimen/text_size_input"
+                        android:textStyle="bold"
+                        android:fontFamily="sans-serif-medium"
+                        android:layout_marginBottom="@dimen/spacing_medium" />
+
+                    <!-- Goal History RecyclerView -->
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/recycler_goal_history"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:nestedScrollingEnabled="false"
+                        tools:listitem="@layout/item_goal_history"
+                        tools:itemCount="3" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+    <!-- FAB to Add Goal -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab_add_goal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="@dimen/spacing_large"
+        android:src="@drawable/ic_add"
+        android:contentDescription="@string/cd_add_goal"
+        app:tint="@color/text_on_primary"
+        app:backgroundTint="@color/primary_teal" />
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
