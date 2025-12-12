@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.weighttogo.R;
 import com.example.weighttogo.adapters.GoalHistoryAdapter;
 import com.example.weighttogo.database.GoalWeightDAO;
+import com.example.weighttogo.fragments.GoalDialogFragment;
 import com.example.weighttogo.database.UserDAO;
 import com.example.weighttogo.database.WeighToGoDBHelper;
 import com.example.weighttogo.database.WeightEntryDAO;
@@ -35,7 +36,8 @@ import java.util.List;
  * Activity for managing weight goals.
  * Displays current goal with expanded stats and goal history.
  */
-public class GoalsActivity extends AppCompatActivity {
+public class GoalsActivity extends AppCompatActivity
+        implements GoalDialogFragment.GoalDialogListener {
 
     // UI Elements - Header
     private ImageButton btnBack;
@@ -182,16 +184,30 @@ public class GoalsActivity extends AppCompatActivity {
      * Setup FAB click listener.
      */
     private void setupFAB() {
-        fabAddGoal.setOnClickListener(v -> {
-            // Navigate to MainActivity and trigger goal dialog
-            // Use FLAG_ACTIVITY_CLEAR_TOP to return to existing MainActivity instance
-            // instead of creating a new one
-            Intent intent = new Intent(this, MainActivity.class);
-            intent.putExtra("SHOW_GOAL_DIALOG", true);
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            startActivity(intent);
-            finish();
-        });
+        fabAddGoal.setOnClickListener(v -> showSetGoalDialog());
+    }
+
+    /**
+     * Shows the goal dialog fragment.
+     * Fragment handles all UI, validation, and database operations.
+     */
+    private void showSetGoalDialog() {
+        // Get current weight (latest entry)
+        WeightEntry latestEntry = weightEntryDAO.getLatestWeightEntry(currentUserId);
+
+        if (latestEntry == null) {
+            Toast.makeText(this, "Please add a weight entry first", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Create and show dialog fragment
+        GoalDialogFragment dialog = GoalDialogFragment.newInstance(
+                currentUserId,
+                latestEntry.getWeightValue(),
+                latestEntry.getWeightUnit()
+        );
+        dialog.setListener(this);
+        dialog.show(getSupportFragmentManager(), "GoalDialogFragment");
     }
 
     /**
@@ -307,17 +323,34 @@ public class GoalsActivity extends AppCompatActivity {
         }
     }
 
+    // ============================================================
+    // GoalDialogFragment.GoalDialogListener Implementation
+    // ============================================================
+
+    @Override
+    public void onGoalSaved(GoalWeight goal) {
+        // Reload all goal data (active goal + history)
+        loadGoalData();
+    }
+
+    @Override
+    public void onGoalSaveError(String errorMessage) {
+        // Error already shown via Toast in fragment
+        android.util.Log.e("GoalsActivity", "Goal save failed: " + errorMessage);
+    }
+
+    // ============================================================
+    // Goal Actions
+    // ============================================================
+
     /**
      * Handle edit goal button click.
-     * Shows goal dialog pre-filled with current goal data.
+     * TODO: Implement edit mode with GoalDialogFragment
      */
     private void handleEditGoal() {
-        // Navigate to MainActivity and trigger edit dialog
-        Intent intent = new Intent(this, MainActivity.class);
-        intent.putExtra("SHOW_GOAL_DIALOG", true);
-        intent.putExtra("EDIT_GOAL", true);
-        startActivity(intent);
-        finish();
+        // TODO Phase 2: Implement edit mode
+        // Will use GoalDialogFragment.newInstance() with existingGoalId parameter
+        Toast.makeText(this, "Edit goal coming soon", Toast.LENGTH_SHORT).show();
     }
 
     /**
