@@ -152,6 +152,8 @@ public class WeightEntryActivity extends AppCompatActivity {
             loadExistingEntry();
         } else {
             loadPreviousEntry();
+            // In add mode, ensure display shows 0.0 (overrides XML default of 172.0)
+            updateWeightDisplay();
         }
 
         // Initialize date to today
@@ -358,16 +360,17 @@ public class WeightEntryActivity extends AppCompatActivity {
     /**
      * Handle digit button press (0-9).
      * Prevents leading zeros (except "0.") and enforces max digit limit.
+     * Replaces "0" or "0.0" when user starts typing a new number.
      *
      * @param digit the digit to append (0-9)
      */
     private void handleNumberInput(String digit) {
         String current = weightInput.toString();
 
-        // Prevent leading zeros (except when typing "0.")
-        if (current.equals("0") && !digit.equals("0")) {
+        // Replace "0" or "0.0" when user types a non-zero digit (start fresh)
+        if ((current.equals("0") || current.equals("0.0")) && !digit.equals("0")) {
             weightInput = new StringBuilder(digit);
-        } else if (current.equals("0") && digit.equals("0")) {
+        } else if ((current.equals("0") || current.equals("0.0")) && digit.equals("0")) {
             return; // Don't allow multiple leading zeros
         } else {
             // Count digits only (excluding decimal point)
@@ -646,12 +649,13 @@ public class WeightEntryActivity extends AppCompatActivity {
     /**
      * Handle save button click.
      * Validates input and calls createNewEntry or updateExistingEntry.
+     * Allows 0 as a valid weight (can be deleted later via edit).
      */
     private void handleSave() {
         String weightStr = weightInput.toString();
 
-        // Validate non-empty
-        if (weightStr.isEmpty() || weightStr.equals("0.0")) {
+        // Validate non-empty (allow "0" or "0.0" as valid)
+        if (weightStr.isEmpty()) {
             Toast.makeText(this, "Please enter a weight value", Toast.LENGTH_SHORT).show();
             Log.w(TAG, "handleSave: Empty weight value");
             return;
@@ -667,8 +671,8 @@ public class WeightEntryActivity extends AppCompatActivity {
             return;
         }
 
-        // Validate range based on current unit
-        double min = currentUnit.equals("lbs") ? 50.0 : 22.7;
+        // Validate range based on current unit (allow 0 for placeholder/deletion scenario)
+        double min = 0.0;  // Changed from 50.0/22.7 to allow 0
         double max = currentUnit.equals("lbs") ? 700.0 : 317.5;
 
         if (weight < min || weight > max) {
