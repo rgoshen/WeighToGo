@@ -39,6 +39,9 @@ import java.util.List;
  */
 public class MainActivity extends AppCompatActivity implements WeightEntryAdapter.OnItemClickListener {
 
+    // Request Codes
+    private static final int REQUEST_CODE_WEIGHT_ENTRY = 1001;
+
     // UI Elements
     private TextView greetingText;
     private TextView userName;
@@ -182,9 +185,12 @@ public class MainActivity extends AppCompatActivity implements WeightEntryAdapte
      * Setup FAB click listener.
      */
     private void setupFAB() {
-        addEntryFab.setOnClickListener(v ->
-                Toast.makeText(this, "Add Entry - Coming in Phase 4", Toast.LENGTH_SHORT).show()
-        );
+        addEntryFab.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, WeightEntryActivity.class);
+            intent.putExtra(WeightEntryActivity.EXTRA_USER_ID, currentUserId);
+            intent.putExtra(WeightEntryActivity.EXTRA_IS_EDIT_MODE, false);
+            startActivityForResult(intent, REQUEST_CODE_WEIGHT_ENTRY);
+        });
     }
 
     /**
@@ -381,11 +387,34 @@ public class MainActivity extends AppCompatActivity implements WeightEntryAdapte
 
     @Override
     public void onEditClick(WeightEntry entry) {
-        Toast.makeText(this, "Edit Entry - Coming in Phase 4", Toast.LENGTH_SHORT).show();
+        Intent intent = new Intent(MainActivity.this, WeightEntryActivity.class);
+        intent.putExtra(WeightEntryActivity.EXTRA_USER_ID, currentUserId);
+        intent.putExtra(WeightEntryActivity.EXTRA_IS_EDIT_MODE, true);
+        intent.putExtra(WeightEntryActivity.EXTRA_WEIGHT_ID, entry.getWeightId());
+        intent.putExtra(WeightEntryActivity.EXTRA_WEIGHT_VALUE, entry.getWeightValue());
+        intent.putExtra(WeightEntryActivity.EXTRA_WEIGHT_DATE, entry.getWeightDate().toString());
+        intent.putExtra(WeightEntryActivity.EXTRA_WEIGHT_UNIT, entry.getWeightUnit());
+        startActivityForResult(intent, REQUEST_CODE_WEIGHT_ENTRY);
     }
 
     @Override
     public void onDeleteClick(WeightEntry entry) {
         handleDeleteEntry(entry);
+    }
+
+    /**
+     * Handle result from WeightEntryActivity.
+     * Refreshes data if entry was saved or updated.
+     */
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == REQUEST_CODE_WEIGHT_ENTRY && resultCode == RESULT_OK) {
+            // Refresh all data from database
+            loadWeightEntries();
+            updateProgressCard();
+            calculateQuickStats();
+        }
     }
 }

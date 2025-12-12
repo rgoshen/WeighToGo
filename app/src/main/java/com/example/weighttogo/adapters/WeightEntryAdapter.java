@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.weighttogo.R;
 import com.example.weighttogo.models.WeightEntry;
 import com.example.weighttogo.utils.DateUtils;
+import com.example.weighttogo.utils.WeightUtils;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -72,8 +73,8 @@ public class WeightEntryAdapter extends RecyclerView.Adapter<WeightEntryAdapter.
         // Bind date badge
         bindDateBadge(holder, entry.getWeightDate());
 
-        // Bind weight value
-        bindWeightValue(holder, entry.getWeightValue());
+        // Bind weight value and unit
+        bindWeightValue(holder, entry.getWeightValue(), entry.getWeightUnit());
 
         // Bind entry time
         bindEntryTime(holder, entry.getWeightDate(), entry.getCreatedAt());
@@ -117,13 +118,15 @@ public class WeightEntryAdapter extends RecyclerView.Adapter<WeightEntryAdapter.
     }
 
     /**
-     * Binds weight value with 1 decimal place formatting.
+     * Binds weight value and unit with 1 decimal place formatting.
      *
      * @param holder ViewHolder containing the views
      * @param weight the weight value to display
+     * @param unit the weight unit (lbs or kg)
      */
-    private void bindWeightValue(ViewHolder holder, double weight) {
+    private void bindWeightValue(ViewHolder holder, double weight, String unit) {
         holder.weightValue.setText(String.format("%.1f", weight));
+        holder.weightUnit.setText(unit);
     }
 
     /**
@@ -149,6 +152,7 @@ public class WeightEntryAdapter extends RecyclerView.Adapter<WeightEntryAdapter.
 
     /**
      * Binds trend badge showing weight change from previous entry.
+     * Converts weights to current entry's unit before comparison.
      *
      * @param holder ViewHolder containing the views
      * @param position position of the entry in the list
@@ -165,21 +169,36 @@ public class WeightEntryAdapter extends RecyclerView.Adapter<WeightEntryAdapter.
         WeightEntry current = entries.get(position);
         WeightEntry previous = entries.get(position + 1); // List is sorted DESC (most recent first)
 
+        // Normalize both weights to current entry's unit for accurate comparison
+        double currentWeight = current.getWeightValue();
+        double previousWeight = previous.getWeightValue();
+
+        // Convert previous weight to current entry's unit if they differ
+        if (!current.getWeightUnit().equals(previous.getWeightUnit())) {
+            if (current.getWeightUnit().equals("lbs") && previous.getWeightUnit().equals("kg")) {
+                // Convert previous kg to lbs
+                previousWeight = WeightUtils.convertKgToLbs(previousWeight);
+            } else if (current.getWeightUnit().equals("kg") && previous.getWeightUnit().equals("lbs")) {
+                // Convert previous lbs to kg
+                previousWeight = WeightUtils.convertLbsToKg(previousWeight);
+            }
+        }
+
         // Calculate trend: previous - current (positive = weight loss, negative = weight gain)
-        // This assumes entries list is sorted by date DESC (verified in WeightEntryDAO.getWeightEntriesForUser)
-        double diff = previous.getWeightValue() - current.getWeightValue();
+        double diff = WeightUtils.roundToOneDecimal(previousWeight - currentWeight);
+        String unit = current.getWeightUnit(); // Trend shown in current entry's unit
 
         if (Math.abs(diff) < 0.1) {
             // No change
-            holder.trendBadge.setText("− 0.0");
+            holder.trendBadge.setText("− 0.0 " + unit);
             holder.trendBadge.setBackgroundResource(R.drawable.bg_badge_trend_same);
         } else if (diff > 0) {
             // Lost weight (previous was heavier)
-            holder.trendBadge.setText("↓ " + String.format("%.1f", diff));
+            holder.trendBadge.setText("↓ " + String.format("%.1f", diff) + " " + unit);
             holder.trendBadge.setBackgroundResource(R.drawable.bg_badge_trend_down);
         } else {
             // Gained weight
-            holder.trendBadge.setText("↑ " + String.format("%.1f", Math.abs(diff)));
+            holder.trendBadge.setText("↑ " + String.format("%.1f", Math.abs(diff)) + " " + unit);
             holder.trendBadge.setBackgroundResource(R.drawable.bg_badge_trend_up);
         }
     }

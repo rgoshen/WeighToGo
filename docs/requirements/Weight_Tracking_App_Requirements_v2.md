@@ -40,7 +40,7 @@ Provide users with a simple, effective tool for monitoring daily weight and prog
 3. **Family Health Managers**: Parents/caregivers tracking weight for multiple family members
 
 ### Core Value Proposition
-Streamlined weight tracking without overwhelming complexity - focusing on essential features: secure login, daily weight entry, historical data display, goal setting, achievement notifications, and **SMS alerts** for milestone celebrations.
+Streamlined weight tracking without overwhelming complexity - focusing on essential features: secure login, daily weight entry, historical data display, goal s, achievement notifications, and **SMS alerts** for milestone celebrations.
 
 ### Key Features
 - **Secure Authentication**: User registration and login with hashed passwords
