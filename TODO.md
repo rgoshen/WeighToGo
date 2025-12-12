@@ -891,21 +891,21 @@ WeighToGo_Database_Architecture.md is the source of truth specification document
 - [x] All layouts compile, tests pass (246 passing), lint clean
 - [x] Commit: `feat: create Goals screen layout (activity + history item)`
 
-### 5.5 Commit 5: GoalsActivity Implementation
-- [ ] Create `activities/GoalsActivity.java` (skeleton → full implementation)
-  - [ ] loadGoalData() - query active goal + history
-  - [ ] updateCurrentGoalCard() - display weights
-  - [ ] updateExpandedStats() - calculate days, pace, projection, avg weekly loss
-  - [ ] handleEditGoal() - show dialog pre-filled
-  - [ ] handleDeleteGoal() - deactivate with confirmation
-  - [ ] getCurrentWeight() - helper
-- [ ] Create `adapters/GoalHistoryAdapter.java`
-  - [ ] Bind goal history items
-  - [ ] Show achieved badge
-  - [ ] Calculate stats (lbs lost, duration)
-- [ ] Declare GoalsActivity in `AndroidManifest.xml`
-- [ ] Manual testing: screen shows, stats calculate correctly
-- [ ] Commit: `feat: implement GoalsActivity with expanded stats`
+### 5.5 Commit 5: GoalsActivity Implementation ✅ Completed 2025-12-12
+- [x] Create `activities/GoalsActivity.java` (skeleton → full implementation)
+  - [x] loadGoalData() - query active goal + history
+  - [x] updateCurrentGoalCard() - display weights
+  - [x] updateExpandedStats() - calculate days, pace, projection, avg weekly loss
+  - [x] handleEditGoal() - show dialog pre-filled
+  - [x] handleDeleteGoal() - deactivate with confirmation
+  - [x] getCurrentWeight() - helper
+- [x] Create `adapters/GoalHistoryAdapter.java`
+  - [x] Bind goal history items
+  - [x] Show achieved badge
+  - [x] Calculate stats (lbs lost, duration)
+- [x] Declare GoalsActivity in `AndroidManifest.xml`
+- [x] Manual testing: screen shows, stats calculate correctly (deferred to Phase 5.9)
+- [x] Commit: `feat: implement GoalsActivity with goal history adapter`
 
 ### 5.6 Commit 6: Achievement Detection Logic
 - [ ] Write `AchievementManagerTest.java` (12 tests)
