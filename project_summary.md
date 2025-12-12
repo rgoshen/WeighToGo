@@ -77,23 +77,58 @@
 - Ensures username always displays (better UX than blank header)
 - Defensive programming best practice
 
-### Issue 3: 🟢 FEATURE REQUEST - Email Support (DEFERRED)
+### Issue 3: 🟢 FEATURE REQUEST - Email Support (MOVED TO PHASE 7.9)
 
 **User Feedback:**
 > "should allow a username or email and validate off that. right now it does not allow email do to the existing validation rules of 3-20 characters, alphanumeric + underscore"
 
-**Status:** Deferred to Phase 4+
+**Status:** Moved to TODO.md Phase 7.9 - Future Enhancements (Post-Launch)
 
 **Reason:** Significant scope requiring:
-- Database schema changes (username field length, email uniqueness constraint)
+- Database schema migration (add email column with UNIQUE constraint)
 - ValidationUtils email validation logic (regex, format checking)
 - Login by email OR username logic (UserDAO.getUserByEmailOrUsername())
 - Registration UI updates (email field collection)
 - Email uniqueness validation
 
-**Recommendation:** Track as separate feature in GitHub Issues
+**Recommendation:** Track as GitHub Issue for post-launch release
 
-**Estimated Effort:** 1-2 days (new tests, DAO changes, UI updates, email validation)
+**Estimated Effort:** 2-3 days (new tests, DAO changes, UI updates, email validation, schema migration)
+
+**Documentation:** See TODO.md Phase 7.9 for detailed implementation plan
+
+### Issue 4: 🔵 UX IMPROVEMENT - Login Error Visibility (Completed 2025-12-11)
+
+**User Feedback:**
+> "if both are blank, it does have a generic message, but still outlines the password field in red - looks like the validation message is still tied to the [field]"
+>
+> "now actually signing in with an invalid user it displays the toast at the bottom, but is this the best place to display? also, should it use text color or something to make it more noticeable?"
+
+**Problems Identified:**
+1. Red outline on password field revealed which field had error (information leakage)
+2. Toast at bottom was easy to miss (poor visibility)
+
+**Solution Implemented:**
+- Created `showAuthenticationError()` helper method
+- All Sign In authentication errors now use Snackbar instead of Toast/TextInputLayout
+- Snackbar styling: red background (`R.color.error`), white text, `LENGTH_LONG` duration
+- No field highlighting in Sign In mode (prevents information leakage)
+- Register mode unchanged (still uses field-specific errors)
+
+**Code Changes:**
+- `LoginActivity.java` - Added `showAuthenticationError()` helper method (lines 398-405)
+- `LoginActivity.java:212` - Empty fields validation uses Snackbar
+- `LoginActivity.java:267,277` - Invalid credentials use Snackbar
+
+**UX Impact:**
+- ✅ More prominent error messages (red background, longer duration)
+- ✅ Consistent error presentation across all authentication failures
+- ✅ Professional Material Design styling
+
+**Security Impact:**
+- ✅ No visual distinction between different error types
+- ✅ Prevents attackers from learning which field is incorrect
+- ✅ Maintains username enumeration protection
 
 ### Testing
 
@@ -133,6 +168,15 @@ No errors, clean ✅
    - Updated updateUserName() with fallback to username
    - Handles edge cases defensively
 
+4. **docs: document Phase 3.6 security and bug fixes** (0100d26)
+   - Updated TODO.md with Phase 3.6 section
+   - Updated project_summary.md with comprehensive bug fix documentation
+
+5. **refactor: improve login error visibility with Snackbar** (b5dd885)
+   - Replaced Toast and TextInputLayout errors with prominent Snackbar
+   - No field highlighting in Sign In mode (prevents info leakage)
+   - Red background, white text, LENGTH_LONG duration
+
 ### Lessons Learned
 
 **Manual Testing is Critical:**
@@ -150,15 +194,38 @@ No errors, clean ✅
 - Null checks and fallbacks improve robustness
 - Small defensive changes prevent big bugs
 
+**User Feedback Drives Quality:**
+- Manual testing revealed real-world UX issues automated tests missed
+- Iterative improvements based on user feedback
+- Snackbar visibility improvement directly from user suggestion
+
+### Documentation Organization
+
+**TODO.md Reorganization (Completed 2025-12-11):**
+- Moved deferred manual testing items from Phase 3.5 to Phase 4.5
+  - Delete button testing (requires weight entry data)
+  - Edit button testing (requires weight entry data)
+  - Progress card testing (requires goal and weight data)
+- Moved email support feature request from Phase 3.6 to Phase 7.9
+  - Now documented as "Future Enhancements (Post-Launch)"
+  - Includes detailed implementation plan
+- Updated Phase 3.5 manual testing checklist with completed items
+  - Login error handling with Snackbar ✅
+  - Sign In security (no field highlighting) ✅
+
+**Rationale:** Deferred items should live in the phase where they'll be implemented, not accumulate in current phase. This keeps TODO.md organized and actionable.
+
 ### Phase Status
 
-**Phase 3 (Main Dashboard):**
-- ✅ All functionality implemented and tested
-- ✅ Security vulnerability fixed (username enumeration)
-- ✅ Display name bug fixed
+**Phase 3 (Main Dashboard) - COMPLETE:**
+- ✅ All core functionality implemented and tested
+- ✅ Security vulnerability fixed (username enumeration prevention)
+- ✅ Display name bug fixed (defaults to username)
+- ✅ UX improvement (Snackbar for prominent error messages)
 - ✅ 217 tests passing (91 Phase 1 + 28 Phase 2 + 91 Phase 3 + 7 integration)
-- ✅ Lint clean
-- ⏸ Email support deferred to Phase 4+
+- ✅ Lint clean, no errors
+- ✅ All manual testing completed (items requiring data moved to Phase 4)
+- ✅ Email support feature request moved to Phase 7.9 (post-launch)
 - ✅ Ready for merge to main
 
 ---

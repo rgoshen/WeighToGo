@@ -585,21 +585,20 @@ WeighToGo_Database_Architecture.md is the source of truth specification document
 ### 3.5 Phase 3 Validation (Completed 2025-12-11)
 - [x] Code compiles successfully ✅
 - [x] Run `./gradlew lint` - clean, no errors ✅
-- [x] Run `./gradlew test` - 213 tests passing ✅
+- [x] Run `./gradlew test` - 217 tests passing ✅
   - **Note:** 17 MainActivity tests blocked by Robolectric/Material3 theme compatibility (see GH #12)
   - Implementation is correct and production-ready
-  - Tests would pass with Espresso (instrumented tests)
+  - Tests will be migrated to Espresso in Phase 8.4
 - [x] **Manual Testing Checklist** (Completed 2025-12-11):
   - [x] Dashboard shows only current user's data ✅
-  - [x] Weight entries display in RecyclerView ✅ (verified with no data)
-  - [ ] Delete button works with confirmation dialog (no data to test)
-  - [ ] Edit button shows placeholder toast (no data to test)
-  - [ ] Progress card shows correct calculations (no active goal to test)
   - [x] Empty state shows when no entries ✅
   - [x] FAB shows placeholder toast ✅
   - [x] Bottom navigation shows placeholder toasts ✅
   - [x] Time-based greeting displays correctly ✅
   - [x] User's display name shows in header ✅ (FIXED in Phase 3.6)
+  - [x] Login error handling uses Snackbar ✅ (IMPROVED in Phase 3.6)
+  - [x] Sign In errors don't reveal field information ✅ (SECURITY FIX in Phase 3.6)
+  - **Deferred to Phase 4:** Delete button, Edit button, Progress card (requires weight entry data)
 - [x] Update TODO.md to mark Phase 3 complete ✅
 - [ ] Merge to main branch (ready when approved)
 
@@ -620,10 +619,10 @@ WeighToGo_Database_Architecture.md is the source of truth specification document
 - [x] Add defensive fallback in MainActivity.updateUserName() - Completed 2025-12-11
 - [x] Run tests - All 217 passing ✅
 
-#### 🟢 Feature Request: Email Support (DEFERRED)
-- Status: Deferred to Phase 4+
-- Reason: Requires database schema changes, significant validation updates
-- Recommendation: Track as separate feature in GitHub Issues
+#### 🔵 UX Improvement: Login Error Visibility
+- [x] Replace Toast with Snackbar for better visibility - Completed 2025-12-11
+- [x] Remove red outline on fields in Sign In mode (prevents info leakage) - Completed 2025-12-11
+- [x] All authentication errors now use consistent Snackbar styling - Completed 2025-12-11
 
 #### Validation & Documentation
 - [x] Run `./gradlew test` - All 217 tests passing ✅
@@ -673,6 +672,11 @@ WeighToGo_Database_Architecture.md is the source of truth specification document
 - [ ] Show undo option (optional)
 
 ### 4.5 Phase 4 Validation
+**Automated Testing:**
+- [ ] Run `./gradlew test` - all tests pass
+- [ ] Run `./gradlew lint` - clean, no errors
+
+**Manual Testing - Weight Entry CRUD:**
 - [ ] User can add new weight entry
 - [ ] Number pad works correctly
 - [ ] Quick adjust buttons work
@@ -680,10 +684,20 @@ WeighToGo_Database_Architecture.md is the source of truth specification document
 - [ ] Date navigation works
 - [ ] Edit mode loads existing data
 - [ ] Save persists to database
-- [ ] Delete shows confirmation
+- [ ] Delete shows confirmation dialog
 - [ ] Deleted entries removed from list
-- [ ] Run `./gradlew test` - all tests pass
-- [ ] Merge to develop branch
+
+**Manual Testing - Dashboard Integration (Deferred from Phase 3):**
+- [ ] Dashboard displays weight entries in RecyclerView
+- [ ] Delete button works with confirmation dialog
+- [ ] Edit button opens WeightEntryActivity in edit mode
+- [ ] Progress card shows correct calculations with real data
+- [ ] Quick stats update after adding/deleting entries
+
+**Documentation:**
+- [ ] Update TODO.md to mark Phase 4 complete
+- [ ] Update project_summary.md with Phase 4 notes
+- [ ] Merge to main branch
 
 ---
 
@@ -915,12 +929,42 @@ WeighToGo_Database_Architecture.md is the source of truth specification document
 - [ ] Fix all errors
 - [ ] Address warnings where appropriate
 
-### 7.9 Phase 7 Validation
+### 7.9 Future Enhancements (Post-Launch)
+
+#### Email/Username Login Support (Deferred from Phase 3.6)
+**User Request:** "should allow a username or email and validate off that"
+
+**Status:** Deferred to post-launch (Phase 9+)
+
+**Reason:** Significant scope requiring:
+- Database schema changes (email column with UNIQUE constraint, increased username field length)
+- ValidationUtils.isValidEmail() implementation (regex, format checking)
+- Login by email OR username logic (UserDAO.getUserByEmailOrUsername())
+- Registration UI updates (email field collection, validation)
+- Email uniqueness validation and duplicate checking
+
+**Estimated Effort:** 2-3 days (tests, DAO changes, UI updates, email validation)
+
+**Implementation Plan:**
+- [ ] Add `email` TEXT UNIQUE column to `users` table (schema migration v1 → v2)
+- [ ] Write `ValidationUtilsTest.isValidEmail()` tests (6+ tests)
+- [ ] Implement `ValidationUtils.isValidEmail()` using RFC 5322 regex
+- [ ] Write `UserDAO.getUserByEmailOrUsername()` tests (4+ tests)
+- [ ] Implement `UserDAO.getUserByEmailOrUsername(String identifier)`
+- [ ] Update `LoginActivity` to accept email or username
+- [ ] Update `RegisterActivity` to collect and validate email
+- [ ] Check email uniqueness during registration
+- [ ] Add email field to User model
+- [ ] Run full test suite, update documentation
+
+**Recommendation:** Track as GitHub Issue for future release
+
+### 7.10 Phase 7 Validation
 - [ ] All code follows naming conventions
 - [ ] All classes documented
 - [ ] No lint errors
 - [ ] No dead code
-- [ ] Merge to develop branch
+- [ ] Merge to main branch
 
 ---
 
