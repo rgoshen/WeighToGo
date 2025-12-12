@@ -163,8 +163,10 @@ public class WeightEntryAdapter extends RecyclerView.Adapter<WeightEntryAdapter.
         holder.trendBadge.setVisibility(View.VISIBLE);
 
         WeightEntry current = entries.get(position);
-        WeightEntry previous = entries.get(position + 1); // List is sorted DESC
+        WeightEntry previous = entries.get(position + 1); // List is sorted DESC (most recent first)
 
+        // Calculate trend: previous - current (positive = weight loss, negative = weight gain)
+        // This assumes entries list is sorted by date DESC (verified in WeightEntryDAO.getWeightEntriesForUser)
         double diff = previous.getWeightValue() - current.getWeightValue();
 
         if (Math.abs(diff) < 0.1) {

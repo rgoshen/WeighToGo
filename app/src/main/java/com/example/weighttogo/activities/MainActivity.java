@@ -227,6 +227,7 @@ public class MainActivity extends AppCompatActivity implements WeightEntryAdapte
 
     /**
      * Update progress card with goal data.
+     * Uses cached weightEntries to avoid redundant database query.
      */
     private void updateProgressCard() {
         activeGoal = goalWeightDAO.getActiveGoal(currentUserId);
@@ -238,11 +239,10 @@ public class MainActivity extends AppCompatActivity implements WeightEntryAdapte
 
         progressCard.setVisibility(View.VISIBLE);
 
-        // Get current weight from most recent entry
-        List<WeightEntry> entries = weightEntryDAO.getWeightEntriesForUser(currentUserId);
+        // Get current weight from most recent entry (use cached list)
         double current = activeGoal.getStartWeight();
-        if (!entries.isEmpty()) {
-            current = entries.get(0).getWeightValue();
+        if (!weightEntries.isEmpty()) {
+            current = weightEntries.get(0).getWeightValue();
         }
 
         // Display weight values
@@ -288,13 +288,13 @@ public class MainActivity extends AppCompatActivity implements WeightEntryAdapte
 
     /**
      * Calculate and display quick stats.
+     * Uses cached weightEntries to avoid redundant database query.
      */
     private void calculateQuickStats() {
         activeGoal = goalWeightDAO.getActiveGoal(currentUserId);
-        List<WeightEntry> entries = weightEntryDAO.getWeightEntriesForUser(currentUserId);
 
-        if (activeGoal != null && !entries.isEmpty()) {
-            double current = entries.get(0).getWeightValue();
+        if (activeGoal != null && !weightEntries.isEmpty()) {
+            double current = weightEntries.get(0).getWeightValue();
             double start = activeGoal.getStartWeight();
             double goal = activeGoal.getGoalWeight();
 
@@ -307,8 +307,8 @@ public class MainActivity extends AppCompatActivity implements WeightEntryAdapte
             lbsToGoalValue.setText(String.format("%.0f", lbsToGoal));
         }
 
-        // Day streak
-        int streak = DateUtils.calculateDayStreak(entries);
+        // Day streak (use cached list)
+        int streak = DateUtils.calculateDayStreak(weightEntries);
         dayStreakValue.setText(String.valueOf(streak));
     }
 
