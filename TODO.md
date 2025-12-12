@@ -856,17 +856,21 @@ WeighToGo_Database_Architecture.md is the source of truth specification document
 - [x] All 8 tests passing (246 total: 238 existing + 8 new GoalUtils)
 - [x] Commit: `feat: create goal setting dialog layout with validation`
 
-### 5.3 Commit 3: Wire Goal Dialog to MainActivity
-- [ ] Modify `activities/MainActivity.java`
-  - [ ] Add showSetGoalDialog() method
-  - [ ] Add handleSaveGoal() method (validate + save via GoalWeightDAO)
-  - [ ] Add showDatePicker() method (optional target date)
-  - [ ] Add updateUnitButtonUI() helper
-- [ ] Integrate GoalUtils validation before save
-- [ ] Call GoalWeightDAO.setNewActiveGoal() on save
-- [ ] Refresh progress card after successful save
-- [ ] Manual testing: dialog shows, validates, saves to DB
-- [ ] Commit: `feat: wire goal setting dialog to MainActivity`
+### 5.3 Commit 3: Wire Goal Dialog to MainActivity - COMPLETED 2025-12-12
+- [x] Modify `activities/MainActivity.java`
+  - [x] Add showSetGoalDialog() method (public, can be called externally)
+  - [x] Add handleSaveGoal() method (validate + save via GoalWeightDAO)
+  - [x] Add showDatePicker() method (Material Date Picker for optional target date)
+  - [x] Add updateUnitButtonUI() helper (toggle lbs/kg button states)
+- [x] Integrate GoalUtils validation before save
+  - [x] Validates goal differs from current weight
+  - [x] Validates goal within range (0-700 lbs / 0-317.5 kg)
+  - [x] Validates target date in future (if provided)
+  - [x] Shows specific error messages per validation rule
+- [x] Call GoalWeightDAO.setNewActiveGoal() on save (auto-deactivates previous goal)
+- [x] Refresh progress card and stats after successful save
+- [x] Manual testing: Deferred to Phase 5.8 (when edit button wired up)
+- [x] Commit: `feat: wire goal setting dialog to MainActivity`
 
 ### 5.4 Commit 4: Goals Screen Layout
 - [ ] Create `res/layout/activity_goals.xml`
