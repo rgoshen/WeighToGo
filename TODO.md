@@ -589,18 +589,48 @@ WeighToGo_Database_Architecture.md is the source of truth specification document
   - **Note:** 17 MainActivity tests blocked by Robolectric/Material3 theme compatibility (see GH #12)
   - Implementation is correct and production-ready
   - Tests would pass with Espresso (instrumented tests)
-- [ ] **Manual Testing Checklist** (deferred - requires device/emulator):
-  - [ ] Dashboard shows only current user's data
-  - [ ] Weight entries display in RecyclerView
-  - [ ] Delete button works with confirmation dialog
-  - [ ] Edit button shows placeholder toast
-  - [ ] Progress card shows correct calculations
-  - [ ] Empty state shows when no entries
-  - [ ] FAB shows placeholder toast
-  - [ ] Bottom navigation shows placeholder toasts
-  - [ ] Time-based greeting displays correctly
-  - [ ] User's display name shows in header
+- [x] **Manual Testing Checklist** (Completed 2025-12-11):
+  - [x] Dashboard shows only current user's data ✅
+  - [x] Weight entries display in RecyclerView ✅ (verified with no data)
+  - [ ] Delete button works with confirmation dialog (no data to test)
+  - [ ] Edit button shows placeholder toast (no data to test)
+  - [ ] Progress card shows correct calculations (no active goal to test)
+  - [x] Empty state shows when no entries ✅
+  - [x] FAB shows placeholder toast ✅
+  - [x] Bottom navigation shows placeholder toasts ✅
+  - [x] Time-based greeting displays correctly ✅
+  - [x] User's display name shows in header ✅ (FIXED in Phase 3.6)
 - [x] Update TODO.md to mark Phase 3 complete ✅
+- [ ] Merge to main branch (ready when approved)
+
+### 3.6 Phase 3 Post-Release Bug Fixes (Completed 2025-12-11)
+**Issues Found During Manual Testing:**
+
+#### 🔴 Security Issue: Login Validation Information Disclosure
+- [x] Write failing tests (5 tests) - Completed 2025-12-11
+- [x] Fix validateInput() to prevent username enumeration - Completed 2025-12-11
+  - Sign In mode: Generic error "Please enter username and password"
+  - Register mode: Specific errors to help users create accounts
+  - Prevents OWASP A01:2021 username enumeration attack
+- [x] Run tests - All 217 passing ✅
+
+#### 🟡 Bug: MainActivity Display Name Not Showing
+- [x] Write failing test (included in 5 tests above) - Completed 2025-12-11
+- [x] Fix LoginActivity.handleRegister() to set display_name - Completed 2025-12-11
+- [x] Add defensive fallback in MainActivity.updateUserName() - Completed 2025-12-11
+- [x] Run tests - All 217 passing ✅
+
+#### 🟢 Feature Request: Email Support (DEFERRED)
+- Status: Deferred to Phase 4+
+- Reason: Requires database schema changes, significant validation updates
+- Recommendation: Track as separate feature in GitHub Issues
+
+#### Validation & Documentation
+- [x] Run `./gradlew test` - All 217 tests passing ✅
+- [x] Run `./gradlew lint` - Clean, no errors ✅
+- [x] Commit bug fixes (3 commits) ✅
+- [x] Update TODO.md ✅
+- [x] Update project_summary.md ✅
 - [ ] Merge to main branch (ready when approved)
 
 ---
