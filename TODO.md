@@ -637,41 +637,111 @@ WeighToGo_Database_Architecture.md is the source of truth specification document
 ## Phase 4: Weight Entry CRUD
 **Branch:** `feature/FR2.1-weight-entry-crud`
 
-### 4.1 Implement WeightEntryActivity
-- [ ] Write `WeightEntryActivityTest.java`
-- [ ] Implement `activities/WeightEntryActivity.java`
-  - initViews() - bind all UI elements
-  - setupDateSelector() - prev/next navigation
-  - setupNumberPad() - digit input handling
-  - handleNumberInput(digit) - append to display
-  - handleBackspace() - remove last digit
-  - handleDecimalPoint() - only one allowed
-  - handleQuickAdjust(amount) - +/- buttons
-  - handleUnitToggle(unit) - lbs/kg switch
-  - saveEntry() - validate and persist
+### 4.1 Commit 1: Create WeightEntryActivity Skeleton
+- [ ] Create `activities/WeightEntryActivity.java` with basic structure
+  - Intent extras constants (EXTRA_USER_ID, EXTRA_IS_EDIT_MODE, etc.)
+  - UI component fields (40+ views from layout)
+  - State fields (userId, isEditMode, editWeightId, currentDate, currentUnit, weightInput)
+  - onCreate() - initialize data layer, UI, click listeners
+  - getIntentExtras() - extract intent data
+  - initDataLayer() - initialize WeightEntryDAO
+  - initViews() - bind all UI elements via findViewById
+  - setupClickListeners() - wire up all buttons
   - loadExistingEntry() - for edit mode
+  - loadPreviousEntry() - show last entry hint
+  - updateDateDisplay() - update date UI elements
+- [ ] Commit: `feat: create WeightEntryActivity skeleton with intent handling`
 
-### 4.2 Number Pad Logic
-- [ ] Implement `utils/WeightInputHelper.java`
-  - appendDigit(current, digit) - max 5 digits + 1 decimal
-  - removeLastDigit(current)
-  - isValidWeight(value) - range 50-700 lbs
-  - convertWeight(value, fromUnit, toUnit)
+### 4.2 Commit 2: Implement Number Pad Logic
+- [ ] setupNumberPadListeners() - wire up 12 buttons (0-9, decimal, backspace)
+- [ ] handleNumberInput(digit) - append to StringBuilder (max 5 digits)
+  - Prevent leading zeros (except "0.")
+- [ ] handleDecimalPoint() - only add if not present and not empty
+- [ ] handleBackspace() - remove last character
+- [ ] updateWeightDisplay() - update TextView (show "0.0" if empty)
+- [ ] Commit: `feat: implement number pad input logic with validation`
 
-### 4.3 Date Navigation
-- [ ] updateDateDisplay(date) - show formatted date
-- [ ] navigateToPreviousDay()
-- [ ] navigateToNextDay()
-- [ ] Show "Today" badge when appropriate
-- [ ] Prevent future date selection
+### 4.3 Commit 3: Implement Quick Adjust Buttons
+- [ ] setupQuickAdjustListeners() - wire up 4 buttons (-1, -0.5, +0.5, +1)
+- [ ] adjustWeight(amount) - add/subtract from current value
+  - Parse current value from StringBuilder
+  - Validate range: 50-700 lbs / 22.7-317.5 kg
+  - Format to 1 decimal place
+- [ ] Commit: `feat: implement quick adjust buttons with range validation`
 
-### 4.4 Delete Functionality
-- [ ] Implement delete confirmation dialog
-- [ ] Soft delete (set is_deleted = 1)
-- [ ] Refresh list after delete
-- [ ] Show undo option (optional)
+### 4.4 Commit 4: Implement Unit Toggle
+- [ ] setupUnitToggleListeners() - wire up lbs/kg buttons
+- [ ] switchUnit(newUnit) - toggle between lbs and kg
+  - Convert weight value (1 lb = 0.453592 kg)
+  - Update button backgrounds (active/inactive drawables)
+  - Update button text colors (primary/secondary)
+  - Update weightUnit TextView
+- [ ] Commit: `feat: implement unit toggle with lbs/kg conversion`
 
-### 4.5 Phase 4 Validation
+### 4.5 Commit 5: Implement Date Navigation
+- [ ] setupDateNavigationListeners() - wire up prev/next buttons
+- [ ] navigateToPreviousDay() - subtract 1 day, update display
+- [ ] navigateToNextDay() - add 1 day if not after today
+- [ ] updateDateDisplay(date) - comprehensive update
+  - Set dayNumber TextView (day of month)
+  - Set fullDate TextView (DateUtils.formatDateFull)
+  - Show/hide todayBadge based on DateUtils.isToday()
+  - Disable next button if today (alpha 0.3)
+- [ ] Commit: `feat: implement date navigation with today detection`
+
+### 4.6 Commit 6: Implement Save Functionality
+- [ ] setupSaveButton() - wire up save button click
+- [ ] handleSave() - validate and route to create/update
+  - Validate non-empty weight
+  - Validate range (50-700 lbs / 22.7-317.5 kg)
+  - Call createNewEntry() or updateExistingEntry()
+- [ ] createNewEntry(weight) - insert new WeightEntry
+  - Build WeightEntry object with all fields
+  - Call weightEntryDAO.insertWeightEntry()
+  - Handle duplicate entry error (weightId = -1)
+  - setResult(RESULT_OK) and finish() on success
+- [ ] updateExistingEntry(weight) - update existing entry
+  - Query entry by editWeightId
+  - Update fields (value, unit, date, updatedAt)
+  - Call weightEntryDAO.updateWeightEntry()
+  - setResult(RESULT_OK) and finish() on success
+- [ ] loadExistingEntry() - pre-fill for edit mode
+  - Query entry by editWeightId
+  - Set weightInput StringBuilder
+  - Set currentUnit and currentDate
+  - Call updateWeightDisplay(), switchUnit(), updateDateDisplay()
+- [ ] loadPreviousEntry() - show last entry hint
+  - Query weightEntryDAO.getLatestWeightEntry(userId)
+  - Update lastEntryValue and lastEntryDate TextViews
+- [ ] Commit: `feat: implement save/update functionality with validation`
+
+### 4.7 Commit 7: Update MainActivity Navigation
+- [ ] Add REQUEST_CODE_WEIGHT_ENTRY constant (1001)
+- [ ] Update setupFAB() - navigate to WeightEntryActivity
+  - Create Intent with EXTRA_USER_ID and EXTRA_IS_EDIT_MODE=false
+  - startActivityForResult()
+- [ ] Update onEditClick(entry) - navigate with entry data
+  - Create Intent with all entry fields as extras
+  - EXTRA_IS_EDIT_MODE=true
+  - startActivityForResult()
+- [ ] Add onActivityResult() - refresh after save
+  - Check REQUEST_CODE_WEIGHT_ENTRY and RESULT_OK
+  - Call loadWeightEntries()
+  - Call updateProgressCard()
+  - Call calculateQuickStats()
+  - Show success Toast
+- [ ] Commit: `feat: wire up MainActivity navigation to WeightEntryActivity`
+
+### 4.8 Commit 8: Update AndroidManifest
+- [ ] Declare WeightEntryActivity in AndroidManifest.xml
+  - android:name=".activities.WeightEntryActivity"
+  - android:label="@string/log_weight"
+  - android:parentActivityName=".activities.MainActivity"
+  - android:windowSoftInputMode="stateAlwaysHidden"
+  - Add parent activity metadata
+- [ ] Commit: `chore: declare WeightEntryActivity in AndroidManifest`
+
+### 4.9 Phase 4 Validation
 **Automated Testing:**
 - [ ] Run `./gradlew test` - all tests pass
 - [ ] Run `./gradlew lint` - clean, no errors
