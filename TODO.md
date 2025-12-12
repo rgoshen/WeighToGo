@@ -992,9 +992,103 @@ WeighToGo_Database_Architecture.md is the source of truth specification document
 
 **Documentation:**
 - [ ] Update TODO.md to mark Phase 5 complete
-- [ ] Update project_summary.md with Phase 5 notes
-- [ ] Create DDR-0002 for Goals screen design decisions
+- [x] Update project_summary.md with Phase 5 notes (completed 2025-12-12)
+- [ ] Create DDR-0001 for Goals screen design decisions
 - [ ] Merge to main branch
+
+### 5.10 Refactoring: Goal Dialog → Reusable DialogFragment ⏳ In Progress
+**Goal:** Eliminate awkward navigation (GoalsActivity FAB → MainActivity → Dialog) by creating reusable GoalDialogFragment
+
+**Phase 1: Red - Write Failing Tests** ⏳ Starting
+- [ ] Create `test/java/com/example/weighttogo/fragments/GoalDialogFragmentTest.java`
+  - [ ] test_newInstance_withValidArgs_createsFragment()
+  - [ ] test_newInstance_withValidArgs_populatesArguments()
+  - [ ] test_setListener_withNull_throwsException()
+  - [ ] test_onCreate_withMissingArguments_throwsException()
+  - [ ] test_onCreate_withInvalidUserId_throwsException()
+  - [ ] test_onCreate_withInvalidCurrentWeight_throwsException()
+- [ ] Run tests - expect failures (fragment doesn't exist yet)
+
+**Phase 2: Green - Implement Fragment**
+- [ ] Create `main/java/com/example/weighttogo/fragments/` package (NEW)
+- [ ] Create `fragments/GoalDialogFragment.java` (~400 lines)
+  - [ ] Define GoalDialogListener interface (onGoalSaved, onGoalSaveError)
+  - [ ] Implement newInstance() factory method with Bundle arguments
+  - [ ] Implement setListener() with null check
+  - [ ] Implement onCreate() - parse arguments, validate, initialize DAOs
+  - [ ] Implement onCreateDialog() - inflate dialog_set_goal.xml, build AlertDialog
+  - [ ] Implement initViews() - find view references
+  - [ ] Implement setupUnitToggle() - lbs/kg button listeners
+  - [ ] Implement setupDatePicker() - MaterialDatePicker integration
+  - [ ] Implement handleSaveGoal() - validation logic (copy from MainActivity)
+  - [ ] Implement validateAndSaveGoal() - DAO save + listener callback
+- [ ] Run tests - expect passes
+
+**Phase 3: Refactor - MainActivity**
+- [ ] Modify `activities/MainActivity.java`
+  - [ ] Add import: `com.example.weighttogo.fragments.GoalDialogFragment`
+  - [ ] Implement `GoalDialogFragment.GoalDialogListener` interface
+  - [ ] REMOVE lines 411-607 (~197 lines):
+    - [ ] Remove showSetGoalDialog() method
+    - [ ] Remove handleSaveGoal() method
+    - [ ] Remove showDatePicker() method
+    - [ ] Remove updateUnitButtonUI() method
+  - [ ] ADD new showSetGoalDialog() method (~15 lines):
+    - [ ] Get current weight from weightEntries.get(0)
+    - [ ] Create fragment via newInstance()
+    - [ ] Set listener
+    - [ ] Show via getSupportFragmentManager()
+  - [ ] ADD onGoalSaved() callback (~5 lines):
+    - [ ] Update activeGoal
+    - [ ] Refresh updateProgressCard(), calculateQuickStats()
+  - [ ] ADD onGoalSaveError() callback (~3 lines):
+    - [ ] Log error
+- [ ] Net change: -157 lines
+- [ ] Run tests - verify no regressions
+
+**Phase 4: Refactor - GoalsActivity**
+- [ ] Modify `activities/GoalsActivity.java`
+  - [ ] Add import: `com.example.weighttogo.fragments.GoalDialogFragment`
+  - [ ] Implement `GoalDialogFragment.GoalDialogListener` interface
+  - [ ] MODIFY setupFAB() method (lines 184-195):
+    - [ ] Replace navigation intent with showSetGoalDialog() call
+  - [ ] ADD showSetGoalDialog() method (~20 lines):
+    - [ ] Get current weight from weightEntryDAO.getLatestWeightEntry()
+    - [ ] Validate weight exists
+    - [ ] Create fragment via newInstance()
+    - [ ] Set listener
+    - [ ] Show via getSupportFragmentManager()
+  - [ ] ADD onGoalSaved() callback (~3 lines):
+    - [ ] Call loadGoalData() to refresh UI
+  - [ ] ADD onGoalSaveError() callback (~3 lines):
+    - [ ] Log error
+  - [ ] MODIFY handleEditGoal() (lines 314-321):
+    - [ ] Stub for future edit mode
+- [ ] REMOVE MainActivity.onCreate() intent extra check (lines 97-101):
+  - [ ] Delete SHOW_GOAL_DIALOG check (no longer needed)
+- [ ] Run tests - verify no regressions
+
+**Phase 5: Manual Testing**
+- [ ] MainActivity: Click "Set Goal" button → dialog appears locally (no navigation)
+- [ ] GoalsActivity: Click FAB → dialog appears locally (no navigation to MainActivity)
+- [ ] Dialog: Current weight displays correctly
+- [ ] Dialog: Unit toggle works
+- [ ] Dialog: Date picker works
+- [ ] Dialog: All validation errors work
+- [ ] Dialog: Save creates goal and dismisses
+- [ ] MainActivity: Progress card updates after save
+- [ ] GoalsActivity: Current goal card appears after save
+- [ ] Screen rotation: Dialog state preserved
+- [ ] Run `./gradlew test` - all 270 tests pass
+- [ ] Run `./gradlew lint` - clean
+
+**Success Criteria:**
+- [ ] GoalDialogFragment class created (~400 lines)
+- [ ] MainActivity reduced by 157 lines (dialog logic extracted)
+- [ ] GoalsActivity FAB shows dialog locally (no navigation)
+- [ ] All existing functionality preserved
+- [ ] No regressions (270 tests passing)
+- [ ] Manual testing checklist complete
 
 ---
 
