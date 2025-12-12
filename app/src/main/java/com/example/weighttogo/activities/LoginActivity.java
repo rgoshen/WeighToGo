@@ -10,6 +10,7 @@ import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.weighttogo.R;
+import com.google.android.material.snackbar.Snackbar;
 import com.example.weighttogo.database.DatabaseException;
 import com.example.weighttogo.database.DuplicateUsernameException;
 import com.example.weighttogo.database.UserDAO;
@@ -169,8 +170,8 @@ public class LoginActivity extends AppCompatActivity {
         usernameInputLayout.setError(null);
         passwordInputLayout.setError(null);
 
-        // Validate input
-        if (!validateInput()) {
+        // Validate input (pass mode to determine error specificity)
+        if (!validateInput(isSignInMode)) {
             Log.w(TAG, "handleButtonClick: Input validation failed");
             return;
         }
@@ -189,9 +190,13 @@ public class LoginActivity extends AppCompatActivity {
      * Validate username and password inputs.
      * Uses ValidationUtils for format validation.
      *
+     * **Security:** Sign In mode shows generic error to prevent username enumeration.
+     * Register mode shows specific errors to help users create valid accounts.
+     *
+     * @param isSignInMode true for Sign In mode (generic errors), false for Register mode (specific errors)
      * @return true if all inputs are valid, false otherwise
      */
-    private boolean validateInput() {
+    private boolean validateInput(boolean isSignInMode) {
         // Username is trimmed to prevent accidental leading/trailing spaces
         String username = usernameEditText.getText() != null ? usernameEditText.getText().toString().trim() : "";
 
@@ -200,26 +205,35 @@ public class LoginActivity extends AppCompatActivity {
 
         boolean isValid = true;
 
-        // Validate username
-        if (username.isEmpty()) {
-            usernameInputLayout.setError(getString(R.string.error_username_required));
-            isValid = false;
-            Log.w(TAG, "validateInput: Username is empty");
-        } else if (!ValidationUtils.isValidUsername(username)) {
-            usernameInputLayout.setError(getString(R.string.error_invalid_username));
-            isValid = false;
-            Log.w(TAG, "validateInput: Username is invalid");
-        }
+        if (isSignInMode) {
+            // Sign In mode: Only check if fields are non-empty (prevents username enumeration)
+            if (username.isEmpty() || password.isEmpty()) {
+                // Show generic error via Snackbar (no field highlighting to prevent info leakage)
+                showAuthenticationError("Please enter username and password");
+                isValid = false;
+                Log.w(TAG, "validateInput: Sign In validation failed - empty field(s)");
+            }
+        } else {
+            // Register mode: Detailed validation to help users create valid accounts
+            if (username.isEmpty()) {
+                usernameInputLayout.setError(getString(R.string.error_username_required));
+                isValid = false;
+                Log.w(TAG, "validateInput: Username is empty");
+            } else if (!ValidationUtils.isValidUsername(username)) {
+                usernameInputLayout.setError(getString(R.string.error_invalid_username));
+                isValid = false;
+                Log.w(TAG, "validateInput: Username is invalid");
+            }
 
-        // Validate password
-        if (password.isEmpty()) {
-            passwordInputLayout.setError(getString(R.string.error_password_required));
-            isValid = false;
-            Log.w(TAG, "validateInput: Password is empty");
-        } else if (!ValidationUtils.isValidPassword(password)) {
-            passwordInputLayout.setError(getString(R.string.error_invalid_password));
-            isValid = false;
-            Log.w(TAG, "validateInput: Password is invalid");
+            if (password.isEmpty()) {
+                passwordInputLayout.setError(getString(R.string.error_password_required));
+                isValid = false;
+                Log.w(TAG, "validateInput: Password is empty");
+            } else if (!ValidationUtils.isValidPassword(password)) {
+                passwordInputLayout.setError(getString(R.string.error_invalid_password));
+                isValid = false;
+                Log.w(TAG, "validateInput: Password is invalid");
+            }
         }
 
         return isValid;
@@ -245,7 +259,7 @@ public class LoginActivity extends AppCompatActivity {
         if (user == null) {
             // User doesn't exist
             Log.w(TAG, "handleSignIn: User not found with username: " + username);
-            Toast.makeText(this, "Invalid username or password", Toast.LENGTH_SHORT).show();
+            showAuthenticationError("Invalid username or password");
             return;
         }
 
@@ -255,7 +269,7 @@ public class LoginActivity extends AppCompatActivity {
         if (!passwordMatches) {
             // Wrong password
             Log.w(TAG, "handleSignIn: Password verification failed for username: " + username);
-            Toast.makeText(this, "Invalid username or password", Toast.LENGTH_SHORT).show();
+            showAuthenticationError("Invalid username or password");
             return;
         }
 
@@ -319,6 +333,7 @@ public class LoginActivity extends AppCompatActivity {
         newUser.setUsername(username);
         newUser.setPasswordHash(passwordHash);
         newUser.setSalt(salt);
+        newUser.setDisplayName(username);  // Default display name to username
         newUser.setCreatedAt(LocalDateTime.now());
         newUser.setUpdatedAt(LocalDateTime.now());
         newUser.setActive(true);
@@ -360,6 +375,28 @@ public class LoginActivity extends AppCompatActivity {
             Log.e(TAG, "handleRegister: Database error during registration", e);
             Toast.makeText(this, "Registration failed. Please try again.", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    // =============================================================================================
+    // ERROR HANDLING
+    // =============================================================================================
+
+    /**
+     * Show authentication error using Snackbar.
+     *
+     * **Security:** Uses prominent Snackbar instead of Toast for better visibility.
+     * All authentication errors (empty fields, invalid credentials) use same styling
+     * to prevent information leakage.
+     *
+     * @param message Generic error message to display
+     */
+    private void showAuthenticationError(String message) {
+        Snackbar.make(findViewById(android.R.id.content),
+                message,
+                Snackbar.LENGTH_LONG)
+                .setBackgroundTint(getResources().getColor(R.color.error, null))
+                .setTextColor(getResources().getColor(android.R.color.white, null))
+                .show();
     }
 
     // =============================================================================================
