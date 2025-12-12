@@ -5,6 +5,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -16,6 +17,7 @@ import com.example.weighttogo.utils.DateUtils;
 import com.google.android.material.button.MaterialButton;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * WeightEntryActivity handles adding and editing weight entries.
@@ -265,7 +267,8 @@ public class WeightEntryActivity extends AppCompatActivity {
         // Unit toggle
         setupUnitToggleListeners();
 
-        // Save button (stubbed - will implement in Commit 6)
+        // Save button
+        setupSaveButton();
 
         Log.d(TAG, "setupClickListeners: Click listeners configured");
     }
@@ -571,5 +574,116 @@ public class WeightEntryActivity extends AppCompatActivity {
         }
         weightValue.setText(value);
         weightUnit.setText(currentUnit);
+    }
+
+    // =============================================================================================
+    // SAVE FUNCTIONALITY (Commit 6)
+    // =============================================================================================
+
+    /**
+     * Setup save button click listener.
+     */
+    private void setupSaveButton() {
+        saveButton.setOnClickListener(v -> handleSave());
+        Log.d(TAG, "setupSaveButton: Save button configured");
+    }
+
+    /**
+     * Handle save button click.
+     * Validates input and calls createNewEntry or updateExistingEntry.
+     */
+    private void handleSave() {
+        String weightStr = weightInput.toString();
+
+        // Validate non-empty
+        if (weightStr.isEmpty() || weightStr.equals("0.0")) {
+            Toast.makeText(this, "Please enter a weight value", Toast.LENGTH_SHORT).show();
+            Log.w(TAG, "handleSave: Empty weight value");
+            return;
+        }
+
+        double weight = Double.parseDouble(weightStr);
+
+        // Validate range based on current unit
+        double min = currentUnit.equals("lbs") ? 50.0 : 22.7;
+        double max = currentUnit.equals("lbs") ? 700.0 : 317.5;
+
+        if (weight < min || weight > max) {
+            String message = String.format("Weight must be between %.1f and %.1f %s",
+                    min, max, currentUnit);
+            Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+            Log.w(TAG, "handleSave: Weight out of range: " + weight);
+            return;
+        }
+
+        // Call appropriate method based on mode
+        if (isEditMode) {
+            updateExistingEntry(weight);
+        } else {
+            createNewEntry(weight);
+        }
+    }
+
+    /**
+     * Create new weight entry in database.
+     *
+     * @param weight the weight value to save
+     */
+    private void createNewEntry(double weight) {
+        WeightEntry entry = new WeightEntry();
+        entry.setUserId(userId);
+        entry.setWeightValue(weight);
+        entry.setWeightUnit(currentUnit);
+        entry.setWeightDate(currentDate);
+        entry.setCreatedAt(LocalDateTime.now());
+        entry.setUpdatedAt(LocalDateTime.now());
+        entry.setDeleted(false);
+
+        long weightId = weightEntryDAO.insertWeightEntry(entry);
+
+        if (weightId > 0) {
+            Log.i(TAG, "createNewEntry: Successfully created weight entry: " + weightId);
+            Toast.makeText(this, "Entry saved successfully", Toast.LENGTH_SHORT).show();
+            setResult(RESULT_OK);
+            finish();
+        } else {
+            // Likely duplicate entry for this date
+            String message = String.format("You already have an entry for %s",
+                    DateUtils.formatDateFull(currentDate));
+            Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+            Log.w(TAG, "createNewEntry: Duplicate entry detected for date: " + currentDate);
+        }
+    }
+
+    /**
+     * Update existing weight entry in database.
+     *
+     * @param weight the weight value to save
+     */
+    private void updateExistingEntry(double weight) {
+        WeightEntry entry = weightEntryDAO.getWeightEntryById(editWeightId);
+
+        if (entry == null) {
+            Toast.makeText(this, "Entry not found", Toast.LENGTH_SHORT).show();
+            Log.e(TAG, "updateExistingEntry: Entry not found for weightId=" + editWeightId);
+            return;
+        }
+
+        entry.setWeightValue(weight);
+        entry.setWeightUnit(currentUnit);
+        entry.setWeightDate(currentDate);
+        entry.setUpdatedAt(LocalDateTime.now());
+
+        int rowsUpdated = weightEntryDAO.updateWeightEntry(entry);
+
+        if (rowsUpdated == 1) {
+            Log.i(TAG, "updateExistingEntry: Successfully updated weight entry: " + editWeightId);
+            Toast.makeText(this, "Entry updated successfully", Toast.LENGTH_SHORT).show();
+            setResult(RESULT_OK);
+            finish();
+        } else {
+            Toast.makeText(this, "Failed to update entry", Toast.LENGTH_SHORT).show();
+            Log.e(TAG, "updateExistingEntry: Update failed for weightId=" + editWeightId);
+        }
     }
 }
