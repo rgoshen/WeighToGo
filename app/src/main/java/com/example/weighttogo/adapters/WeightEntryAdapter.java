@@ -72,8 +72,8 @@ public class WeightEntryAdapter extends RecyclerView.Adapter<WeightEntryAdapter.
         // Bind date badge
         bindDateBadge(holder, entry.getWeightDate());
 
-        // Bind weight value
-        bindWeightValue(holder, entry.getWeightValue());
+        // Bind weight value and unit
+        bindWeightValue(holder, entry.getWeightValue(), entry.getWeightUnit());
 
         // Bind entry time
         bindEntryTime(holder, entry.getWeightDate(), entry.getCreatedAt());
@@ -117,13 +117,15 @@ public class WeightEntryAdapter extends RecyclerView.Adapter<WeightEntryAdapter.
     }
 
     /**
-     * Binds weight value with 1 decimal place formatting.
+     * Binds weight value and unit with 1 decimal place formatting.
      *
      * @param holder ViewHolder containing the views
      * @param weight the weight value to display
+     * @param unit the weight unit (lbs or kg)
      */
-    private void bindWeightValue(ViewHolder holder, double weight) {
+    private void bindWeightValue(ViewHolder holder, double weight, String unit) {
         holder.weightValue.setText(String.format("%.1f", weight));
+        holder.weightUnit.setText(unit);
     }
 
     /**
