@@ -100,13 +100,14 @@ public class GoalDialogFragment extends DialogFragment {
     // Dialog State
     private String selectedUnit;
     private LocalDate selectedTargetDate;
+    private GoalWeight existingGoal; // For edit mode
 
     // ============================================================
     // Public Methods
     // ============================================================
 
     /**
-     * Creates a new instance of GoalDialogFragment with required arguments.
+     * Creates a new instance of GoalDialogFragment for creating a new goal.
      *
      * @param userId        Current user ID for goal creation
      * @param currentWeight User's current weight for display and validation
@@ -120,6 +121,27 @@ public class GoalDialogFragment extends DialogFragment {
         args.putDouble(ARG_CURRENT_WEIGHT, currentWeight);
         args.putString(ARG_CURRENT_UNIT, currentUnit);
         args.putLong(ARG_EXISTING_GOAL_ID, -1); // Default: create mode
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    /**
+     * Creates a new instance of GoalDialogFragment for editing an existing goal.
+     *
+     * @param userId        Current user ID
+     * @param currentWeight User's current weight for display and validation
+     * @param currentUnit   Current weight unit ("lbs" or "kg")
+     * @param existingGoal  The existing goal to edit
+     * @return Configured GoalDialogFragment instance in edit mode
+     */
+    public static GoalDialogFragment newInstanceForEdit(long userId, double currentWeight,
+                                                        String currentUnit, GoalWeight existingGoal) {
+        GoalDialogFragment fragment = new GoalDialogFragment();
+        Bundle args = new Bundle();
+        args.putLong(ARG_USER_ID, userId);
+        args.putDouble(ARG_CURRENT_WEIGHT, currentWeight);
+        args.putString(ARG_CURRENT_UNIT, currentUnit);
+        args.putLong(ARG_EXISTING_GOAL_ID, existingGoal.getGoalId());
         fragment.setArguments(args);
         return fragment;
     }
@@ -166,9 +188,23 @@ public class GoalDialogFragment extends DialogFragment {
         WeighToGoDBHelper dbHelper = WeighToGoDBHelper.getInstance(requireContext());
         goalWeightDAO = new GoalWeightDAO(dbHelper);
 
-        // Initialize state
-        selectedUnit = currentUnit;
-        selectedTargetDate = null;
+        // Load existing goal if in edit mode
+        if (existingGoalId > 0) {
+            existingGoal = goalWeightDAO.getGoalById(existingGoalId);
+            if (existingGoal != null) {
+                selectedUnit = existingGoal.getGoalUnit();
+                selectedTargetDate = existingGoal.getTargetDate();
+            } else {
+                // Goal not found, treat as create mode
+                existingGoalId = -1;
+                selectedUnit = currentUnit;
+                selectedTargetDate = null;
+            }
+        } else {
+            // Create mode
+            selectedUnit = currentUnit;
+            selectedTargetDate = null;
+        }
     }
 
     @NonNull
@@ -217,6 +253,18 @@ public class GoalDialogFragment extends DialogFragment {
 
         // Set current weight display
         textCurrentWeight.setText(String.format("%.1f %s", currentWeight, currentUnit));
+
+        // Pre-fill goal weight if in edit mode
+        if (existingGoal != null) {
+            inputGoalWeight.setText(String.format("%.1f", existingGoal.getGoalWeight()));
+
+            // Show target date if exists
+            if (selectedTargetDate != null) {
+                textSelectedTargetDate.setText(String.format(getString(R.string.target_date_format),
+                        DateUtils.formatDateFull(selectedTargetDate)));
+                textSelectedTargetDate.setVisibility(View.VISIBLE);
+            }
+        }
 
         // Set initial unit toggle state
         updateUnitButtonUI(selectedUnit);
@@ -322,44 +370,101 @@ public class GoalDialogFragment extends DialogFragment {
     }
 
     /**
-     * Creates GoalWeight object and saves to database via DAO.
+     * Creates or updates GoalWeight object and saves to database via DAO.
      * Calls listener callback on success or failure.
      *
      * @param goalWeight The validated goal weight value
      */
     private void validateAndSaveGoal(double goalWeight) {
-        // Create new goal
-        GoalWeight newGoal = new GoalWeight();
-        newGoal.setUserId(userId);
-        newGoal.setGoalWeight(goalWeight);
-        newGoal.setGoalUnit(selectedUnit);
-        newGoal.setStartWeight(currentWeight);
-        newGoal.setTargetDate(selectedTargetDate); // Optional, can be null
-        newGoal.setActive(true);
-        newGoal.setAchieved(false);
-        newGoal.setCreatedAt(LocalDateTime.now());
-        newGoal.setUpdatedAt(LocalDateTime.now());
+        GoalWeight goal;
+        boolean isEditMode = (existingGoal != null);
 
-        // Save to database (deactivates previous goal automatically)
-        long goalId = goalWeightDAO.setNewActiveGoal(newGoal);
+        if (isEditMode) {
+            // Edit mode: Update existing goal
+            goal = existingGoal;
+            goal.setGoalWeight(goalWeight);
 
-        if (goalId > 0) {
-            newGoal.setGoalId(goalId); // Set ID for callback
-            Toast.makeText(requireContext(), R.string.success_goal_created, Toast.LENGTH_SHORT).show();
-
-            // Callback to activity BEFORE dismiss (ensure activity gets data)
-            if (listener != null) {
-                listener.onGoalSaved(newGoal);
+            // Convert start weight if unit was changed
+            String oldUnit = existingGoal.getGoalUnit();
+            if (!oldUnit.equals(selectedUnit)) {
+                double currentStartWeight = existingGoal.getStartWeight();
+                if ("kg".equals(selectedUnit)) {
+                    // Converting from lbs to kg
+                    goal.setStartWeight(WeightUtils.convertLbsToKg(currentStartWeight));
+                } else {
+                    // Converting from kg to lbs
+                    goal.setStartWeight(WeightUtils.convertKgToLbs(currentStartWeight));
+                }
             }
 
-            dismiss();
-        } else {
-            String errorMsg = "Failed to create goal. Please try again.";
-            Toast.makeText(requireContext(), errorMsg, Toast.LENGTH_SHORT).show();
+            goal.setGoalUnit(selectedUnit);
+            goal.setTargetDate(selectedTargetDate); // Optional, can be null
+            goal.setUpdatedAt(LocalDateTime.now());
 
-            // Callback to activity
-            if (listener != null) {
-                listener.onGoalSaveError(errorMsg);
+            // Update in database
+            int rowsUpdated = goalWeightDAO.updateGoal(goal);
+
+            if (rowsUpdated > 0) {
+                Toast.makeText(requireContext(), "Goal updated successfully", Toast.LENGTH_SHORT).show();
+
+                // Callback to activity BEFORE dismiss
+                if (listener != null) {
+                    listener.onGoalSaved(goal);
+                }
+
+                dismiss();
+            } else {
+                String errorMsg = "Failed to update goal. Please try again.";
+                Toast.makeText(requireContext(), errorMsg, Toast.LENGTH_SHORT).show();
+
+                if (listener != null) {
+                    listener.onGoalSaveError(errorMsg);
+                }
+            }
+        } else {
+            // Create mode: Create new goal
+            goal = new GoalWeight();
+            goal.setUserId(userId);
+            goal.setGoalWeight(goalWeight);
+            goal.setGoalUnit(selectedUnit);
+
+            // Convert start weight if unit was changed
+            double startWeight = currentWeight;
+            if (!currentUnit.equals(selectedUnit)) {
+                if ("kg".equals(selectedUnit)) {
+                    startWeight = WeightUtils.convertLbsToKg(currentWeight);
+                } else {
+                    startWeight = WeightUtils.convertKgToLbs(currentWeight);
+                }
+            }
+            goal.setStartWeight(startWeight);
+
+            goal.setTargetDate(selectedTargetDate); // Optional, can be null
+            goal.setActive(true);
+            goal.setAchieved(false);
+            goal.setCreatedAt(LocalDateTime.now());
+            goal.setUpdatedAt(LocalDateTime.now());
+
+            // Save to database (deactivates previous goal automatically)
+            long goalId = goalWeightDAO.setNewActiveGoal(goal);
+
+            if (goalId > 0) {
+                goal.setGoalId(goalId); // Set ID for callback
+                Toast.makeText(requireContext(), R.string.success_goal_created, Toast.LENGTH_SHORT).show();
+
+                // Callback to activity BEFORE dismiss
+                if (listener != null) {
+                    listener.onGoalSaved(goal);
+                }
+
+                dismiss();
+            } else {
+                String errorMsg = "Failed to create goal. Please try again.";
+                Toast.makeText(requireContext(), errorMsg, Toast.LENGTH_SHORT).show();
+
+                if (listener != null) {
+                    listener.onGoalSaveError(errorMsg);
+                }
             }
         }
     }

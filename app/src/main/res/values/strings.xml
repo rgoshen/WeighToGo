@@ -192,6 +192,7 @@
     <!-- Goal Setting Dialog -->
     <string name="dialog_set_goal_title">Set Your Goal Weight</string>
     <string name="hint_goal_weight">Goal Weight</string>
+    <string name="target_date">Target Date</string>
     <string name="label_target_date_optional">TARGET DATE (OPTIONAL)</string>
     <string name="btn_select_target_date">Select Target Date</string>
     <string name="no_target_date_selected">No target date selected</string>

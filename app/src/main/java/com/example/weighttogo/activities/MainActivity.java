@@ -55,8 +55,11 @@ public class MainActivity extends AppCompatActivity
     // Progress Card
     private MaterialCardView progressCard;
     private TextView currentWeightValue;
+    private TextView currentWeightUnit;
     private TextView startWeightValue;
+    private TextView startWeightUnit;
     private TextView goalWeightValue;
+    private TextView goalWeightUnit;
     private View progressBarFill;
     private TextView progressPercentage;
     private ImageButton btnEditGoalFromCard;
@@ -163,8 +166,11 @@ public class MainActivity extends AppCompatActivity
         // Progress Card
         progressCard = findViewById(R.id.progressCard);
         currentWeightValue = findViewById(R.id.currentWeightValue);
+        currentWeightUnit = findViewById(R.id.currentWeightUnit);
         startWeightValue = findViewById(R.id.startWeightValue);
+        startWeightUnit = findViewById(R.id.startWeightUnit);
         goalWeightValue = findViewById(R.id.goalWeightValue);
+        goalWeightUnit = findViewById(R.id.goalWeightUnit);
         progressBarFill = findViewById(R.id.progressBarFill);
         progressPercentage = findViewById(R.id.progressPercentage);
         btnEditGoalFromCard = findViewById(R.id.btnEditGoalFromCard);
@@ -203,10 +209,7 @@ public class MainActivity extends AppCompatActivity
             startActivityForResult(intent, REQUEST_CODE_WEIGHT_ENTRY);
         });
 
-        btnEditGoalFromCard.setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, GoalsActivity.class);
-            startActivity(intent);
-        });
+        btnEditGoalFromCard.setOnClickListener(v -> handleEditGoal());
     }
 
     /**
@@ -264,16 +267,33 @@ public class MainActivity extends AppCompatActivity
         progressCard.setVisibility(View.VISIBLE);
         btnEditGoalFromCard.setVisibility(View.VISIBLE);
 
+        // Get goal unit
+        String goalUnit = activeGoal.getGoalUnit();
+
         // Get current weight from most recent entry (use cached list)
         double current = activeGoal.getStartWeight();
         if (!weightEntries.isEmpty()) {
-            current = weightEntries.get(0).getWeightValue();
+            WeightEntry latestEntry = weightEntries.get(0);
+            current = latestEntry.getWeightValue();
+            String entryUnit = latestEntry.getWeightUnit();
+
+            // Convert if units don't match
+            if (!entryUnit.equals(goalUnit)) {
+                if ("kg".equals(goalUnit)) {
+                    current = WeightUtils.convertLbsToKg(current);
+                } else {
+                    current = WeightUtils.convertKgToLbs(current);
+                }
+            }
         }
 
         // Display weight values
         startWeightValue.setText(String.format("%.1f", activeGoal.getStartWeight()));
+        startWeightUnit.setText(goalUnit);
         currentWeightValue.setText(String.format("%.1f", current));
+        currentWeightUnit.setText(goalUnit);
         goalWeightValue.setText(String.format("%.1f", activeGoal.getGoalWeight()));
+        goalWeightUnit.setText(goalUnit);
 
         // Update progress bar
         updateProgressBar(current, activeGoal.getStartWeight(), activeGoal.getGoalWeight());
@@ -429,6 +449,42 @@ public class MainActivity extends AppCompatActivity
                 currentUserId,
                 currentWeight,
                 currentUnit
+        );
+        dialog.setListener(this);
+        dialog.show(getSupportFragmentManager(), "GoalDialogFragment");
+    }
+
+    /**
+     * Shows the goal dialog fragment in edit mode.
+     * Opens dialog with existing goal data for editing.
+     */
+    private void handleEditGoal() {
+        if (activeGoal == null) {
+            Toast.makeText(this, "No active goal to edit", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Get current weight (latest entry)
+        double currentWeight = 0.0;
+        String currentUnit = "lbs";
+        if (!weightEntries.isEmpty()) {
+            WeightEntry latestEntry = weightEntries.get(0);
+            currentWeight = latestEntry.getWeightValue();
+            currentUnit = latestEntry.getWeightUnit();
+        }
+
+        // Validate we have a weight
+        if (currentWeight <= 0.0) {
+            Toast.makeText(this, "No weight entries found", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Create and show dialog in edit mode
+        GoalDialogFragment dialog = GoalDialogFragment.newInstanceForEdit(
+                currentUserId,
+                currentWeight,
+                currentUnit,
+                activeGoal
         );
         dialog.setListener(this);
         dialog.show(getSupportFragmentManager(), "GoalDialogFragment");

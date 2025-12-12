@@ -108,6 +108,32 @@ public class GoalWeightDAO {
     }
 
     /**
+     * Gets a specific goal by its ID.
+     */
+    @Nullable
+    public GoalWeight getGoalById(long goalId) {
+        Log.d(TAG, "getGoalById: goal_id=" + goalId);
+
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+
+        try (Cursor cursor = db.query(
+            WeighToGoDBHelper.TABLE_GOAL_WEIGHTS,
+            null,
+            "goal_id = ?",
+            new String[]{String.valueOf(goalId)},
+            null, null, null,
+            "1"
+        )) {
+            if (cursor != null && cursor.moveToFirst()) {
+                return mapCursorToGoal(cursor);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "getGoalById: Exception", e);
+        }
+        return null;
+    }
+
+    /**
      * Gets all goals for a user (both active and inactive).
      */
     @NonNull

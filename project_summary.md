@@ -1,5 +1,199 @@
 # Project Summary - Weigh to Go!
 
+## [2025-12-12] Phase 6.0 Planning: Global Weight Unit Preference Refactoring
+
+### Work Completed
+**Planning and Documentation (Completed 2025-12-12)**
+- Created comprehensive implementation plan for global weight unit preference refactoring
+- Refactored weight unit selection from per-entry to global user preference
+- Created ADR-0004: Global Weight Unit Preference Architecture
+- Created DDR-0001: Weight Unit Preference UX Simplification
+- Updated TODO.md with Phase 6.0 tasks and renumbered subsequent phases
+- All 270 tests still passing, lint clean (no code changes yet - planning phase only)
+
+### Context: User Request for UX Simplification
+
+**User Feedback:**
+> "I think we are spending too much time on this. I think we should not allow the user from entry to entry to select lbs or kg. I think there should be a settings for this. so, when we set the permissions to allow sms messaging, this is another setting we can set on that screen. what do you think?"
+
+**Problems with Current Per-Entry Unit Selection:**
+- Users rarely switch units between entries (unit preference is typically static)
+- Unit toggles clutter the UI in WeightEntryActivity and GoalDialogFragment
+- Conversion complexity required throughout codebase when entries use mixed units
+- Not industry standard (MyFitnessPal, Lose It!, Noom all use global preference)
+- Cognitive overhead for users who must see and interact with unit selection for every entry
+- Data fragmentation makes trend calculations more complex
+
+**Current State:**
+- `daily_weights` table has `weight_unit` column storing unit per entry
+- WeightEntryActivity has lbs/kg toggle buttons (lines 317-350 in layout)
+- GoalDialogFragment has lbs/kg toggle buttons with conversion logic
+- `user_preferences` table exists but UserPreferenceDAO not yet implemented
+
+---
+
+### Planning Phase: Exploration and Architecture Design
+
+**Exploration Approach:**
+Launched 3 parallel explore agents to understand:
+1. Current unit selection implementation in WeightEntryActivity
+2. Existing user preferences system (table schema, models)
+3. Settings screen architecture (activity_sms_settings.xml layout exists)
+
+**Key Findings:**
+- WeightEntryActivity has unit toggle with ~100 lines of switching logic (lines 493-552)
+- GoalDialogFragment has unit toggle with ~80 lines of logic (lines 275-290, 447-468)
+- `user_preferences` table exists with proper schema (UNIQUE constraint on user_id, pref_key)
+- UserPreference model exists but UserPreferenceDAO does NOT exist (needs creation)
+- activity_sms_settings.xml layout exists but SMSSettingsActivity doesn't exist yet
+- No existing settings infrastructure to build upon
+
+**Architecture Decision: Migration Strategy**
+
+Two options considered:
+1. **Keep weight_unit Column (SELECTED)** - Backward compatible
+2. Remove weight_unit Column - Requires migration script
+
+**Selected: Keep Column (Option A)**
+
+**Rationale:**
+- ✅ Backward compatible - no data loss
+- ✅ Historical accuracy - preserves what user actually entered
+- ✅ Simple implementation - no migration scripts required
+- ✅ Lower risk - can deploy immediately without breaking existing data
+- ✅ Future enhancement possible: "Convert all entries to [unit]" button (Phase 8)
+
+**How it works:**
+1. New entries use global preference from UserPreferenceDAO (ignore per-entry toggle)
+2. Existing entries display in their originally stored units
+3. Conversion happens at display time when units don't match
+4. User can optionally bulk-convert all entries later (Phase 8 enhancement)
+
+**Rejected: Remove Column**
+- ❌ Requires database migration script (onUpgrade)
+- ❌ Loses historical accuracy of what user entered
+- ❌ Higher risk of data corruption
+- ❌ Complex rollback if issues arise
+
+---
+
+### Architecture Design: Global Preference System
+
+**Settings Screen Architecture: Unified SettingsActivity**
+
+**Decision:** Create single SettingsActivity with multiple preference sections (NOT separate WeightSettingsActivity)
+
+**Preference sections (Material Cards):**
+1. **Weight Preferences Card** (NEW - Phase 6.0)
+   - Weight unit toggle (lbs / kg)
+   - Description: "Choose your preferred unit for weight tracking"
+2. **SMS Notification Preferences Card** (Future - Phase 7)
+   - Permission status, phone number input, SMS toggles
+3. **App Preferences Card** (Future - Phase 8)
+   - Theme, date format, data export
+
+**File organization:**
+- Rename `activity_sms_settings.xml` → `activity_settings.xml`
+- Create `SettingsActivity.java` (combines all preferences, ~300 lines)
+- Weight preferences card positioned BEFORE SMS card
+
+**Benefits:**
+- Single location for all user preferences (better UX)
+- Reusable infrastructure for future settings
+- Consistent Material Design 3 pattern (card-based sections)
+- Easier navigation (one settings button instead of multiple)
+
+---
+
+### Documentation Created
+
+**ADR-0004: Global Weight Unit Preference Architecture**
+- Location: `docs/adr/0004-global-weight-unit-preference.md`
+- Focus: Technical architecture (UserPreferenceDAO, migration strategy, INSERT OR REPLACE)
+- Key decisions: Keep weight_unit column, use UserPreferenceDAO over SharedPreferences
+
+**DDR-0001: Weight Unit Preference UX Simplification**
+- Location: `docs/ddr/0001-weight-unit-preference-ux-simplification.md` (NEW directory)
+- Focus: User experience and visual design
+- Key decisions: Remove unit toggles, unified SettingsActivity, read-only unit display
+- Industry analysis: MyFitnessPal, Lose It!, Noom all use global preference
+
+---
+
+### Implementation Plan (6 Sub-Phases)
+
+**Phase 6.0.1:** Create UserPreferenceDAO (10 tests)
+**Phase 6.0.2:** Refactor WeightEntryActivity (3 tests) - Remove ~100 lines toggle logic
+**Phase 6.0.3:** Refactor GoalDialogFragment (2 tests) - Remove ~80 lines toggle logic
+**Phase 6.0.4:** Create SettingsActivity (4 tests) - ~300 lines new code
+**Phase 6.0.5:** Integration Testing (4 E2E tests)
+**Phase 6.0.6:** Documentation & Finalization
+
+**Total Tests:** 23 new tests (14 unit + 9 integration)
+**Expected Final Count:** 270 (current) + 23 (new) = 293 tests
+**Estimated Time:** 9-14 hours (1-2 days)
+
+---
+
+### File Impact Summary
+
+**Files to Create (7 new):**
+1. `database/UserPreferenceDAO.java` (~200 lines)
+2. `activities/SettingsActivity.java` (~300 lines)
+3-7. Five test classes (~875 lines total)
+
+**Files to Modify (9 existing):**
+1. `activities/WeightEntryActivity.java` (~100 lines removed, ~10 added)
+2. `fragments/GoalDialogFragment.java` (~80 lines removed, ~10 added)
+3. `res/layout/activity_weight_entry.xml` (~35 lines removed)
+4. `res/layout/dialog_set_goal.xml` (~35 lines removed)
+5. `res/layout/activity_sms_settings.xml` (renamed + ~50 lines added)
+6-9. strings.xml, AndroidManifest.xml, TODO.md, project_summary.md
+
+**Net Code Impact:** ~350 lines removed, ~1000 lines added (+650 lines net)
+
+---
+
+### Competitive Analysis
+
+| App | Unit Selection Method | Decision Point |
+|-----|----------------------|----------------|
+| MyFitnessPal | Global setting | Account Settings |
+| Lose It! | Global setting | Profile |
+| Noom | Global setting | Settings |
+| **WeighToGo (current)** | **Per-entry toggle** | **Every entry** ❌ |
+| **WeighToGo (Phase 6.0)** | **Global setting** | **Settings** ✅ |
+
+**Result:** After Phase 6.0, WeighToGo matches industry standard UX pattern.
+
+---
+
+### Lessons Learned
+
+1. **User Feedback Drives Architecture** - Simple request led to comprehensive refactoring
+2. **Planning Before Coding Saves Time** - 3-4 hours planning prevents days of refactoring
+3. **Industry Standards Matter** - Users have learned patterns from competing apps
+4. **Migration Strategy is Critical** - "Keep Column" eliminates data loss risk
+5. **Generic Design Enables Growth** - UserPreferenceDAO supports future preferences
+6. **Documentation Prevents Technical Debt** - ADR/DDR answer future "why?" questions
+
+---
+
+### Summary
+
+Completed comprehensive planning for Phase 6.0 refactoring to move weight unit selection from per-entry toggle to global user preference. Created ADR-0004 (architecture) and DDR-0001 (design) documenting all decisions. Updated TODO.md with detailed implementation plan.
+
+**Benefits:**
+- ✅ Simplify UX (remove toggles from 2 screens)
+- ✅ Align with industry standard
+- ✅ Reduce cognitive load (set once, forget)
+- ✅ Enable future preferences (SMS, theme, etc.)
+- ✅ Maintain backward compatibility
+
+**Current Status:** Planning complete, ready for implementation. No code changes yet - all 270 tests still passing, lint clean.
+
+---
+
 ## [2025-12-11] Phase 3.6 Post-Release Bug Fixes: Security & Display Name
 
 ### Work Completed

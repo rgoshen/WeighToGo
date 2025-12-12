@@ -210,6 +210,14 @@
                                 tools:text="185" />
 
                             <TextView
+                                android:id="@+id/startWeightUnit"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="12sp"
+                                tools:text="kg" />
+
+                            <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="@dimen/spacing_micro"
@@ -246,6 +254,14 @@
                                 tools:text="172" />
 
                             <TextView
+                                android:id="@+id/currentWeightUnit"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="12sp"
+                                tools:text="kg" />
+
+                            <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="@dimen/spacing_micro"
@@ -280,6 +296,14 @@
                                 android:textSize="28sp"
                                 android:textStyle="bold"
                                 tools:text="165" />
+
+                            <TextView
+                                android:id="@+id/goalWeightUnit"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="12sp"
+                                tools:text="kg" />
 
                             <TextView
                                 android:layout_width="wrap_content"

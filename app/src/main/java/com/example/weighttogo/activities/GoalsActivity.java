@@ -24,6 +24,7 @@ import com.example.weighttogo.models.GoalWeight;
 import com.example.weighttogo.models.WeightEntry;
 import com.example.weighttogo.utils.DateUtils;
 import com.example.weighttogo.utils.SessionManager;
+import com.example.weighttogo.utils.WeightUtils;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
@@ -52,6 +53,8 @@ public class GoalsActivity extends AppCompatActivity
     private TextView textCurrentUnit;
     private TextView textGoalWeight;
     private TextView textGoalUnit;
+    private LinearLayout targetDateContainer;
+    private TextView textTargetDate;
     private TextView textDaysSinceStart;
     private TextView textPace;
     private TextView textProjection;
@@ -151,6 +154,8 @@ public class GoalsActivity extends AppCompatActivity
         textCurrentUnit = findViewById(R.id.text_current_unit);
         textGoalWeight = findViewById(R.id.text_goal_weight);
         textGoalUnit = findViewById(R.id.text_goal_unit);
+        targetDateContainer = findViewById(R.id.target_date_container);
+        textTargetDate = findViewById(R.id.text_target_date);
         textDaysSinceStart = findViewById(R.id.text_days_since_start);
         textPace = findViewById(R.id.text_pace);
         textProjection = findViewById(R.id.text_projection);
@@ -263,7 +268,7 @@ public class GoalsActivity extends AppCompatActivity
         textStartWeight.setText(String.format("%.1f", activeGoal.getStartWeight()));
         textStartUnit.setText(activeGoal.getGoalUnit());
 
-        // Current weight
+        // Current weight (already converted to goal's unit by getCurrentWeight())
         double currentWeight = getCurrentWeight();
         textCurrentWeightValue.setText(String.format("%.1f", currentWeight));
         textCurrentUnit.setText(activeGoal.getGoalUnit());
@@ -271,6 +276,14 @@ public class GoalsActivity extends AppCompatActivity
         // Goal weight
         textGoalWeight.setText(String.format("%.1f", activeGoal.getGoalWeight()));
         textGoalUnit.setText(activeGoal.getGoalUnit());
+
+        // Target date (optional)
+        if (activeGoal.getTargetDate() != null) {
+            textTargetDate.setText(DateUtils.formatDateFull(activeGoal.getTargetDate()));
+            targetDateContainer.setVisibility(View.VISIBLE);
+        } else {
+            targetDateContainer.setVisibility(View.GONE);
+        }
     }
 
     /**
@@ -345,12 +358,30 @@ public class GoalsActivity extends AppCompatActivity
 
     /**
      * Handle edit goal button click.
-     * TODO: Implement edit mode with GoalDialogFragment
+     * Opens GoalDialogFragment in edit mode with existing goal data.
      */
     private void handleEditGoal() {
-        // TODO Phase 2: Implement edit mode
-        // Will use GoalDialogFragment.newInstance() with existingGoalId parameter
-        Toast.makeText(this, "Edit goal coming soon", Toast.LENGTH_SHORT).show();
+        if (activeGoal == null) {
+            Toast.makeText(this, "No active goal to edit", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Get current weight for validation
+        WeightEntry latestEntry = weightEntryDAO.getLatestWeightEntry(currentUserId);
+        if (latestEntry == null) {
+            Toast.makeText(this, "No weight entries found", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Show dialog in edit mode
+        GoalDialogFragment dialog = GoalDialogFragment.newInstanceForEdit(
+                currentUserId,
+                latestEntry.getWeightValue(),
+                latestEntry.getWeightUnit(),
+                activeGoal
+        );
+        dialog.setListener(this);
+        dialog.show(getSupportFragmentManager(), "GoalDialogFragment");
     }
 
     /**
@@ -377,14 +408,30 @@ public class GoalsActivity extends AppCompatActivity
     }
 
     /**
-     * Get current weight from latest weight entry.
+     * Get current weight from latest weight entry, converted to match goal's unit.
      *
-     * @return current weight, or 0.0 if no entries exist
+     * @return current weight in goal's unit, or 0.0 if no entries exist
      */
     private double getCurrentWeight() {
         WeightEntry latestEntry = weightEntryDAO.getLatestWeightEntry(currentUserId);
         if (latestEntry != null) {
-            return latestEntry.getWeightValue();
+            double currentWeight = latestEntry.getWeightValue();
+
+            // Convert if goal exists and units don't match
+            if (activeGoal != null) {
+                String entryUnit = latestEntry.getWeightUnit();
+                String goalUnit = activeGoal.getGoalUnit();
+
+                if (!entryUnit.equals(goalUnit)) {
+                    if ("kg".equals(goalUnit)) {
+                        currentWeight = WeightUtils.convertLbsToKg(currentWeight);
+                    } else {
+                        currentWeight = WeightUtils.convertKgToLbs(currentWeight);
+                    }
+                }
+            }
+
+            return currentWeight;
         }
         return 0.0;
     }
