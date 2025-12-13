@@ -81,7 +81,7 @@ public final class DateTimeConverter {
      * @return LocalDateTime object, or null if input is null/invalid
      */
     public static LocalDateTime fromTimestamp(String timestamp) {
-        if (timestamp == null || timestamp.trim().isEmpty()) {
+        if (ValidationUtils.isNullOrEmpty(timestamp)) {
             Log.w(TAG, "fromTimestamp: called with null or empty string");
             return null;
         }
@@ -121,7 +121,7 @@ public final class DateTimeConverter {
      * @return LocalDate object, or null if input is null/invalid
      */
     public static LocalDate fromDateString(String dateString) {
-        if (dateString == null || dateString.trim().isEmpty()) {
+        if (ValidationUtils.isNullOrEmpty(dateString)) {
             Log.w(TAG, "fromDateString: called with null or empty string");
             return null;
         }
@@ -142,7 +142,7 @@ public final class DateTimeConverter {
      * @return true if timestamp matches "yyyy-MM-dd HH:mm:ss" format, false otherwise
      */
     public static boolean isValidTimestamp(String timestamp) {
-        if (timestamp == null || timestamp.trim().isEmpty()) {
+        if (ValidationUtils.isNullOrEmpty(timestamp)) {
             return false;
         }
 
@@ -162,7 +162,7 @@ public final class DateTimeConverter {
      * @return true if dateString matches "yyyy-MM-dd" format, false otherwise
      */
     public static boolean isValidDateString(String dateString) {
-        if (dateString == null || dateString.trim().isEmpty()) {
+        if (ValidationUtils.isNullOrEmpty(dateString)) {
             return false;
         }
 

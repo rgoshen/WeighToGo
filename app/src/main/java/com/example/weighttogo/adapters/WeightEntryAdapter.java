@@ -125,7 +125,7 @@ public class WeightEntryAdapter extends RecyclerView.Adapter<WeightEntryAdapter.
      * @param unit the weight unit (lbs or kg)
      */
     private void bindWeightValue(ViewHolder holder, double weight, String unit) {
-        holder.weightValue.setText(String.format("%.1f", weight));
+        holder.weightValue.setText(WeightUtils.formatWeight(weight));
         holder.weightUnit.setText(unit);
     }
 
@@ -194,11 +194,11 @@ public class WeightEntryAdapter extends RecyclerView.Adapter<WeightEntryAdapter.
             holder.trendBadge.setBackgroundResource(R.drawable.bg_badge_trend_same);
         } else if (diff > 0) {
             // Lost weight (previous was heavier)
-            holder.trendBadge.setText("↓ " + String.format("%.1f", diff) + " " + unit);
+            holder.trendBadge.setText("↓ " + WeightUtils.formatWeightWithUnit(diff, unit));
             holder.trendBadge.setBackgroundResource(R.drawable.bg_badge_trend_down);
         } else {
             // Gained weight
-            holder.trendBadge.setText("↑ " + String.format("%.1f", Math.abs(diff)) + " " + unit);
+            holder.trendBadge.setText("↑ " + WeightUtils.formatWeightWithUnit(Math.abs(diff), unit));
             holder.trendBadge.setBackgroundResource(R.drawable.bg_badge_trend_up);
         }
     }

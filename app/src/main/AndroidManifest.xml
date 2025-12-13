@@ -55,6 +55,17 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".activities.MainActivity" />
         </activity>
+
+        <!-- Settings Activity (manage app preferences) -->
+        <activity
+            android:name=".activities.SettingsActivity"
+            android:label="@string/settings_title"
+            android:parentActivityName=".activities.MainActivity"
+            android:exported="false">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".activities.MainActivity" />
+        </activity>
     </application>
 
 </manifest>

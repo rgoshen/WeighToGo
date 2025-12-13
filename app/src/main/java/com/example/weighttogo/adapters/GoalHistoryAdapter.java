@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.weighttogo.R;
 import com.example.weighttogo.models.GoalWeight;
 import com.example.weighttogo.utils.DateUtils;
+import com.example.weighttogo.utils.WeightUtils;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -56,7 +57,7 @@ public class GoalHistoryAdapter extends RecyclerView.Adapter<GoalHistoryAdapter.
         }
 
         // Goal weight value
-        String goalWeightText = String.format("%.1f %s", goal.getGoalWeight(), goal.getGoalUnit());
+        String goalWeightText = WeightUtils.formatWeightWithUnit(goal.getGoalWeight(), goal.getGoalUnit());
         holder.textGoalWeightValue.setText(goalWeightText);
 
         // Calculate lbs lost

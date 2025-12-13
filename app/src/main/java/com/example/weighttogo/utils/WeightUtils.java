@@ -114,6 +114,62 @@ public final class WeightUtils {
     }
 
     /**
+     * Formats weight value to 1 decimal place.
+     *
+     * @param weight the weight value to format
+     * @return formatted string (e.g., "150.0")
+     */
+    public static String formatWeight(double weight) {
+        return String.format("%.1f", weight);
+    }
+
+    /**
+     * Formats weight value with unit to 1 decimal place.
+     *
+     * @param weight the weight value to format
+     * @param unit   the weight unit ("lbs" or "kg")
+     * @return formatted string with unit (e.g., "150.0 lbs")
+     */
+    public static String formatWeightWithUnit(double weight, String unit) {
+        return String.format("%.1f %s", weight, unit);
+    }
+
+    /**
+     * Converts weight between units (lbs ↔ kg).
+     *
+     * @param value      the weight value to convert
+     * @param fromUnit   source unit ("lbs" or "kg")
+     * @param toUnit     target unit ("lbs" or "kg")
+     * @return converted weight, rounded to 1 decimal place; 0.0 if invalid
+     */
+    public static double convertBetweenUnits(double value, String fromUnit, String toUnit) {
+        // Validate input - negative values not allowed
+        if (value < 0) {
+            Log.w(TAG, "convertBetweenUnits: negative weight provided: " + value);
+            return 0.0;
+        }
+
+        // Same unit - no conversion needed
+        if (fromUnit.equals(toUnit)) {
+            return value;
+        }
+
+        // Convert lbs to kg
+        if ("lbs".equals(fromUnit) && "kg".equals(toUnit)) {
+            return convertLbsToKg(value);
+        }
+
+        // Convert kg to lbs
+        if ("kg".equals(fromUnit) && "lbs".equals(toUnit)) {
+            return convertKgToLbs(value);
+        }
+
+        // Invalid unit combination
+        Log.w(TAG, "convertBetweenUnits: invalid unit combination: " + fromUnit + " to " + toUnit);
+        return 0.0;
+    }
+
+    /**
      * Validates whether a weight is within acceptable range for the given unit.
      *
      * Valid ranges:

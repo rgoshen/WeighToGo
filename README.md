@@ -428,25 +428,29 @@ The app requires the following permissions:
 ## 🗺️ Roadmap
 
 ### Version 1.0 (Current)
-- [ ] User authentication
-- [ ] Daily weight logging
-- [ ] Weight history display
-- [ ] Goal weight setting
-- [ ] Goal achievement notifications
-- [ ] SMS notifications for goals, milestones, and reminders
+- [x] User authentication
+- [x] Daily weight logging
+- [x] Weight history display
+- [x] Goal weight setting and tracking
+- [x] Goal achievement notifications
+- [x] SMS notifications for goals, milestones, and reminders
+- [x] Global weight unit preferences (lbs/kg)
+
+> **Note:** Bottom navigation includes disabled "Trends" and "Profile" buttons (greyed out). These features are planned for post-launch (see Version 2.0 below).
 
 ### Version 1.1 (Planned)
-- [ ] Weight trend graphs/charts
-- [ ] Export data to CSV
+- [ ] Export weight data to CSV
 - [ ] Dark mode support
-- [ ] Backup/restore functionality
+- [ ] Data backup/restore functionality
+- [ ] Enhanced SMS reminder scheduling
 
 ### Version 2.0 (Future)
-- [ ] Cloud sync
-- [ ] Multiple profiles
-- [ ] BMI calculator
-- [ ] Scheduled daily reminders
+- [ ] **Trends Screen** - Interactive charts, progress visualization, and analytics (see [TODO.md Phase 11](TODO.md))
+- [ ] **Profile Management** - User settings, personal info, account management (see [TODO.md Phase 12](TODO.md))
+- [ ] Cloud sync across devices
+- [ ] BMI calculator and health metrics
 - [ ] Wear OS companion app
+- [ ] Multiple user profiles per device
 
 ---
 

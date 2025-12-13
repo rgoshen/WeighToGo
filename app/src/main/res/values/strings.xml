@@ -105,6 +105,17 @@
     <string name="cd_unit_lbs">Select pounds</string>
     <string name="cd_unit_kg">Select kilograms</string>
 
+    <!-- Settings Screen -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_subtitle">Manage app preferences</string>
+
+    <!-- Weight Preferences -->
+    <string name="weight_preferences_title">Weight Preferences</string>
+    <string name="weight_unit_label">Default weight unit for new entries</string>
+    <string name="weight_unit_description">Choose your preferred unit for weight tracking</string>
+    <string name="weight_unit_updated">Weight unit updated to %s</string>
+    <string name="weight_unit_update_failed">Failed to update weight unit</string>
+
     <!-- SMS/Notifications Screen -->
     <string name="sms_notifications_title">SMS Notifications</string>
     <string name="sms_notifications_subtitle">Manage text message alerts</string>

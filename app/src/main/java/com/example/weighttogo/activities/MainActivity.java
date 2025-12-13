@@ -26,6 +26,7 @@ import com.example.weighttogo.models.User;
 import com.example.weighttogo.models.WeightEntry;
 import com.example.weighttogo.utils.DateUtils;
 import com.example.weighttogo.utils.SessionManager;
+import com.example.weighttogo.utils.ValidationUtils;
 import com.example.weighttogo.utils.WeightUtils;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.card.MaterialCardView;
@@ -199,7 +200,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     /**
-     * Setup FAB click listener.
+     * Setup FAB and button click listeners.
      */
     private void setupFAB() {
         addEntryFab.setOnClickListener(v -> {
@@ -210,6 +211,11 @@ public class MainActivity extends AppCompatActivity
         });
 
         btnEditGoalFromCard.setOnClickListener(v -> handleEditGoal());
+
+        settingsButton.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
+            startActivity(intent);
+        });
     }
 
     /**
@@ -224,15 +230,15 @@ public class MainActivity extends AppCompatActivity
                 // Already on home, do nothing
                 return true;
             } else if (itemId == R.id.nav_trends) {
-                Toast.makeText(this, "Trends - Coming in Phase 6", Toast.LENGTH_SHORT).show();
-                return true;
+                // Trends disabled - future enhancement (see TODO.md Phase 11)
+                return false;
             } else if (itemId == R.id.nav_goals) {
                 Intent intent = new Intent(this, GoalsActivity.class);
                 startActivity(intent);
                 return true;
             } else if (itemId == R.id.nav_profile) {
-                Toast.makeText(this, "Profile - Coming in Phase 7", Toast.LENGTH_SHORT).show();
-                return true;
+                // Profile disabled - future enhancement (see TODO.md Phase 12)
+                return false;
             }
 
             return false;
@@ -288,11 +294,11 @@ public class MainActivity extends AppCompatActivity
         }
 
         // Display weight values
-        startWeightValue.setText(String.format("%.1f", activeGoal.getStartWeight()));
+        startWeightValue.setText(WeightUtils.formatWeight(activeGoal.getStartWeight()));
         startWeightUnit.setText(goalUnit);
-        currentWeightValue.setText(String.format("%.1f", current));
+        currentWeightValue.setText(WeightUtils.formatWeight(current));
         currentWeightUnit.setText(goalUnit);
-        goalWeightValue.setText(String.format("%.1f", activeGoal.getGoalWeight()));
+        goalWeightValue.setText(WeightUtils.formatWeight(activeGoal.getGoalWeight()));
         goalWeightUnit.setText(goalUnit);
 
         // Update progress bar
@@ -385,7 +391,7 @@ public class MainActivity extends AppCompatActivity
         User user = userDAO.getUserById(currentUserId);
         if (user != null) {
             String displayName = user.getDisplayName();
-            if (displayName == null || displayName.trim().isEmpty()) {
+            if (ValidationUtils.isNullOrEmpty(displayName)) {
                 displayName = user.getUsername();  // Fallback to username
             }
             userName.setText(displayName);
