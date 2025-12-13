@@ -206,4 +206,37 @@ public class ValidationUtilsTest {
         // ASSERT
         assertTrue("Password with only numbers (6+ chars) should be valid", result);
     }
+
+    // =============================================================================================
+    // NULL/EMPTY CHECKING TESTS (1 test with multiple cases)
+    // =============================================================================================
+
+    /**
+     * Tests that isNullOrEmpty() correctly identifies null, empty, and whitespace-only strings.
+     * This utility method is used throughout the codebase for consistent null checking.
+     */
+    @Test
+    public void test_isNullOrEmpty_withVariousInputs_returnsCorrectValue() {
+        // ARRANGE & ACT & ASSERT
+
+        // Null string should return true
+        assertTrue("null should return true",
+                ValidationUtils.isNullOrEmpty(null));
+
+        // Empty string should return true
+        assertTrue("Empty string should return true",
+                ValidationUtils.isNullOrEmpty(""));
+
+        // Whitespace only should return true
+        assertTrue("Whitespace-only string should return true",
+                ValidationUtils.isNullOrEmpty("   "));
+
+        // Valid string should return false
+        assertFalse("Non-empty string should return false",
+                ValidationUtils.isNullOrEmpty("test"));
+
+        // String with whitespace padding should return false (trimmed first)
+        assertFalse("String with whitespace padding should return false",
+                ValidationUtils.isNullOrEmpty(" test "));
+    }
 }
