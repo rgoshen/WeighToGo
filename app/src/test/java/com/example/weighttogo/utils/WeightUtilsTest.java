@@ -161,4 +161,59 @@ public class WeightUtilsTest {
         assertEquals("150 lbs should convert to approximately 68.0 kg",
                 expectedKg, actualKg, DELTA);
     }
+
+    /**
+     * Test 9: Convert kilograms to pounds
+     */
+    @Test
+    public void test_convertBetweenUnits_withKgToLbs_returnsCorrectValue() {
+        // ARRANGE
+        double weightKg = 68.0;
+        double expectedLbs = 149.9; // 68 / 0.453592 ≈ 149.9
+
+        // ACT
+        double actualLbs = WeightUtils.convertBetweenUnits(weightKg, "kg", "lbs");
+
+        // ASSERT
+        assertEquals("68 kg should convert to approximately 149.9 lbs",
+                expectedLbs, actualLbs, DELTA);
+    }
+
+    /**
+     * Test 10: Convert with invalid units returns zero
+     */
+    @Test
+    public void test_convertBetweenUnits_withInvalidUnits_returnsZero() {
+        // ARRANGE
+        double weight = 150.0;
+
+        // ACT
+        double result1 = WeightUtils.convertBetweenUnits(weight, "pounds", "kg");
+        double result2 = WeightUtils.convertBetweenUnits(weight, "lbs", "kilograms");
+
+        // ASSERT
+        assertEquals("Invalid 'pounds' unit should return 0.0",
+                0.0, result1, DELTA);
+        assertEquals("Invalid 'kilograms' unit should return 0.0",
+                0.0, result2, DELTA);
+    }
+
+    /**
+     * Test 11: Convert negative weight returns zero
+     */
+    @Test
+    public void test_convertBetweenUnits_withNegativeValue_returnsZero() {
+        // ARRANGE
+        double negativeWeight = -150.0;
+
+        // ACT
+        double result1 = WeightUtils.convertBetweenUnits(negativeWeight, "lbs", "kg");
+        double result2 = WeightUtils.convertBetweenUnits(negativeWeight, "kg", "lbs");
+
+        // ASSERT
+        assertEquals("Negative lbs to kg should return 0.0",
+                0.0, result1, DELTA);
+        assertEquals("Negative kg to lbs should return 0.0",
+                0.0, result2, DELTA);
+    }
 }
