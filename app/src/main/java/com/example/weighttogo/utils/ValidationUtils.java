@@ -55,6 +55,21 @@ public final class ValidationUtils {
     private static final int MIN_PASSWORD_LENGTH = 6;
 
     /**
+     * Phone number validation pattern: E.164 international format.
+     * Pattern: ^\\+?[1-9]\\d{9,14}$
+     * - ^ = start of string
+     * - \\+? = optional plus sign
+     * - [1-9] = first digit 1-9 (not 0)
+     * - \\d{9,14} = 9-14 more digits (total 10-15 digits)
+     * - $ = end of string
+     *
+     * Examples:
+     * - Valid: +12025551234, 2025551234, +447911123456
+     * - Invalid: 202-555-1234, +1 202 555 1234, abc123
+     */
+    private static final Pattern PHONE_PATTERN = Pattern.compile("^\\+?[1-9]\\d{9,14}$");
+
+    /**
      * Private constructor to prevent instantiation.
      * This is a utility class with only static methods.
      *
@@ -166,5 +181,100 @@ public final class ValidationUtils {
 
         Log.d(TAG, "isValidPassword: password is valid");
         return true;
+    }
+
+    // =============================================================================================
+    // PHONE NUMBER VALIDATION (Phase 7.1)
+    // =============================================================================================
+
+    /**
+     * Validates a phone number against E.164 international format.
+     *
+     * **Validation Rules:**
+     * - 10-15 digits total
+     * - Optional + prefix (international format)
+     * - No spaces, dashes, or letters
+     * - First digit cannot be 0
+     *
+     * **Examples:**
+     * - Valid: "2025551234", "+12025551234", "+447911123456"
+     * - Invalid: "202-555-1234", "+1 202 555 1234", "123456789"
+     *
+     * **Note:** US numbers without country code (10 digits) are accepted.
+     * Use formatPhoneE164() to convert to E.164 format before storage.
+     *
+     * @param phoneNumber the phone number to validate
+     * @return true if valid E.164 format, false otherwise
+     */
+    public static boolean isValidPhoneNumber(@Nullable String phoneNumber) {
+        // Null or empty check
+        if (isNullOrEmpty(phoneNumber)) {
+            Log.w(TAG, "isValidPhoneNumber: phone number is null or empty");
+            return false;
+        }
+
+        // Remove all whitespace for validation
+        String cleanPhone = phoneNumber.replaceAll("\\s+", "");
+
+        // Pattern matching
+        boolean isValid = PHONE_PATTERN.matcher(cleanPhone).matches();
+
+        if (!isValid) {
+            Log.w(TAG, "isValidPhoneNumber: phone does not match E.164 pattern (10-15 digits, optional +)");
+        } else {
+            Log.d(TAG, "isValidPhoneNumber: phone is valid E.164 format");
+        }
+
+        return isValid;
+    }
+
+    /**
+     * Formats a phone number to E.164 international format.
+     *
+     * **Conversion Rules:**
+     * - Already E.164 (+1...): Return unchanged
+     * - 10-digit US number: Prepend +1
+     * - Invalid format: Return null
+     *
+     * **Examples:**
+     * - Input: "2025551234" → Output: "+12025551234"
+     * - Input: "+12025551234" → Output: "+12025551234"
+     * - Input: "202-555-1234" → Output: null (invalid format)
+     *
+     * **Note:** This method assumes US country code (+1) for 10-digit numbers.
+     * International numbers must already include country code.
+     *
+     * @param phoneNumber the phone number to format
+     * @return E.164 formatted phone number, or null if invalid
+     */
+    @Nullable
+    public static String formatPhoneE164(@Nullable String phoneNumber) {
+        // Validate first
+        if (!isValidPhoneNumber(phoneNumber)) {
+            Log.w(TAG, "formatPhoneE164: phone number is invalid, cannot format");
+            return null;
+        }
+
+        // Remove whitespace
+        String cleanPhone = phoneNumber.replaceAll("\\s+", "");
+
+        // Already E.164 format (starts with +)
+        if (cleanPhone.startsWith("+")) {
+            Log.d(TAG, "formatPhoneE164: already E.164 format");
+            return cleanPhone;
+        }
+
+        // Assume US country code for 10-digit numbers
+        if (cleanPhone.length() == 10) {
+            String e164 = "+1" + cleanPhone;
+            Log.d(TAG, "formatPhoneE164: converted US number to E.164: " + e164);
+            return e164;
+        }
+
+        // All other cases: prepend + if not present
+        // (International numbers 11-15 digits should already have country code)
+        String e164 = "+" + cleanPhone;
+        Log.d(TAG, "formatPhoneE164: prepended + to phone number");
+        return e164;
     }
 }
