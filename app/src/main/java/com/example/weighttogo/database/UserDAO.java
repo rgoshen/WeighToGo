@@ -289,6 +289,70 @@ public class UserDAO {
     }
 
     /**
+     * Updates user's phone number.
+     * Accepts null to clear phone number.
+     *
+     * **Note:** Phone should be E.164 format (+12025551234).
+     * Use ValidationUtils.formatPhoneE164() before calling.
+     *
+     * **Usage Example:**
+     * <pre>
+     * // Validate and format phone
+     * String phone = ValidationUtils.formatPhoneE164(userInput);
+     * if (phone != null) {
+     *     boolean success = userDAO.updatePhoneNumber(userId, phone);
+     * }
+     *
+     * // Clear phone number
+     * boolean cleared = userDAO.updatePhoneNumber(userId, null);
+     * </pre>
+     *
+     * @param userId User ID to update
+     * @param phoneNumber E.164 phone number or null to clear
+     * @return true if successful (1 row updated), false if user not found (0 rows)
+     */
+    public boolean updatePhoneNumber(long userId, @Nullable String phoneNumber) {
+        Log.d(TAG, "updatePhoneNumber: Updating phone for user_id=" + userId);
+
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+
+        ContentValues values = new ContentValues();
+
+        // Handle null phone number (clear field)
+        if (phoneNumber == null) {
+            values.putNull("phone_number");
+            Log.d(TAG, "updatePhoneNumber: Clearing phone number for user_id=" + userId);
+        } else {
+            values.put("phone_number", phoneNumber);
+            Log.d(TAG, "updatePhoneNumber: Setting phone to " + phoneNumber + " for user_id=" + userId);
+        }
+
+        // Always update the updated_at timestamp
+        values.put("updated_at", LocalDateTime.now().format(ISO_FORMATTER));
+
+        try {
+            int rowsAffected = db.update(
+                WeighToGoDBHelper.TABLE_USERS,
+                values,
+                "user_id = ?",
+                new String[]{String.valueOf(userId)}
+            );
+
+            if (rowsAffected > 0) {
+                Log.i(TAG, "updatePhoneNumber: Successfully updated phone for user_id=" + userId);
+                return true;
+            } else {
+                Log.w(TAG, "updatePhoneNumber: No rows updated for user_id=" + userId + " (user not found)");
+                return false;
+            }
+
+        } catch (Exception e) {
+            Log.e(TAG, "updatePhoneNumber: Exception updating phone", e);
+            return false;
+        }
+    }
+
+    /**
      * Deletes a user from the database.
      * CASCADE DELETE will automatically remove associated weight_entries and goal_weights.
      *
