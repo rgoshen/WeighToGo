@@ -124,6 +124,17 @@ public final class WeightUtils {
     }
 
     /**
+     * Formats weight value with unit to 1 decimal place.
+     *
+     * @param weight the weight value to format
+     * @param unit   the weight unit ("lbs" or "kg")
+     * @return formatted string with unit (e.g., "150.0 lbs")
+     */
+    public static String formatWeightWithUnit(double weight, String unit) {
+        return String.format("%.1f %s", weight, unit);
+    }
+
+    /**
      * Converts weight between units (lbs ↔ kg).
      *
      * @param value      the weight value to convert
