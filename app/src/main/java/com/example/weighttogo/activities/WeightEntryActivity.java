@@ -7,6 +7,7 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.VisibleForTesting;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
@@ -246,6 +247,7 @@ public class WeightEntryActivity extends AppCompatActivity {
      * @param weightEntryDAO the WeightEntryDAO instance to use
      * @throws IllegalArgumentException if weightEntryDAO is null
      */
+    @VisibleForTesting
     void setWeightEntryDAO(WeightEntryDAO weightEntryDAO) {
         if (weightEntryDAO == null) {
             throw new IllegalArgumentException("WeightEntryDAO cannot be null");
@@ -259,6 +261,7 @@ public class WeightEntryActivity extends AppCompatActivity {
      * @param userPreferenceDAO the UserPreferenceDAO instance to use
      * @throws IllegalArgumentException if userPreferenceDAO is null
      */
+    @VisibleForTesting
     void setUserPreferenceDAO(UserPreferenceDAO userPreferenceDAO) {
         if (userPreferenceDAO == null) {
             throw new IllegalArgumentException("UserPreferenceDAO cannot be null");
@@ -272,6 +275,7 @@ public class WeightEntryActivity extends AppCompatActivity {
      * @param achievementManager the AchievementManager instance to use
      * @throws IllegalArgumentException if achievementManager is null
      */
+    @VisibleForTesting
     void setAchievementManager(AchievementManager achievementManager) {
         if (achievementManager == null) {
             throw new IllegalArgumentException("AchievementManager cannot be null");
@@ -285,6 +289,7 @@ public class WeightEntryActivity extends AppCompatActivity {
      * @param smsManager the SMSNotificationManager instance to use
      * @throws IllegalArgumentException if smsManager is null
      */
+    @VisibleForTesting
     void setSMSNotificationManager(SMSNotificationManager smsManager) {
         if (smsManager == null) {
             throw new IllegalArgumentException("SMSNotificationManager cannot be null");

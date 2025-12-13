@@ -14,6 +14,7 @@ import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.VisibleForTesting;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.work.Constraints;
@@ -143,6 +144,7 @@ public class SettingsActivity extends AppCompatActivity {
      * @param userDAO the UserDAO instance to use
      * @throws IllegalArgumentException if userDAO is null
      */
+    @VisibleForTesting
     void setUserDAO(UserDAO userDAO) {
         if (userDAO == null) {
             throw new IllegalArgumentException("UserDAO cannot be null");
@@ -156,6 +158,7 @@ public class SettingsActivity extends AppCompatActivity {
      * @param userPreferenceDAO the UserPreferenceDAO instance to use
      * @throws IllegalArgumentException if userPreferenceDAO is null
      */
+    @VisibleForTesting
     void setUserPreferenceDAO(UserPreferenceDAO userPreferenceDAO) {
         if (userPreferenceDAO == null) {
             throw new IllegalArgumentException("UserPreferenceDAO cannot be null");
@@ -169,6 +172,7 @@ public class SettingsActivity extends AppCompatActivity {
      * @param smsManager the SMSNotificationManager instance to use
      * @throws IllegalArgumentException if smsManager is null
      */
+    @VisibleForTesting
     void setSMSNotificationManager(SMSNotificationManager smsManager) {
         if (smsManager == null) {
             throw new IllegalArgumentException("SMSNotificationManager cannot be null");

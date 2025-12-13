@@ -9,6 +9,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.VisibleForTesting;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -177,6 +178,7 @@ public class MainActivity extends AppCompatActivity
      * @param userDAO the UserDAO instance to use
      * @throws IllegalArgumentException if userDAO is null
      */
+    @VisibleForTesting
     void setUserDAO(UserDAO userDAO) {
         if (userDAO == null) {
             throw new IllegalArgumentException("UserDAO cannot be null");
@@ -190,6 +192,7 @@ public class MainActivity extends AppCompatActivity
      * @param weightEntryDAO the WeightEntryDAO instance to use
      * @throws IllegalArgumentException if weightEntryDAO is null
      */
+    @VisibleForTesting
     void setWeightEntryDAO(WeightEntryDAO weightEntryDAO) {
         if (weightEntryDAO == null) {
             throw new IllegalArgumentException("WeightEntryDAO cannot be null");
@@ -203,6 +206,7 @@ public class MainActivity extends AppCompatActivity
      * @param goalWeightDAO the GoalWeightDAO instance to use
      * @throws IllegalArgumentException if goalWeightDAO is null
      */
+    @VisibleForTesting
     void setGoalWeightDAO(GoalWeightDAO goalWeightDAO) {
         if (goalWeightDAO == null) {
             throw new IllegalArgumentException("GoalWeightDAO cannot be null");
@@ -216,6 +220,7 @@ public class MainActivity extends AppCompatActivity
      * @param sessionManager the SessionManager instance to use
      * @throws IllegalArgumentException if sessionManager is null
      */
+    @VisibleForTesting
     void setSessionManager(SessionManager sessionManager) {
         if (sessionManager == null) {
             throw new IllegalArgumentException("SessionManager cannot be null");
@@ -229,6 +234,7 @@ public class MainActivity extends AppCompatActivity
      * @param dbHelper the WeighToGoDBHelper instance to use
      * @throws IllegalArgumentException if dbHelper is null
      */
+    @VisibleForTesting
     void setDbHelper(WeighToGoDBHelper dbHelper) {
         if (dbHelper == null) {
             throw new IllegalArgumentException("DBHelper cannot be null");

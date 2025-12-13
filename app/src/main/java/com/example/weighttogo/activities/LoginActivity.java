@@ -7,6 +7,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.VisibleForTesting;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.weighttogo.R;
@@ -142,6 +143,7 @@ public class LoginActivity extends AppCompatActivity {
      * @param userDAO the UserDAO instance to use
      * @throws IllegalArgumentException if userDAO is null
      */
+    @VisibleForTesting
     void setUserDAO(UserDAO userDAO) {
         if (userDAO == null) {
             throw new IllegalArgumentException("UserDAO cannot be null");
@@ -156,6 +158,7 @@ public class LoginActivity extends AppCompatActivity {
      * @param sessionManager the SessionManager instance to use
      * @throws IllegalArgumentException if sessionManager is null
      */
+    @VisibleForTesting
     void setSessionManager(SessionManager sessionManager) {
         if (sessionManager == null) {
             throw new IllegalArgumentException("SessionManager cannot be null");

@@ -41,6 +41,7 @@ import org.robolectric.shadows.ShadowToast;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -70,11 +71,15 @@ public class MainActivityTest {
     private MainActivity activity;
     private long testUserId;
     private User testUser;
+    private AtomicLong idGenerator;
 
     @Before
     public void setUp() {
         // Initialize Mockito mocks
         MockitoAnnotations.openMocks(this);
+
+        // Initialize ID generator for predictable, thread-safe mock IDs
+        idGenerator = new AtomicLong(1);
 
         // Create test user data
         testUserId = 1L;
@@ -95,10 +100,7 @@ public class MainActivityTest {
 
         // Stub helper method DAO calls to return realistic values
         when(mockWeightEntryDAO.insertWeightEntry(any(WeightEntry.class)))
-                .thenAnswer(invocation -> {
-                    // Return incrementing IDs (1L, 2L, 3L, etc.)
-                    return System.currentTimeMillis() % 1000000; // Simple unique ID
-                });
+                .thenAnswer(invocation -> idGenerator.getAndIncrement());
 
         when(mockGoalWeightDAO.insertGoal(any(GoalWeight.class)))
                 .thenAnswer(invocation -> {
