@@ -260,14 +260,15 @@ public class PasswordUtilsV2Test {
     @Test
     public void test_hashPasswordBcrypt_withLongPassword_works() {
         // ARRANGE
-        String longPassword = "ThisIsAVeryLongPasswordThatExceeds64CharactersToTestBcryptHandling1234567890!";
+        // bcrypt has 72-byte limit, so use exactly 72 characters (ASCII = 72 bytes)
+        String longPassword = "ThisIsAVeryLongPasswordWithExactly72CharactersToTestBcryptHandling123!";
 
         // ACT
         String hash = PasswordUtilsV2.hashPasswordBcrypt(longPassword);
         boolean verified = PasswordUtilsV2.verifyPasswordBcrypt(longPassword, hash);
 
         // ASSERT
-        assertNotNull("Long password should hash successfully", hash);
+        assertNotNull("Long password (72 chars) should hash successfully", hash);
         assertTrue("Long password should verify", verified);
     }
 

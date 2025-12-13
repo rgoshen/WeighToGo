@@ -168,6 +168,7 @@ public class WeightEntryDAOTest {
         user2.setUsername("user2_entries_" + System.currentTimeMillis());
         user2.setPasswordHash("hash");
         user2.setSalt("salt");
+        user2.setPasswordAlgorithm("SHA256");
         user2.setCreatedAt(LocalDateTime.now());
         user2.setUpdatedAt(LocalDateTime.now());
         user2.setActive(true);
@@ -208,6 +209,7 @@ public class WeightEntryDAOTest {
         user2.setUsername("user2_latest_" + System.currentTimeMillis());
         user2.setPasswordHash("hash");
         user2.setSalt("salt");
+        user2.setPasswordAlgorithm("SHA256");
         user2.setCreatedAt(LocalDateTime.now());
         user2.setUpdatedAt(LocalDateTime.now());
         user2.setActive(true);
