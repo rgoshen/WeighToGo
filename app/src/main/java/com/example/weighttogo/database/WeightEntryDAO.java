@@ -166,6 +166,40 @@ public class WeightEntryDAO {
     }
 
     /**
+     * Gets a weight entry for a specific user and date.
+     * Used by DailyReminderWorker to check if user logged weight today.
+     *
+     * @param userId user ID
+     * @param date   the date to check
+     * @return WeightEntry for the date, or null if no entry exists
+     */
+    @Nullable
+    public WeightEntry getWeightEntryForDate(long userId, java.time.LocalDate date) {
+        Log.d(TAG, "getWeightEntryForDate: user_id=" + userId + ", date=" + date);
+
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+
+        try (Cursor cursor = db.query(
+            WeighToGoDBHelper.TABLE_DAILY_WEIGHTS,
+            null,
+            "user_id = ? AND weight_date = ? AND is_deleted = 0",
+            new String[]{String.valueOf(userId), date.toString()},
+            null, null, null
+        )) {
+            if (cursor != null && cursor.moveToFirst()) {
+                WeightEntry entry = mapCursorToEntry(cursor);
+                Log.d(TAG, "getWeightEntryForDate: Found entry weight_id=" + entry.getWeightId());
+                return entry;
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "getWeightEntryForDate: Exception", e);
+        }
+
+        Log.d(TAG, "getWeightEntryForDate: No entry found for date");
+        return null;
+    }
+
+    /**
      * Gets the minimum weight value for a user (optimized for NEW_LOW achievement).
      * Uses SQL MIN() instead of fetching all entries.
      *

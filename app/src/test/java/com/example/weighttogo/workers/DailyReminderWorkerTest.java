@@ -4,7 +4,6 @@ import static org.junit.Assert.assertEquals;
 
 import android.content.Context;
 
-import androidx.test.core.app.ApplicationProvider;
 import androidx.work.ListenableWorker;
 import androidx.work.testing.TestListenableWorkerBuilder;
 
@@ -23,6 +22,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
+import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 
 import java.time.LocalDate;
@@ -55,7 +55,7 @@ public class DailyReminderWorkerTest {
 
     @Before
     public void setUp() {
-        context = ApplicationProvider.getApplicationContext();
+        context = RuntimeEnvironment.getApplication();
         dbHelper = WeighToGoDBHelper.getInstance(context);
         userDAO = new UserDAO(dbHelper);
         weightEntryDAO = new WeightEntryDAO(dbHelper);
