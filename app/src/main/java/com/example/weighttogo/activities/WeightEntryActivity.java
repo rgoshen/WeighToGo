@@ -11,10 +11,12 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
 import com.example.weighttogo.R;
+import com.example.weighttogo.database.UserPreferenceDAO;
 import com.example.weighttogo.database.WeighToGoDBHelper;
 import com.example.weighttogo.database.WeightEntryDAO;
 import com.example.weighttogo.models.WeightEntry;
 import com.example.weighttogo.utils.DateUtils;
+import com.example.weighttogo.utils.SessionManager;
 import com.example.weighttogo.utils.WeightUtils;
 import com.google.android.material.button.MaterialButton;
 
@@ -93,10 +95,6 @@ public class WeightEntryActivity extends AppCompatActivity {
     private TextView adjustPlusHalf;
     private TextView adjustPlusOne;
 
-    // Unit Toggle
-    private TextView unitLbs;
-    private TextView unitKg;
-
     // Save Button
     private MaterialButton saveButton;
 
@@ -110,6 +108,7 @@ public class WeightEntryActivity extends AppCompatActivity {
 
     private WeighToGoDBHelper dbHelper;
     private WeightEntryDAO weightEntryDAO;
+    private UserPreferenceDAO userPreferenceDAO;
 
     // =============================================================================================
     // STATE
@@ -142,6 +141,9 @@ public class WeightEntryActivity extends AppCompatActivity {
 
         // Initialize data layer
         initDataLayer();
+
+        // Load user preferences (must be after initDataLayer, before initViews)
+        loadUserPreferences();
 
         // Initialize UI
         initViews();
@@ -198,7 +200,23 @@ public class WeightEntryActivity extends AppCompatActivity {
     private void initDataLayer() {
         dbHelper = WeighToGoDBHelper.getInstance(this);
         weightEntryDAO = new WeightEntryDAO(dbHelper);
+        userPreferenceDAO = new UserPreferenceDAO(dbHelper);
         Log.d(TAG, "initDataLayer: Data layer initialized");
+    }
+
+    /**
+     * Load user preferences from database.
+     * Only loads in add mode; edit mode uses unit from existing entry.
+     */
+    private void loadUserPreferences() {
+        if (isEditMode) {
+            Log.d(TAG, "loadUserPreferences: Skipping (edit mode uses entry's unit)");
+            return; // In edit mode, unit comes from existing entry via intent
+        }
+
+        long currentUserId = SessionManager.getInstance(this).getCurrentUserId();
+        currentUnit = userPreferenceDAO.getWeightUnit(currentUserId);
+        Log.d(TAG, "loadUserPreferences: Loaded weight unit preference: " + currentUnit);
     }
 
     /**
@@ -239,10 +257,6 @@ public class WeightEntryActivity extends AppCompatActivity {
         adjustPlusHalf = findViewById(R.id.adjustPlusHalf);
         adjustPlusOne = findViewById(R.id.adjustPlusOne);
 
-        // Unit Toggle
-        unitLbs = findViewById(R.id.unitLbs);
-        unitKg = findViewById(R.id.unitKg);
-
         // Save Button
         saveButton = findViewById(R.id.saveButton);
 
@@ -268,9 +282,6 @@ public class WeightEntryActivity extends AppCompatActivity {
 
         // Quick adjust
         setupQuickAdjustListeners();
-
-        // Unit toggle
-        setupUnitToggleListeners();
 
         // Save button
         setupSaveButton();
@@ -465,90 +476,6 @@ public class WeightEntryActivity extends AppCompatActivity {
             Log.w(TAG, "adjustWeight: Value " + newValue + " exceeds max " + max);
             Toast.makeText(this, "Maximum weight is " + (int)max + " " + currentUnit, Toast.LENGTH_SHORT).show();
         }
-    }
-
-    // =============================================================================================
-    // UNIT TOGGLE (Commit 4)
-    // =============================================================================================
-
-    /**
-     * Setup unit toggle button click listeners (lbs/kg).
-     */
-    private void setupUnitToggleListeners() {
-        unitLbs.setOnClickListener(v -> switchUnit("lbs"));
-        unitKg.setOnClickListener(v -> switchUnit("kg"));
-
-        // Initialize unit display with current unit (without conversion)
-        updateUnitButtonUI();
-
-        Log.d(TAG, "setupUnitToggleListeners: Unit toggle configured");
-    }
-
-    /**
-     * Switch between lbs and kg units.
-     * Converts weight value and updates button backgrounds.
-     *
-     * @param newUnit the unit to switch to ("lbs" or "kg")
-     */
-    private void switchUnit(String newUnit) {
-        if (currentUnit.equals(newUnit)) {
-            return;  // Already in this unit
-        }
-
-        // Convert weight value
-        String current = weightInput.toString();
-        if (!current.isEmpty() && !current.equals("0.0")) {
-            double value;
-
-            try {
-                value = Double.parseDouble(current);
-            } catch (NumberFormatException e) {
-                Log.w(TAG, "switchUnit: Invalid number format: " + current);
-                Toast.makeText(this, "Invalid weight format", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            if (newUnit.equals("kg")) {
-                // lbs to kg
-                value = WeightUtils.convertLbsToKg(value);
-            } else {
-                // kg to lbs
-                value = WeightUtils.convertKgToLbs(value);
-            }
-
-            weightInput = new StringBuilder(WeightUtils.formatWeight(value));
-        }
-
-        currentUnit = newUnit;
-
-        // Update UI
-        updateWeightDisplay();
-        updateUnitButtonUI();
-
-        Log.d(TAG, "switchUnit: Switched to " + currentUnit + ", value = " + weightInput.toString());
-    }
-
-    /**
-     * Update unit toggle button UI without performing conversion.
-     * Sets button backgrounds and text colors based on currentUnit.
-     */
-    private void updateUnitButtonUI() {
-        weightUnit.setText(currentUnit);
-
-        // Update button backgrounds and text colors
-        if (currentUnit.equals("lbs")) {
-            unitLbs.setBackgroundResource(R.drawable.bg_unit_toggle_active);
-            unitKg.setBackgroundResource(R.drawable.bg_unit_toggle_inactive);
-            unitLbs.setTextColor(ContextCompat.getColor(this, R.color.text_on_primary));
-            unitKg.setTextColor(ContextCompat.getColor(this, R.color.text_secondary));
-        } else {
-            unitKg.setBackgroundResource(R.drawable.bg_unit_toggle_active);
-            unitLbs.setBackgroundResource(R.drawable.bg_unit_toggle_inactive);
-            unitKg.setTextColor(ContextCompat.getColor(this, R.color.text_on_primary));
-            unitLbs.setTextColor(ContextCompat.getColor(this, R.color.text_secondary));
-        }
-
-        Log.d(TAG, "updateUnitButtonUI: UI updated for " + currentUnit);
     }
 
     // =============================================================================================

@@ -320,8 +320,8 @@ public class WeightEntryActivityTest {
         assertEquals("Weight should be 120", "120", weightValue.getText().toString());
         assertEquals("Unit should be lbs", "lbs", weightUnit.getText().toString());
 
-        // ACT - Toggle to kg
-        activity.findViewById(R.id.unitKg).performClick();
+        // ACT - Toggle to kg (NOTE: Unit toggle removed in Phase 6.0.2)
+        // activity.findViewById(R.id.unitKg).performClick();
 
         // ASSERT - Weight should convert to ~54.4 kg
         String convertedWeight = weightValue.getText().toString();
@@ -345,8 +345,8 @@ public class WeightEntryActivityTest {
         activityController = Robolectric.buildActivity(WeightEntryActivity.class, intent);
         activity = activityController.create().start().resume().get();
 
-        // Switch to kg first
-        activity.findViewById(R.id.unitKg).performClick();
+        // Switch to kg first (NOTE: Unit toggle removed in Phase 6.0.2)
+        // activity.findViewById(R.id.unitKg).performClick();
 
         // Type "54.4" kg
         activity.findViewById(R.id.numpad5).performClick();
@@ -360,8 +360,8 @@ public class WeightEntryActivityTest {
         assertEquals("Weight should be 54.4", "54.4", weightValue.getText().toString());
         assertEquals("Unit should be kg", "kg", weightUnit.getText().toString());
 
-        // ACT - Toggle to lbs
-        activity.findViewById(R.id.unitLbs).performClick();
+        // ACT - Toggle to lbs (NOTE: Unit toggle removed in Phase 6.0.2)
+        // activity.findViewById(R.id.unitLbs).performClick();
 
         // ASSERT - Weight should convert to ~120 lbs
         String convertedWeight = weightValue.getText().toString();
