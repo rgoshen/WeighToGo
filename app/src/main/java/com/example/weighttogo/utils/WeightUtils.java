@@ -119,9 +119,15 @@ public final class WeightUtils {
      * @param value      the weight value to convert
      * @param fromUnit   source unit ("lbs" or "kg")
      * @param toUnit     target unit ("lbs" or "kg")
-     * @return converted weight, rounded to 1 decimal place
+     * @return converted weight, rounded to 1 decimal place; 0.0 if invalid
      */
     public static double convertBetweenUnits(double value, String fromUnit, String toUnit) {
+        // Validate input - negative values not allowed
+        if (value < 0) {
+            Log.w(TAG, "convertBetweenUnits: negative weight provided: " + value);
+            return 0.0;
+        }
+
         // Same unit - no conversion needed
         if (fromUnit.equals(toUnit)) {
             return value;
@@ -132,7 +138,13 @@ public final class WeightUtils {
             return convertLbsToKg(value);
         }
 
-        // Stub for other conversions
+        // Convert kg to lbs
+        if ("kg".equals(fromUnit) && "lbs".equals(toUnit)) {
+            return convertKgToLbs(value);
+        }
+
+        // Invalid unit combination
+        Log.w(TAG, "convertBetweenUnits: invalid unit combination: " + fromUnit + " to " + toUnit);
         return 0.0;
     }
 
