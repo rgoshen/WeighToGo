@@ -291,8 +291,7 @@ public class SettingsActivity extends AppCompatActivity {
 
         if ("granted".equals(status)) {
             permissionStatusBadge.setText(R.string.permission_granted);
-            // TODO: Add bg_permission_granted drawable resource
-            // permissionStatusBadge.setBackgroundResource(R.drawable.bg_permission_granted);
+            permissionStatusBadge.setBackgroundResource(R.drawable.bg_permission_granted);
             grantPermissionButton.setVisibility(android.view.View.GONE);
 
             // Enable SMS toggles
@@ -301,8 +300,7 @@ public class SettingsActivity extends AppCompatActivity {
 
         } else {
             permissionStatusBadge.setText(R.string.permission_required);
-            // TODO: Add bg_permission_required drawable resource
-            // permissionStatusBadge.setBackgroundResource(R.drawable.bg_permission_required);
+            permissionStatusBadge.setBackgroundResource(R.drawable.bg_permission_required);
             grantPermissionButton.setVisibility(android.view.View.VISIBLE);
 
             // Disable SMS toggles
