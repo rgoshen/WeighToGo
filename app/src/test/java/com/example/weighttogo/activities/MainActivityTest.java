@@ -462,6 +462,7 @@ public class MainActivityTest {
 
     /**
      * Creates a test weight entry for a specific date
+     * NOTE: Uses mock DAO. When tests are un-ignored in Phase 8B, update to stub behavior.
      */
     private long createTestWeightEntryOnDate(double weight, LocalDate date) {
         WeightEntry entry = new WeightEntry();
@@ -472,11 +473,12 @@ public class MainActivityTest {
         entry.setCreatedAt(LocalDateTime.now());
         entry.setUpdatedAt(LocalDateTime.now());
         entry.setDeleted(false);
-        return weightEntryDAO.insertWeightEntry(entry);
+        return mockWeightEntryDAO.insertWeightEntry(entry);
     }
 
     /**
      * Creates a test goal for the test user
+     * NOTE: Uses mock DAO. When tests are un-ignored in Phase 8B, update to stub behavior.
      */
     private void createTestGoal(double startWeight, double goalWeight) {
         GoalWeight goal = new GoalWeight();
@@ -487,6 +489,6 @@ public class MainActivityTest {
         goal.setActive(true);
         goal.setCreatedAt(LocalDateTime.now());
         goal.setUpdatedAt(LocalDateTime.now());
-        goalWeightDAO.insertGoal(goal);
+        mockGoalWeightDAO.insertGoal(goal);
     }
 }

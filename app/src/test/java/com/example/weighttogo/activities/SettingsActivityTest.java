@@ -117,7 +117,7 @@ public class SettingsActivityTest {
     @Test
     public void test_onCreate_loadsCurrentWeightUnit() {
         // ARRANGE - Set preference to "kg"
-        userPreferenceDAO.setWeightUnit(testUserId, "kg");
+        mockUserPreferenceDAO.setWeightUnit(testUserId, "kg");
 
         // ACT - Launch SettingsActivity
         activityController = Robolectric.buildActivity(SettingsActivity.class);
@@ -146,7 +146,7 @@ public class SettingsActivityTest {
     @Test
     public void test_clickLbsToggle_savesLbsPreference() {
         // ARRANGE - Start with "kg" preference
-        userPreferenceDAO.setWeightUnit(testUserId, "kg");
+        mockUserPreferenceDAO.setWeightUnit(testUserId, "kg");
 
         activityController = Robolectric.buildActivity(SettingsActivity.class);
         activity = activityController.create().start().resume().get();
@@ -156,7 +156,7 @@ public class SettingsActivityTest {
         unitLbs.performClick();
 
         // ASSERT - Preference should be saved as "lbs"
-        String savedUnit = userPreferenceDAO.getWeightUnit(testUserId);
+        String savedUnit = mockUserPreferenceDAO.getWeightUnit(testUserId);
         assertEquals("Clicking lbs should save 'lbs' preference", "lbs", savedUnit);
     }
 
@@ -180,7 +180,7 @@ public class SettingsActivityTest {
         unitKg.performClick();
 
         // ASSERT - Preference should be saved as "kg"
-        String savedUnit = userPreferenceDAO.getWeightUnit(testUserId);
+        String savedUnit = mockUserPreferenceDAO.getWeightUnit(testUserId);
         assertEquals("Clicking kg should save 'kg' preference", "kg", savedUnit);
     }
 
