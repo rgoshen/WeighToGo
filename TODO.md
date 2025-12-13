@@ -2149,6 +2149,258 @@ public class WeightUnitPreferenceIntegrationTest {
 
 ---
 
+## Phase 11: Trends Screen (Future Enhancement - Post-Launch)
+
+**Status:** Not Started (Post-Launch Feature)
+**Goal:** Implement comprehensive data visualization and trend analysis screen
+**Estimated Effort:** 5-7 days
+
+### Context
+The bottom navigation currently has a disabled "Trends" button. This feature will provide users with visual insights into their weight loss journey through charts and statistical analysis.
+
+### 11.1 Requirements Analysis
+- [ ] Define feature scope and user stories
+- [ ] Research charting libraries (MPAndroidChart, AnyChart, PhilJay)
+- [ ] Design screen mockups (Figma or wireframes)
+- [ ] Identify key metrics to display
+
+### 11.2 Design Specifications
+
+#### Key Features
+- [ ] **Weight Line Chart**
+  - X-axis: Date (configurable time range)
+  - Y-axis: Weight value (auto-scale based on data)
+  - Line color: Primary teal
+  - Goal line (dashed) overlaid on chart
+  - Touch interaction to show exact values
+
+- [ ] **Time Range Selector**
+  - Chip buttons: 7 Days, 30 Days, 90 Days, 6 Months, 1 Year, All Time
+  - Active chip highlighted in primary teal
+  - Default: 30 Days
+
+- [ ] **Statistical Summary Card**
+  - Average weight for selected period
+  - Total weight change (+ or -)
+  - Average weight loss per week
+  - Projection to goal (based on current rate)
+  - Best weekly loss
+  - Longest streak
+
+- [ ] **BMI Tracker (Optional)**
+  - BMI chart over time
+  - BMI category indicator (Underweight, Normal, Overweight, Obese)
+  - Requires height input (new user preference field)
+
+- [ ] **Progress Milestones**
+  - List of achievements in selected time range
+  - 5 lbs lost, 10 lbs lost, 25 lbs lost, etc.
+  - Consecutive day streaks
+  - Goal achievements
+
+### 11.3 Technical Implementation
+
+#### Phase 11.3.1: Library Integration
+- [ ] Add charting library dependency to build.gradle
+  - Recommended: MPAndroidChart (actively maintained, Apache 2.0 license)
+  - `implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'`
+- [ ] Add necessary Maven repository to settings.gradle
+- [ ] Test basic chart rendering in sample layout
+
+#### Phase 11.3.2: Create TrendsActivity
+- [ ] Write TrendsActivityTest.java (12+ tests)
+  - test_onCreate_loadsWeightData
+  - test_timeRangeSelector_filters7Days
+  - test_timeRangeSelector_filters30Days
+  - test_chartDisplay_withNoData_showsEmptyState
+  - test_chartDisplay_withData_rendersLineChart
+  - test_statisticsSummary_calculatesAverageWeight
+  - test_statisticsSummary_calculatesTotalChange
+  - test_statisticsSummary_calculatesWeeklyAverage
+  - test_goalLine_displaysWhenGoalActive
+  - test_goalLine_hidesWhenNoGoal
+  - test_backButton_navigatesToMainActivity
+  - test_multipleUsers_showsIsolatedData
+
+- [ ] Implement TrendsActivity.java
+  - Create activity_trends.xml layout
+  - Initialize LineChart view
+  - Load weight entries from database (filtered by time range)
+  - Configure chart styling (colors, labels, grid)
+  - Setup time range chip click listeners
+  - Calculate and display statistics
+  - Handle empty state (no data in range)
+
+#### Phase 11.3.3: Data Aggregation Layer
+- [ ] Create TrendsDataService.java (business logic layer)
+  - `getWeightDataForRange(userId, startDate, endDate)` → List<WeightEntry>
+  - `calculateAverageWeight(entries)` → double
+  - `calculateTotalChange(entries)` → double
+  - `calculateWeeklyAverage(entries)` → double
+  - `projectDaysToGoal(entries, goalWeight)` → int
+  - `findBestWeeklyLoss(entries)` → double
+
+- [ ] Write TrendsDataServiceTest.java (20+ tests)
+  - Test all calculation methods with various data sets
+  - Test edge cases (single entry, no entries, all same weight)
+  - Test date range filtering accuracy
+
+#### Phase 11.3.4: Chart Configuration
+- [ ] Implement chart data conversion
+  - Convert WeightEntry list to LineDataSet
+  - Handle mixed units (convert to user preference)
+  - Format X-axis labels (dates)
+  - Format Y-axis labels (weight with unit)
+
+- [ ] Style chart for Material Design 3
+  - Use primary teal color for data line
+  - Use card background color for chart background
+  - Use text colors from theme
+  - Add gradient fill under line (optional)
+  - Configure touch interactions
+
+#### Phase 11.3.5: Empty State & Error Handling
+- [ ] Design empty state for no data
+  - Illustration or icon
+  - Message: "No weight entries in this period"
+  - CTA button: "Add Weight Entry"
+
+- [ ] Handle edge cases
+  - Single data point (can't draw trend)
+  - All weights same value (flat line)
+  - Missing goal (hide goal line)
+  - Very large date ranges (data aggregation)
+
+### 11.4 UI/UX Design
+
+#### Layout Structure
+```
+┌─────────────────────────────────────┐
+│ ← Back        Trends                │  Header
+├─────────────────────────────────────┤
+│ ○ 7D  ○ 30D  ● 90D  ○ 6M  ○ 1Y     │  Time Range Chips
+├─────────────────────────────────────┤
+│                                     │
+│         [Line Chart]                │  Main Chart Area
+│                                     │
+├─────────────────────────────────────┤
+│ Statistics Summary                  │
+│                                     │
+│ Average:    152.3 lbs              │
+│ Change:     -12.5 lbs              │  Stats Card
+│ Weekly Avg: -2.1 lbs               │
+│ Streak:     14 days                │
+├─────────────────────────────────────┤
+│ Milestones                          │
+│ ✓ 5 lbs lost                       │  Achievements
+│ ✓ 10 lbs lost                      │  (Optional)
+│ ✓ 7 day streak                     │
+└─────────────────────────────────────┘
+```
+
+### 11.5 Integration with Existing App
+
+#### Update Bottom Navigation
+- [ ] Remove `android:enabled="false"` from bottom_nav_menu.xml
+- [ ] Update MainActivity navigation handler
+  ```java
+  } else if (itemId == R.id.nav_trends) {
+      Intent intent = new Intent(this, TrendsActivity.class);
+      startActivity(intent);
+      return true;
+  ```
+
+#### Register Activity in Manifest
+- [ ] Add TrendsActivity to AndroidManifest.xml
+  ```xml
+  <activity
+      android:name=".activities.TrendsActivity"
+      android:label="@string/trends_title"
+      android:parentActivityName=".activities.MainActivity"
+      android:exported="false" />
+  ```
+
+#### Add String Resources
+- [ ] Add to strings.xml
+  ```xml
+  <string name="trends_title">Trends</string>
+  <string name="trends_subtitle">Analyze your progress</string>
+  <string name="time_range_7d">7 Days</string>
+  <string name="time_range_30d">30 Days</string>
+  <string name="time_range_90d">90 Days</string>
+  <string name="time_range_6m">6 Months</string>
+  <string name="time_range_1y">1 Year</string>
+  <string name="time_range_all">All Time</string>
+  <string name="stats_average">Average</string>
+  <string name="stats_change">Total Change</string>
+  <string name="stats_weekly_avg">Weekly Average</string>
+  <string name="stats_streak">Current Streak</string>
+  <string name="trends_empty_state">No weight entries in this period</string>
+  <string name="trends_empty_action">Add Weight Entry</string>
+  ```
+
+### 11.6 Testing Strategy
+
+#### Unit Tests (TrendsDataServiceTest)
+- [ ] Test all calculation methods with various data sets
+- [ ] Test date range filtering
+- [ ] Test empty data handling
+- [ ] Test single entry handling
+- [ ] Test mixed unit conversion
+
+#### Integration Tests (TrendsActivityTest - Espresso)
+- [ ] Test chart renders with real data
+- [ ] Test time range filters update chart
+- [ ] Test statistics update when range changes
+- [ ] Test navigation back to MainActivity
+- [ ] Test multi-user data isolation
+
+#### Manual Testing Checklist
+- [ ] Chart renders correctly on different screen sizes
+- [ ] Touch interactions work (tap on data points)
+- [ ] Time range chips change chart data
+- [ ] Statistics calculate correctly
+- [ ] Empty state displays when no data
+- [ ] Goal line appears when goal is active
+- [ ] Back button navigates correctly
+- [ ] Chart scrolls/zooms smoothly (if enabled)
+
+### 11.7 Documentation & Finalization
+- [ ] Update project_summary.md with Trends implementation notes
+- [ ] Document charting library choice in ADR
+- [ ] Add inline comments for complex chart configuration
+- [ ] Update user guide with Trends feature usage
+- [ ] Run full test suite (expect 315+ tests)
+- [ ] Run lint check (0 errors, 0 warnings)
+
+### 11.8 Success Criteria
+- [ ] TrendsActivity implemented and functional
+- [ ] Line chart displays weight data over time
+- [ ] Time range filters work correctly (7D, 30D, 90D, etc.)
+- [ ] Statistics calculate accurately
+- [ ] Empty state handles no data gracefully
+- [ ] Goal line displays when active goal exists
+- [ ] All tests passing (unit + integration)
+- [ ] No performance issues with large datasets (500+ entries)
+- [ ] Lint clean
+- [ ] Documentation complete
+
+### 11.9 Future Enhancements (Phase 12+)
+- [ ] Multiple chart types (bar, scatter, area)
+- [ ] Export chart as image
+- [ ] Share progress on social media
+- [ ] Weight predictions using linear regression
+- [ ] Comparison charts (actual vs goal pace)
+- [ ] Body measurements tracking (waist, chest, etc.)
+- [ ] BMI chart with category zones
+- [ ] Custom date range picker
+
+**Estimated Test Count:** +32 tests (20 service + 12 activity/integration)
+**Estimated Lines of Code:** ~800 lines (TrendsActivity + TrendsDataService + tests)
+**Dependencies:** MPAndroidChart library
+
+---
+
 ## Final Submission Preparation
 
 ### Code Submission

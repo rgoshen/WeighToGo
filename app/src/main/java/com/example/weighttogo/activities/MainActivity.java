@@ -230,8 +230,8 @@ public class MainActivity extends AppCompatActivity
                 // Already on home, do nothing
                 return true;
             } else if (itemId == R.id.nav_trends) {
-                Toast.makeText(this, "Trends - Coming soon", Toast.LENGTH_SHORT).show();
-                return true;
+                // Trends disabled - future enhancement (see TODO.md Phase 11)
+                return false;
             } else if (itemId == R.id.nav_goals) {
                 Intent intent = new Intent(this, GoalsActivity.class);
                 startActivity(intent);
