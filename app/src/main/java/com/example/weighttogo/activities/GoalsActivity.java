@@ -265,16 +265,16 @@ public class GoalsActivity extends AppCompatActivity
         }
 
         // Start weight
-        textStartWeight.setText(String.format("%.1f", activeGoal.getStartWeight()));
+        textStartWeight.setText(WeightUtils.formatWeight(activeGoal.getStartWeight()));
         textStartUnit.setText(activeGoal.getGoalUnit());
 
         // Current weight (already converted to goal's unit by getCurrentWeight())
         double currentWeight = getCurrentWeight();
-        textCurrentWeightValue.setText(String.format("%.1f", currentWeight));
+        textCurrentWeightValue.setText(WeightUtils.formatWeight(currentWeight));
         textCurrentUnit.setText(activeGoal.getGoalUnit());
 
         // Goal weight
-        textGoalWeight.setText(String.format("%.1f", activeGoal.getGoalWeight()));
+        textGoalWeight.setText(WeightUtils.formatWeight(activeGoal.getGoalWeight()));
         textGoalUnit.setText(activeGoal.getGoalUnit());
 
         // Target date (optional)
