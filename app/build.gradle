@@ -38,6 +38,7 @@ dependencies {
     implementation libs.material
     implementation libs.activity
     implementation libs.constraintlayout
+    implementation libs.androidx.work.runtime
     testImplementation libs.junit
     testImplementation libs.robolectric
     testImplementation libs.mockito.core
