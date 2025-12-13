@@ -119,11 +119,11 @@ public final class PasswordUtils {
     @Nullable
     public static String hashPassword(@Nullable String password, @Nullable String salt) {
         // Validate inputs
-        if (password == null || password.trim().isEmpty()) {
+        if (ValidationUtils.isNullOrEmpty(password)) {
             Log.w(TAG, "hashPassword: password is null or empty");
             return null;
         }
-        if (salt == null || salt.trim().isEmpty()) {
+        if (ValidationUtils.isNullOrEmpty(salt)) {
             Log.w(TAG, "hashPassword: salt is null or empty");
             return null;
         }
@@ -167,15 +167,15 @@ public final class PasswordUtils {
      */
     public static boolean verifyPassword(@Nullable String password, @Nullable String salt, @Nullable String storedHash) {
         // Validate inputs
-        if (password == null || password.trim().isEmpty()) {
+        if (ValidationUtils.isNullOrEmpty(password)) {
             Log.w(TAG, "verifyPassword: password is null or empty");
             return false;
         }
-        if (salt == null || salt.trim().isEmpty()) {
+        if (ValidationUtils.isNullOrEmpty(salt)) {
             Log.w(TAG, "verifyPassword: salt is null or empty");
             return false;
         }
-        if (storedHash == null || storedHash.trim().isEmpty()) {
+        if (ValidationUtils.isNullOrEmpty(storedHash)) {
             Log.w(TAG, "verifyPassword: storedHash is null or empty");
             return false;
         }
