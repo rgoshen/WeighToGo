@@ -1151,27 +1151,35 @@ Currently, users select lbs/kg for each weight entry and goal. This is complex a
   - [x] Update project_summary.md with refactoring notes
   - [x] Commit: `docs: document Phase 6.0.0 code quality improvements`
 
-#### 6.0.1: Create UserPreferenceDAO (TDD) 📝
-- [ ] 1.1 Write 10 failing tests for UserPreferenceDAO
-  - [ ] test_getPreference_withNonExistentKey_returnsDefaultValue
-  - [ ] test_setPreference_withValidData_returnsTrue
-  - [ ] test_setPreference_thenGet_returnsCorrectValue
-  - [ ] test_setPreference_twice_updatesValue
-  - [ ] test_getWeightUnit_withNoPreference_returnsDefaultLbs
-  - [ ] test_setWeightUnit_withValidLbs_returnsTrue
-  - [ ] test_setWeightUnit_withValidKg_returnsTrue
-  - [ ] test_setWeightUnit_withInvalidUnit_returnsFalse
-  - [ ] test_setWeightUnit_thenGet_returnsCorrectUnit
-  - [ ] test_getPreference_withMultipleUsers_isolatesData
-- [ ] 1.2 Implement UserPreferenceDAO (GREEN)
-  - [ ] Create database/UserPreferenceDAO.java (~200 lines)
-  - [ ] Implement getPreference(userId, key, defaultValue)
-  - [ ] Implement setPreference(userId, key, value) with INSERT OR REPLACE
-  - [ ] Implement getWeightUnit(userId) convenience method
-  - [ ] Implement setWeightUnit(userId, unit) with validation
-  - [ ] Add logging with TAG
-- [ ] 1.3 Commit: `test: add UserPreferenceDAO tests (10 tests)`
-- [ ] 1.4 Commit: `feat: implement UserPreferenceDAO with generic preference storage`
+#### 6.0.1: Create UserPreferenceDAO (TDD) ✅
+- [x] 1.1 Write 10 failing tests for UserPreferenceDAO
+  - [x] test_getPreference_withNonExistentKey_returnsDefaultValue (✅ Committed: 65cbd12)
+  - [x] test_setPreference_withValidData_returnsTrue (✅ Committed: b1c78c3)
+  - [x] test_setPreference_thenGet_returnsCorrectValue (✅ Committed: a8ba895)
+  - [x] test_setPreference_twice_updatesValue (✅ Committed: 57bd09b + b9f5e13)
+  - [x] test_getWeightUnit_withNoPreference_returnsDefaultLbs (✅ Committed: b1f1b83)
+  - [x] test_setWeightUnit_withValidLbs_returnsTrue (✅ Committed: 52812fb)
+  - [x] test_setWeightUnit_withValidKg_returnsTrue (✅ Committed: 52812fb)
+  - [x] test_setWeightUnit_withInvalidUnit_returnsFalse (✅ Committed: 52812fb)
+  - [x] test_setWeightUnit_thenGet_returnsCorrectUnit (✅ Committed: ff5f70c)
+  - [x] test_getPreference_withMultipleUsers_isolatesData (✅ Committed: 7b04546)
+- [x] 1.2 Implement UserPreferenceDAO (GREEN)
+  - [x] Create database/UserPreferenceDAO.java (~205 lines)
+  - [x] Implement getPreference(userId, key, defaultValue) (✅ Committed: e8276c1)
+  - [x] Implement setPreference(userId, key, value) with INSERT OR REPLACE (✅ Committed: c814235)
+  - [x] Implement getWeightUnit(userId) convenience method (✅ Committed: 5f01157)
+  - [x] Implement setWeightUnit(userId, unit) with validation (✅ Committed: 39c4c37)
+  - [x] Add logging with TAG
+  - [x] Implement getAllPreferences(userId) helper for testing (✅ Committed: b9f5e13)
+- [x] 1.3 Validation
+  - [x] Run ./gradlew test (289 tests passing - +10 from baseline)
+  - [x] Run ./gradlew lint (clean - 0 errors, 0 warnings)
+  - [x] Verify 100% test coverage for UserPreferenceDAO
+  - [x] Verify UPSERT pattern (no duplicate keys)
+- [x] 1.4 Update documentation
+  - [x] Update TODO.md with completion status
+  - [ ] Update project_summary.md with implementation notes
+- [ ] 1.5 Push branch: `git push -u origin feature/FR6.0.1-user-preference-dao`
 
 #### 6.0.2: Refactor WeightEntryActivity 📝
 - [ ] 2.1 Write 3 integration tests (RED)
@@ -1288,27 +1296,6 @@ Currently, users select lbs/kg for each weight entry and goal. This is complex a
 - [ ] Lint clean
 - [ ] Manual testing checklist complete
 
-### Files Created (7 new):
-1. `database/UserPreferenceDAO.java` (~200 lines)
-2. `activities/SettingsActivity.java` (~300 lines)
-3. `test/database/UserPreferenceDAOTest.java` (~250 lines)
-4. `test/activities/WeightEntryActivityPreferenceTest.java` (~100 lines)
-5. `test/fragments/GoalDialogFragmentPreferenceTest.java` (~75 lines)
-6. `test/activities/SettingsActivityTest.java` (~150 lines)
-7. `test/integration/WeightUnitPreferenceIntegrationTest.java` (~200 lines)
-
-### Files Modified (9 existing):
-1. `activities/WeightEntryActivity.java` (~100 lines removed, ~10 added)
-2. `fragments/GoalDialogFragment.java` (~80 lines removed, ~10 added)
-3. `res/layout/activity_weight_entry.xml` (~35 lines removed)
-4. `res/layout/dialog_set_goal.xml` (~35 lines removed)
-5. `res/layout/activity_sms_settings.xml` (renamed + ~50 lines added)
-6. `res/values/strings.xml` (~7 lines added)
-7. `AndroidManifest.xml` (~6 lines added)
-8. `TODO.md` (~20 lines modified)
-9. `project_summary.md` (~30 lines added)
-
-**Estimated Time:** 9-14 hours (1-2 days)
 **Test Count:** 270 (current) + 23 (new) = 293 tests
 **Migration Strategy:** Keep weight_unit column (backward compatible, no data loss)
 

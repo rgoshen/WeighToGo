@@ -1,5 +1,126 @@
 # Project Summary - Weigh to Go!
 
+## [2025-12-12] Phase 6.0.1 Complete: Create UserPreferenceDAO (TDD)
+
+### Work Completed
+**Strict TDD Implementation (Completed 2025-12-12)**
+- ✅ Implemented UserPreferenceDAO with 100% test coverage
+- ✅ Created 14 commits following strict Red-Green-Refactor cycle
+- ✅ Added 10 new unit tests (279 → 289 total tests)
+- ✅ All tests passing, lint clean (0 errors, 0 warnings)
+- ✅ UPSERT pattern verified (INSERT OR REPLACE prevents duplicate keys)
+
+### Features Implemented
+
+**1. Generic Key-Value Preference Storage**
+- **Method:** `getPreference(userId, key, defaultValue)` - Returns stored value or default
+- **Method:** `setPreference(userId, key, value)` - UPSERT using INSERT OR REPLACE
+- **Database:** Leverages UNIQUE(user_id, pref_key) constraint for automatic update
+- **Impact:** Foundation for storing user preferences (weight units, themes, settings)
+- **Tests:** 4 tests covering get non-existent, set, round-trip, and UPSERT verification
+
+**2. Weight Unit Convenience Methods**
+- **Method:** `getWeightUnit(userId)` - Returns "lbs" or "kg" (defaults to "lbs")
+- **Method:** `setWeightUnit(userId, unit)` - Validates only "lbs" or "kg" (case-sensitive)
+- **Validation:** Rejects invalid units ("pounds", "LBS", "kg", etc.)
+- **Impact:** Global weight unit preference per user (replaces per-screen toggles)
+- **Tests:** 5 tests covering default, valid units, invalid units, round-trip
+
+**3. Multi-User Data Isolation**
+- **Implementation:** Foreign key to users table, WHERE user_id filtering
+- **Behavior:** Each user has independent preferences (different users can have different units)
+- **Cascade Delete:** CASCADE ON DELETE removes preferences when user deleted
+- **Tests:** 1 test verifying multi-user isolation
+
+**4. Testing Helper**
+- **Method:** `getAllPreferences(userId)` - Package-private helper for test verification
+- **Purpose:** Allows tests to verify UPSERT behavior (no duplicate keys created)
+- **Method:** `mapCursorToUserPreference(cursor)` - Private cursor mapping method
+- **Impact:** Enables comprehensive testing of database behavior
+
+### TDD Implementation Strategy
+
+**Strict One-Test-At-A-Time Workflow (14 commits = 10 tests + 4 implementations)**
+1. Test 1 (RED): `test_getPreference_withNonExistentKey_returnsDefaultValue` → FAIL
+2. Implement (GREEN): `getPreference()` with database query → PASS
+3. Test 2 (RED): `test_setPreference_withValidData_returnsTrue` → FAIL (no method)
+4. Implement (GREEN): `setPreference()` with INSERT OR REPLACE → PASS
+5. Test 3: `test_setPreference_thenGet_returnsCorrectValue` → PASS (already working)
+6. Test 4 (RED): `test_setPreference_twice_updatesValue` → FAIL (no getAllPreferences)
+7. Implement (GREEN): `getAllPreferences()` + `mapCursorToUserPreference()` → PASS
+8. Test 5 (RED): `test_getWeightUnit_withNoPreference_returnsDefaultLbs` → FAIL
+9. Implement (GREEN): `getWeightUnit()` wrapper method → PASS
+10. Tests 6-8 (RED): Weight unit validation tests → FAIL (no setWeightUnit)
+11. Implement (GREEN): `setWeightUnit()` with validation → PASS (all 3 tests)
+12. Test 9: `test_setWeightUnit_thenGet_returnsCorrectUnit` → PASS (already working)
+13. Test 10: `test_getPreference_withMultipleUsers_isolatesData` → PASS (foreign key working)
+
+### Technical Implementation Details
+
+**UPSERT Pattern**
+```sql
+-- Leverages UNIQUE(user_id, pref_key) constraint
+INSERT INTO user_preferences (user_id, pref_key, pref_value, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?)
+ON CONFLICT REPLACE;  -- SQLiteDatabase.CONFLICT_REPLACE
+
+-- Result:
+-- First call: Inserts new row (preference_id = 1)
+-- Second call with same user_id + pref_key: Deletes old row, inserts new (preference_id = 2)
+-- No duplicate keys!
+```
+
+**Validation Strategy**
+```java
+// Case-sensitive validation (only "lbs" and "kg" accepted)
+if (!UNIT_LBS.equals(unit) && !UNIT_KG.equals(unit)) {
+    Log.w(TAG, "Invalid unit '" + unit + "' (must be 'lbs' or 'kg')");
+    return false;  // Reject "pounds", "LBS", "KG", "grams", etc.
+}
+```
+
+**Date/Time Handling**
+```java
+// Uses DateTimeConverter for SQLite compatibility
+String now = DateTimeConverter.toTimestamp(LocalDateTime.now());
+values.put("created_at", now);  // Stores as "2025-12-12 14:30:00"
+values.put("updated_at", now);
+```
+
+### Key Learnings
+
+1. **INSERT OR REPLACE behavior**: Deletes old row and inserts new one (preference_id changes)
+   - **Implication:** Never rely on stable preference_id, always query by (user_id, pref_key)
+
+2. **Package-private testing helpers**: `getAllPreferences(userId)` enables comprehensive tests
+   - **Pattern:** Package-private (not public) gives test access without exposing to production code
+
+3. **Validation before persistence**: `setWeightUnit()` validates before calling `setPreference()`
+   - **Benefit:** Prevents invalid data from reaching database, fails fast
+
+4. **Generic + Type-Safe pattern**: Generic `setPreference()` + type-safe `setWeightUnit()`
+   - **Flexibility:** Can add any preference (theme, notifications) using generic methods
+   - **Safety:** Weight unit has compile-time type checking (only "lbs" or "kg")
+
+### Success Metrics
+- ✅ 289 tests passing (+10 from Phase 6.0.0 baseline)
+- ✅ 0 lint errors, 0 lint warnings
+- ✅ 100% test coverage for UserPreferenceDAO (all 6 public/package methods tested)
+- ✅ UPSERT pattern verified (Test 4 confirms no duplicate keys)
+- ✅ Multi-user isolation verified (Test 10 confirms data separation)
+- ✅ 14 clean commits (strict TDD Red-Green-Refactor)
+
+### Files Created
+- `app/src/main/java/com/example/weighttogo/database/UserPreferenceDAO.java` (205 lines)
+- `app/src/test/java/com/example/weighttogo/database/UserPreferenceDAOTest.java` (284 lines)
+
+### Next Steps (Phase 6.0.2)
+- Refactor WeightEntryActivity to use global weight unit from UserPreferenceDAO
+- Remove per-screen unit toggle UI (simplify to read-only display)
+- Write integration tests for preference loading on activity creation
+
+---
+
 ## [2025-12-12] Phase 6.0.0 Complete: Code Quality Refactoring (DRY/SOLID)
 
 ### Work Completed
