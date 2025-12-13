@@ -18,6 +18,7 @@ import com.example.weighttogo.database.WeighToGoDBHelper;
 import com.example.weighttogo.models.User;
 import com.example.weighttogo.utils.BackgroundTask;
 import com.example.weighttogo.utils.PasswordUtils;
+import com.example.weighttogo.utils.PasswordUtilsV2;
 import com.example.weighttogo.utils.SessionManager;
 import com.example.weighttogo.utils.ValidationUtils;
 import com.google.android.material.button.MaterialButton;
@@ -264,8 +265,13 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
-        // Verify password
-        boolean passwordMatches = PasswordUtils.verifyPassword(password, user.getSalt(), user.getPasswordHash());
+        // Verify password using algorithm-specific verification (Phase 8.6 - bcrypt migration)
+        boolean passwordMatches = PasswordUtilsV2.verifyPassword(
+            password,
+            user.getPasswordAlgorithm(),
+            user.getPasswordHash(),
+            user.getSalt()
+        );
 
         if (!passwordMatches) {
             // Wrong password
@@ -276,6 +282,40 @@ public class LoginActivity extends AppCompatActivity {
 
         // Authentication successful
         Log.i(TAG, "handleSignIn: Authentication successful for user_id: " + user.getUserId());
+
+        // LAZY MIGRATION: If user is still on SHA256, migrate to bcrypt (Phase 8.6)
+        if ("SHA256".equals(user.getPasswordAlgorithm())) {
+            Log.i(TAG, "handleSignIn: Migrating user_id=" + user.getUserId() + " from SHA256 to bcrypt");
+
+            // Hash password with bcrypt on background thread
+            BackgroundTask.execute(
+                () -> PasswordUtilsV2.hashPasswordBcrypt(password),
+                new BackgroundTask.Callback<String>() {
+                    @Override
+                    public void onResult(String bcryptHash) {
+                        if (bcryptHash != null) {
+                            // Update database with bcrypt hash
+                            boolean updated = userDAO.updatePassword(
+                                user.getUserId(),
+                                bcryptHash,
+                                "",  // bcrypt handles salt internally
+                                "BCRYPT"
+                            );
+
+                            if (updated) {
+                                Log.i(TAG, "handleSignIn: Successfully migrated user_id=" + user.getUserId() + " to bcrypt");
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onError(Exception error) {
+                        Log.e(TAG, "handleSignIn: Failed to migrate password to bcrypt", error);
+                        // Don't block login - migration will retry next time
+                    }
+                }
+            );
+        }
 
         // Update last_login timestamp
         int rowsUpdated = userDAO.updateLastLogin(user.getUserId(), LocalDateTime.now());
@@ -326,15 +366,12 @@ public class LoginActivity extends AppCompatActivity {
         signInButton.setEnabled(false);
         signInButton.setText("Creating account...");
 
-        // Generate salt (fast operation, can stay on UI thread)
-        String salt = PasswordUtils.generateSalt();
-
-        // Hash password on background thread (CPU-intensive)
+        // Hash password with bcrypt on background thread (CPU-intensive) - Phase 8.6
         BackgroundTask.execute(
             // Background work
             () -> {
-                Log.d(TAG, "handleRegister: Hashing password on background thread");
-                return PasswordUtils.hashPassword(password, salt);
+                Log.d(TAG, "handleRegister: Hashing password with bcrypt on background thread");
+                return PasswordUtilsV2.hashPasswordBcrypt(password);
             },
             // UI thread callback
             new BackgroundTask.Callback<String>() {
@@ -352,11 +389,12 @@ public class LoginActivity extends AppCompatActivity {
 
                     Log.d(TAG, "handleRegister: Password hashed successfully, inserting user");
 
-                    // Create User object
+                    // Create User object with bcrypt (Phase 8.6)
                     User newUser = new User();
                     newUser.setUsername(username);
                     newUser.setPasswordHash(passwordHash);
-                    newUser.setSalt(salt);
+                    newUser.setSalt("");  // bcrypt handles salt internally
+                    newUser.setPasswordAlgorithm("BCRYPT");  // New users use bcrypt
                     newUser.setDisplayName(username);  // Default display name to username
                     newUser.setCreatedAt(LocalDateTime.now());
                     newUser.setUpdatedAt(LocalDateTime.now());
