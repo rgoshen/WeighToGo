@@ -288,11 +288,11 @@ public class MainActivity extends AppCompatActivity
         }
 
         // Display weight values
-        startWeightValue.setText(String.format("%.1f", activeGoal.getStartWeight()));
+        startWeightValue.setText(WeightUtils.formatWeight(activeGoal.getStartWeight()));
         startWeightUnit.setText(goalUnit);
-        currentWeightValue.setText(String.format("%.1f", current));
+        currentWeightValue.setText(WeightUtils.formatWeight(current));
         currentWeightUnit.setText(goalUnit);
-        goalWeightValue.setText(String.format("%.1f", activeGoal.getGoalWeight()));
+        goalWeightValue.setText(WeightUtils.formatWeight(activeGoal.getGoalWeight()));
         goalWeightUnit.setText(goalUnit);
 
         // Update progress bar
