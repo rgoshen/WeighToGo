@@ -216,4 +216,28 @@ public class WeightUtilsTest {
         assertEquals("Negative kg to lbs should return 0.0",
                 0.0, result2, DELTA);
     }
+
+    /**
+     * Test 12: Format weight to 1 decimal place
+     */
+    @Test
+    public void test_formatWeight_withValidValue_returnsFormattedString() {
+        // ARRANGE
+        double weight1 = 150.0;
+        double weight2 = 68.0388; // Should round to 68.0
+        double weight3 = 0.0;
+
+        // ACT
+        String result1 = WeightUtils.formatWeight(weight1);
+        String result2 = WeightUtils.formatWeight(weight2);
+        String result3 = WeightUtils.formatWeight(weight3);
+
+        // ASSERT
+        assertEquals("150.0 should format to '150.0'",
+                "150.0", result1);
+        assertEquals("68.0388 should format to '68.0'",
+                "68.0", result2);
+        assertEquals("0.0 should format to '0.0'",
+                "0.0", result3);
+    }
 }
