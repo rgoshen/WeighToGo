@@ -27,6 +27,13 @@ public class UserPreferenceDAO {
 
     private static final String TAG = "UserPreferenceDAO";
 
+    // Preference keys
+    public static final String KEY_WEIGHT_UNIT = "weight_unit";
+
+    // Valid weight units
+    private static final String UNIT_LBS = "lbs";
+    private static final String UNIT_KG = "kg";
+
     private final WeighToGoDBHelper dbHelper;
 
     /**
@@ -162,5 +169,17 @@ public class UserPreferenceDAO {
         pref.setUpdatedAt(DateTimeConverter.fromTimestamp(updatedStr));
 
         return pref;
+    }
+
+    /**
+     * Gets the weight unit preference (defaults to "lbs").
+     *
+     * @param userId the user ID
+     * @return the weight unit ("lbs" or "kg")
+     */
+    @NonNull
+    public String getWeightUnit(long userId) {
+        Log.d(TAG, "getWeightUnit: user_id=" + userId);
+        return getPreference(userId, KEY_WEIGHT_UNIT, UNIT_LBS);
     }
 }
