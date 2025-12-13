@@ -676,8 +676,9 @@ public class WeightEntryActivity extends AppCompatActivity {
         double max = currentUnit.equals("lbs") ? WeightUtils.MAX_WEIGHT_LBS : WeightUtils.MAX_WEIGHT_KG;
 
         if (weight < min || weight > max) {
-            String message = String.format("Weight must be between %.1f and %.1f %s",
-                    min, max, currentUnit);
+            String message = String.format("Weight must be between %s and %s",
+                    WeightUtils.formatWeightWithUnit(min, currentUnit),
+                    WeightUtils.formatWeightWithUnit(max, currentUnit));
             Toast.makeText(this, message, Toast.LENGTH_LONG).show();
             Log.w(TAG, "handleSave: Weight out of range: " + weight);
             return;
