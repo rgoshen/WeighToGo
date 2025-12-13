@@ -66,6 +66,7 @@ public class UserDAOTest {
         user.setUsername("testuser");
         user.setPasswordHash("hashed_password_123");
         user.setSalt("random_salt_456");
+        user.setPasswordAlgorithm("SHA256");
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
         user.setActive(true);
@@ -93,6 +94,7 @@ public class UserDAOTest {
         user.setUsername("johndoe");
         user.setPasswordHash("hashed_pass");
         user.setSalt("salt123");
+        user.setPasswordAlgorithm("SHA256");
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
         user.setActive(true);
@@ -130,6 +132,7 @@ public class UserDAOTest {
         user.setUsername("existinguser");
         user.setPasswordHash("hash");
         user.setSalt("salt");
+        user.setPasswordAlgorithm("SHA256");
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
         user.setActive(true);
@@ -164,6 +167,7 @@ public class UserDAOTest {
         user.setUsername("loginuser");
         user.setPasswordHash("hash");
         user.setSalt("salt");
+        user.setPasswordAlgorithm("SHA256");
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
         user.setActive(true);
@@ -193,6 +197,7 @@ public class UserDAOTest {
         user.setUsername("deletetest");
         user.setPasswordHash("hash");
         user.setSalt("salt");
+        user.setPasswordAlgorithm("SHA256");
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
         user.setActive(true);
@@ -221,6 +226,7 @@ public class UserDAOTest {
         user1.setUsername("duplicateuser");
         user1.setPasswordHash("hash1");
         user1.setSalt("salt1");
+        user1.setPasswordAlgorithm("SHA256");
         user1.setCreatedAt(LocalDateTime.now());
         user1.setUpdatedAt(LocalDateTime.now());
         user1.setActive(true);
@@ -229,6 +235,7 @@ public class UserDAOTest {
         user2.setUsername("duplicateuser"); // Same username
         user2.setPasswordHash("hash2");
         user2.setSalt("salt2");
+        user2.setPasswordAlgorithm("SHA256");
         user2.setCreatedAt(LocalDateTime.now());
         user2.setUpdatedAt(LocalDateTime.now());
         user2.setActive(true);
@@ -297,6 +304,7 @@ public class UserDAOTest {
         user.setUsername("user_with-special.chars@123");
         user.setPasswordHash("hash");
         user.setSalt("salt");
+        user.setPasswordAlgorithm("SHA256");
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
         user.setActive(true);
@@ -325,6 +333,7 @@ public class UserDAOTest {
         user.setUsername(longUsername.toString());
         user.setPasswordHash("hash");
         user.setSalt("salt");
+        user.setPasswordAlgorithm("SHA256");
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
         user.setActive(true);
@@ -349,6 +358,7 @@ public class UserDAOTest {
         user.setUsername("completeuser");
         user.setPasswordHash("hash");
         user.setSalt("salt");
+        user.setPasswordAlgorithm("SHA256");
         user.setEmail("user@example.com");
         user.setPhoneNumber("+1234567890");
         user.setDisplayName("Complete User");
@@ -380,6 +390,7 @@ public class UserDAOTest {
         user.setUsername("specialuser");
         user.setPasswordHash("hash");
         user.setSalt("salt");
+        user.setPasswordAlgorithm("SHA256");
         user.setEmail("user+tag@example.com");
         user.setDisplayName("User 🎉 Name");
         user.setCreatedAt(LocalDateTime.now());
@@ -407,6 +418,7 @@ public class UserDAOTest {
         user.setUsername("cascadetest");
         user.setPasswordHash("hash");
         user.setSalt("salt");
+        user.setPasswordAlgorithm("SHA256");
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
         user.setActive(true);
@@ -435,6 +447,7 @@ public class UserDAOTest {
         user.setUsername("TestUser");
         user.setPasswordHash("hash");
         user.setSalt("salt");
+        user.setPasswordAlgorithm("SHA256");
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
         user.setActive(true);
@@ -461,6 +474,7 @@ public class UserDAOTest {
         user.setUsername("CaseSensitive");
         user.setPasswordHash("hash");
         user.setSalt("salt");
+        user.setPasswordAlgorithm("SHA256");
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
         user.setActive(true);
@@ -489,6 +503,7 @@ public class UserDAOTest {
         user.setUsername("phonetest");
         user.setPasswordHash("hash");
         user.setSalt("salt");
+        user.setPasswordAlgorithm("SHA256");
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
         user.setActive(true);
@@ -518,6 +533,7 @@ public class UserDAOTest {
         user.setUsername("clearponetest");
         user.setPasswordHash("hash");
         user.setSalt("salt");
+        user.setPasswordAlgorithm("SHA256");
         user.setPhoneNumber("+12025551234");  // Initial phone
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
@@ -562,6 +578,7 @@ public class UserDAOTest {
         user.setUsername("timestamptest");
         user.setPasswordHash("hash");
         user.setSalt("salt");
+        user.setPasswordAlgorithm("SHA256");
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
         user.setActive(true);
@@ -602,6 +619,7 @@ public class UserDAOTest {
         user.setUsername("preservetest");
         user.setPasswordHash("hash123");
         user.setSalt("salt456");
+        user.setPasswordAlgorithm("SHA256");
         user.setEmail("test@example.com");
         user.setDisplayName("Test User");
         user.setCreatedAt(LocalDateTime.now());
@@ -639,6 +657,7 @@ public class UserDAOTest {
         user.setUsername("persisttest");
         user.setPasswordHash("hash");
         user.setSalt("salt");
+        user.setPasswordAlgorithm("SHA256");
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
         user.setActive(true);

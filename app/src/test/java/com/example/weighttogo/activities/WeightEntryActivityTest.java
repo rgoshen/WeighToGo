@@ -84,6 +84,7 @@ public class WeightEntryActivityTest {
         testUser.setUsername("weightentry_testuser_" + System.currentTimeMillis());
         testUser.setPasswordHash("test_hash");
         testUser.setSalt("test_salt");
+        testUser.setPasswordAlgorithm("SHA256");
         testUser.setDisplayName("Weight Entry Test User");
         testUser.setCreatedAt(LocalDateTime.now());
         testUser.setUpdatedAt(LocalDateTime.now());

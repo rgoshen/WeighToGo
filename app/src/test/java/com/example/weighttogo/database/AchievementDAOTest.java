@@ -50,6 +50,7 @@ public class AchievementDAOTest {
         testUser.setUsername("testuser_achievements_" + System.currentTimeMillis()); // Unique username
         testUser.setPasswordHash("hash123");
         testUser.setSalt("salt123");
+        testUser.setPasswordAlgorithm("SHA256");
         testUser.setCreatedAt(LocalDateTime.now());
         testUser.setUpdatedAt(LocalDateTime.now());
         testUser.setActive(true);

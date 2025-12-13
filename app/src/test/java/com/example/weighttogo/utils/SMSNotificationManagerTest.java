@@ -136,6 +136,7 @@ public class SMSNotificationManagerTest {
         // Mock user with phone number
         User mockUser = new User();
         mockUser.setUserId(userId);
+        mockUser.setPasswordAlgorithm("SHA256");
         mockUser.setPhoneNumber(phone);
         when(mockUserDAO.getUserById(userId)).thenReturn(mockUser);
 
@@ -163,6 +164,7 @@ public class SMSNotificationManagerTest {
         // Mock user WITHOUT phone number
         User mockUser = new User();
         mockUser.setUserId(userId);
+        mockUser.setPasswordAlgorithm("SHA256");
         mockUser.setPhoneNumber(null);
         when(mockUserDAO.getUserById(userId)).thenReturn(mockUser);
 
@@ -187,6 +189,7 @@ public class SMSNotificationManagerTest {
         // Mock user with phone number
         User mockUser = new User();
         mockUser.setUserId(userId);
+        mockUser.setPasswordAlgorithm("SHA256");
         mockUser.setPhoneNumber(phone);
         when(mockUserDAO.getUserById(userId)).thenReturn(mockUser);
 
@@ -217,6 +220,7 @@ public class SMSNotificationManagerTest {
         // Mock user with phone number
         User mockUser = new User();
         mockUser.setUserId(userId);
+        mockUser.setPasswordAlgorithm("SHA256");
         mockUser.setPhoneNumber(phone);
         when(mockUserDAO.getUserById(userId)).thenReturn(mockUser);
 
@@ -256,6 +260,7 @@ public class SMSNotificationManagerTest {
         // Mock user with phone number
         User mockUser = new User();
         mockUser.setUserId(userId);
+        mockUser.setPasswordAlgorithm("SHA256");
         mockUser.setPhoneNumber(phone);
         when(mockUserDAO.getUserById(userId)).thenReturn(mockUser);
 
@@ -290,6 +295,7 @@ public class SMSNotificationManagerTest {
         // Mock user with phone number
         User mockUser = new User();
         mockUser.setUserId(userId);
+        mockUser.setPasswordAlgorithm("SHA256");
         mockUser.setPhoneNumber(phone);
         when(mockUserDAO.getUserById(userId)).thenReturn(mockUser);
 
@@ -325,6 +331,7 @@ public class SMSNotificationManagerTest {
         // Mock user with phone number
         User mockUser = new User();
         mockUser.setUserId(userId);
+        mockUser.setPasswordAlgorithm("SHA256");
         mockUser.setPhoneNumber(phone);
         when(mockUserDAO.getUserById(userId)).thenReturn(mockUser);
 
@@ -359,6 +366,7 @@ public class SMSNotificationManagerTest {
         // Mock user with phone number
         User mockUser = new User();
         mockUser.setUserId(userId);
+        mockUser.setPasswordAlgorithm("SHA256");
         mockUser.setPhoneNumber(phone);
         when(mockUserDAO.getUserById(userId)).thenReturn(mockUser);
 
@@ -392,6 +400,7 @@ public class SMSNotificationManagerTest {
         // Mock user with phone number
         User mockUser = new User();
         mockUser.setUserId(userId);
+        mockUser.setPasswordAlgorithm("SHA256");
         mockUser.setPhoneNumber(phone);
         when(mockUserDAO.getUserById(userId)).thenReturn(mockUser);
 

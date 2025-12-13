@@ -117,6 +117,7 @@ public class LoginActivityIntegrationTest {
         newUser.setUsername(username);
         newUser.setPasswordHash(passwordHash);
         newUser.setSalt(salt);
+        newUser.setPasswordAlgorithm("SHA256");
         newUser.setCreatedAt(LocalDateTime.now());
         newUser.setUpdatedAt(LocalDateTime.now());
         newUser.setActive(true);
@@ -169,6 +170,7 @@ public class LoginActivityIntegrationTest {
         existingUser.setUsername(username);
         existingUser.setPasswordHash(passwordHash);
         existingUser.setSalt(salt);
+        existingUser.setPasswordAlgorithm("SHA256");
         existingUser.setCreatedAt(LocalDateTime.now());
         existingUser.setUpdatedAt(LocalDateTime.now());
         existingUser.setActive(true);
@@ -239,6 +241,7 @@ public class LoginActivityIntegrationTest {
         newUser.setUsername(username);
         newUser.setPasswordHash(passwordHash);
         newUser.setSalt(salt);
+        newUser.setPasswordAlgorithm("SHA256");
         newUser.setDisplayName(username);  // **BUG FIX**: This line must be added to LoginActivity
         newUser.setCreatedAt(LocalDateTime.now());
         newUser.setUpdatedAt(LocalDateTime.now());

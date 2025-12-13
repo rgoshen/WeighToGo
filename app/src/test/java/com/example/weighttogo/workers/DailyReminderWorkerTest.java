@@ -69,6 +69,7 @@ public class DailyReminderWorkerTest {
         testUser.setUsername("reminder_testuser_" + System.currentTimeMillis());
         testUser.setPasswordHash("test_hash");
         testUser.setSalt("test_salt");
+        testUser.setPasswordAlgorithm("SHA256");
         testUser.setPhoneNumber("+12025551234");  // Valid E.164 phone
         testUser.setCreatedAt(LocalDateTime.now());
         testUser.setUpdatedAt(LocalDateTime.now());

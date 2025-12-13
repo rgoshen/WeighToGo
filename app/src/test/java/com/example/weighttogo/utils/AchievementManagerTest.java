@@ -67,6 +67,7 @@ public class AchievementManagerTest {
         testUser.setUsername("testuser_" + System.currentTimeMillis());
         testUser.setPasswordHash("hashedpassword");
         testUser.setSalt("salt");
+        testUser.setPasswordAlgorithm("SHA256");
         testUser.setCreatedAt(LocalDateTime.now());
         testUserId = userDAO.insertUser(testUser);
     }

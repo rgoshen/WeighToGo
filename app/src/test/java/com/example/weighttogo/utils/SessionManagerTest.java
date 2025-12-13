@@ -233,6 +233,7 @@ public class SessionManagerTest {
         user.setDisplayName(displayName);
         user.setPasswordHash("dummy_hash");  // Required field but not stored in session
         user.setSalt("dummy_salt");  // Required field but not stored in session
+        user.setPasswordAlgorithm("SHA256");
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
         user.setActive(true);

@@ -144,6 +144,7 @@ public class GoalDialogFragmentTest {
         testUser.setUsername("goalfragment_testuser_" + System.currentTimeMillis());
         testUser.setPasswordHash("test_hash");
         testUser.setSalt("test_salt");
+        testUser.setPasswordAlgorithm("SHA256");
         testUser.setCreatedAt(LocalDateTime.now());
         testUser.setUpdatedAt(LocalDateTime.now());
         testUser.setActive(true);

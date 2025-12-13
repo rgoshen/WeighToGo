@@ -74,6 +74,7 @@ public class UserPreferenceDAOTest {
         user.setUsername(username);
         user.setPasswordHash("hash123");
         user.setSalt("salt123");
+        user.setPasswordAlgorithm("SHA256");
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
         user.setActive(true);

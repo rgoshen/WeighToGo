@@ -82,6 +82,7 @@ public class MainActivityTest {
         testUser.setUsername("mainactivity_testuser_" + System.currentTimeMillis());
         testUser.setPasswordHash("hashed_password");
         testUser.setSalt("test_salt");
+        testUser.setPasswordAlgorithm("SHA256");
         testUser.setDisplayName("Test User");
         testUser.setCreatedAt(LocalDateTime.now());
         testUser.setUpdatedAt(LocalDateTime.now());
