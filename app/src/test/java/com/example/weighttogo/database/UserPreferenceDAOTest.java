@@ -94,4 +94,20 @@ public class UserPreferenceDAOTest {
         // ASSERT
         assertEquals("Should return default when key doesn't exist", "light", result);
     }
+
+    /**
+     * Test 2: SET with valid data returns true.
+     *
+     * Tests FR6.0.1 - UserPreferenceDAO UPSERT functionality.
+     * Verifies that setPreference() successfully inserts a new preference
+     * and returns true on success.
+     */
+    @Test
+    public void test_setPreference_withValidData_returnsTrue() {
+        // ACT
+        boolean result = userPreferenceDAO.setPreference(testUserId, "theme", "dark");
+
+        // ASSERT
+        assertTrue("Should return true on successful insert", result);
+    }
 }
