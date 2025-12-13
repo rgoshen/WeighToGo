@@ -114,6 +114,24 @@ public final class WeightUtils {
     }
 
     /**
+     * Converts weight between units (lbs ↔ kg).
+     *
+     * @param value      the weight value to convert
+     * @param fromUnit   source unit ("lbs" or "kg")
+     * @param toUnit     target unit ("lbs" or "kg")
+     * @return converted weight, rounded to 1 decimal place
+     */
+    public static double convertBetweenUnits(double value, String fromUnit, String toUnit) {
+        // Same unit - no conversion needed
+        if (fromUnit.equals(toUnit)) {
+            return value;
+        }
+
+        // Stub for different units
+        return 0.0;
+    }
+
+    /**
      * Validates whether a weight is within acceptable range for the given unit.
      *
      * Valid ranges:
