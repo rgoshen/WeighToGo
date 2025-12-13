@@ -1286,7 +1286,7 @@ Currently, users select lbs/kg for each weight entry and goal. This is complex a
 - [x] All 10 new unit tests passing (3 integration tests @Ignored for Phase 8.9)
 - [x] No regression in existing features (289 tests passing)
 - [x] Lint clean (0 errors, 0 warnings)
-- [x] Manual testing checklist complete
+- [x] Manual testing checklist completewait
 
 **Test Count:** 279 (Phase 6.0.0 baseline) + 10 (Phase 6.0.1 unit tests) = 289 tests
 **Note:** 3 integration tests (@Ignored) + 4 Espresso tests deferred to Phase 8.9

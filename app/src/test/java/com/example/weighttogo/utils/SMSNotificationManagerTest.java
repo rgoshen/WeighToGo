@@ -119,10 +119,37 @@ public class SMSNotificationManagerTest {
 
     /**
      * Test 8: sendGoalAchievedSms() sends message when conditions met
+     *
+     * This test will fail until Commit 13 implements actual SMS sending.
      */
     @Test
     public void test_sendGoalAchievedSms_withValidConditions_sendsMessage() {
-        fail("Test not implemented yet - RED phase");
+        // ARRANGE
+        long userId = 1L;
+        double goalWeight = 150.0;
+        String unit = "lbs";
+        String phone = "+12025551234";
+
+        // Mock user with phone number
+        User mockUser = new User();
+        mockUser.setUserId(userId);
+        mockUser.setPhoneNumber(phone);
+        when(mockUserDAO.getUserById(userId)).thenReturn(mockUser);
+
+        // Mock preferences - all enabled
+        when(mockUserPreferenceDAO.getPreference(userId, SMSNotificationManager.KEY_SMS_ENABLED, "false"))
+                .thenReturn("true");
+        when(mockUserPreferenceDAO.getPreference(userId, SMSNotificationManager.KEY_GOAL_ALERTS, "true"))
+                .thenReturn("true");
+
+        smsManager = SMSNotificationManager.getInstance(context, mockUserDAO, mockUserPreferenceDAO);
+
+        // ACT
+        boolean result = smsManager.sendGoalAchievedSms(userId, goalWeight, unit);
+
+        // ASSERT
+        assertTrue("Should return true when SMS sent successfully", result);
+        // Note: Verification of SmsManager.sendTextMessage() will be added in Commit 13
     }
 
     /**
@@ -130,15 +157,65 @@ public class SMSNotificationManagerTest {
      */
     @Test
     public void test_sendGoalAchievedSms_goalAlertsDisabled_doesNotSend() {
-        fail("Test not implemented yet - RED phase");
+        // ARRANGE
+        long userId = 1L;
+        double goalWeight = 150.0;
+        String unit = "lbs";
+        String phone = "+12025551234";
+
+        // Mock user with phone number
+        User mockUser = new User();
+        mockUser.setUserId(userId);
+        mockUser.setPhoneNumber(phone);
+        when(mockUserDAO.getUserById(userId)).thenReturn(mockUser);
+
+        // Mock preferences - goal alerts DISABLED
+        when(mockUserPreferenceDAO.getPreference(userId, SMSNotificationManager.KEY_SMS_ENABLED, "false"))
+                .thenReturn("true");
+        when(mockUserPreferenceDAO.getPreference(userId, SMSNotificationManager.KEY_GOAL_ALERTS, "true"))
+                .thenReturn("false");  // Goal alerts disabled
+
+        smsManager = SMSNotificationManager.getInstance(context, mockUserDAO, mockUserPreferenceDAO);
+
+        // ACT
+        boolean result = smsManager.sendGoalAchievedSms(userId, goalWeight, unit);
+
+        // ASSERT
+        assertFalse("Should return false when goal alerts disabled", result);
     }
 
     /**
      * Test 10: sendMilestoneSms() sends message when conditions met
+     *
+     * This test will fail until Commit 13 implements actual SMS sending.
      */
     @Test
     public void test_sendMilestoneSms_withValidConditions_sendsMessage() {
-        fail("Test not implemented yet - RED phase");
+        // ARRANGE
+        long userId = 1L;
+        int milestone = 10;
+        String unit = "lbs";
+        String phone = "+12025551234";
+
+        // Mock user with phone number
+        User mockUser = new User();
+        mockUser.setUserId(userId);
+        mockUser.setPhoneNumber(phone);
+        when(mockUserDAO.getUserById(userId)).thenReturn(mockUser);
+
+        // Mock preferences - all enabled
+        when(mockUserPreferenceDAO.getPreference(userId, SMSNotificationManager.KEY_SMS_ENABLED, "false"))
+                .thenReturn("true");
+        when(mockUserPreferenceDAO.getPreference(userId, SMSNotificationManager.KEY_MILESTONE_ALERTS, "true"))
+                .thenReturn("true");
+
+        smsManager = SMSNotificationManager.getInstance(context, mockUserDAO, mockUserPreferenceDAO);
+
+        // ACT
+        boolean result = smsManager.sendMilestoneSms(userId, milestone, unit);
+
+        // ASSERT
+        assertTrue("Should return true when SMS sent successfully", result);
     }
 
     /**
@@ -146,14 +223,62 @@ public class SMSNotificationManagerTest {
      */
     @Test
     public void test_sendMilestoneSms_milestoneAlertsDisabled_doesNotSend() {
-        fail("Test not implemented yet - RED phase");
+        // ARRANGE
+        long userId = 1L;
+        int milestone = 5;
+        String unit = "lbs";
+        String phone = "+12025551234";
+
+        // Mock user with phone number
+        User mockUser = new User();
+        mockUser.setUserId(userId);
+        mockUser.setPhoneNumber(phone);
+        when(mockUserDAO.getUserById(userId)).thenReturn(mockUser);
+
+        // Mock preferences - milestone alerts DISABLED
+        when(mockUserPreferenceDAO.getPreference(userId, SMSNotificationManager.KEY_SMS_ENABLED, "false"))
+                .thenReturn("true");
+        when(mockUserPreferenceDAO.getPreference(userId, SMSNotificationManager.KEY_MILESTONE_ALERTS, "true"))
+                .thenReturn("false");  // Milestone alerts disabled
+
+        smsManager = SMSNotificationManager.getInstance(context, mockUserDAO, mockUserPreferenceDAO);
+
+        // ACT
+        boolean result = smsManager.sendMilestoneSms(userId, milestone, unit);
+
+        // ASSERT
+        assertFalse("Should return false when milestone alerts disabled", result);
     }
 
     /**
      * Test 12: sendDailyReminderSms() sends message when conditions met
+     *
+     * This test will fail until Commit 13 implements actual SMS sending.
      */
     @Test
     public void test_sendDailyReminderSms_withValidConditions_sendsMessage() {
-        fail("Test not implemented yet - RED phase");
+        // ARRANGE
+        long userId = 1L;
+        String phone = "+12025551234";
+
+        // Mock user with phone number
+        User mockUser = new User();
+        mockUser.setUserId(userId);
+        mockUser.setPhoneNumber(phone);
+        when(mockUserDAO.getUserById(userId)).thenReturn(mockUser);
+
+        // Mock preferences - all enabled
+        when(mockUserPreferenceDAO.getPreference(userId, SMSNotificationManager.KEY_SMS_ENABLED, "false"))
+                .thenReturn("true");
+        when(mockUserPreferenceDAO.getPreference(userId, SMSNotificationManager.KEY_REMINDER_ENABLED, "false"))
+                .thenReturn("true");
+
+        smsManager = SMSNotificationManager.getInstance(context, mockUserDAO, mockUserPreferenceDAO);
+
+        // ACT
+        boolean result = smsManager.sendDailyReminderSms(userId);
+
+        // ASSERT
+        assertTrue("Should return true when SMS sent successfully", result);
     }
 }
