@@ -365,6 +365,29 @@ public class SMSNotificationManager {
     }
 
     /**
+     * Sends SMS for multiple achievements in batch.
+     * Useful for sending all unnotified achievements at once.
+     *
+     * @param achievements List of achievements to notify
+     * @return Number of SMS sent successfully
+     */
+    public int sendAchievementBatch(@NonNull java.util.List<Achievement> achievements) {
+        Log.d(TAG, "sendAchievementBatch: Processing " + achievements.size() + " achievements");
+
+        int successCount = 0;
+
+        for (Achievement achievement : achievements) {
+            boolean sent = sendAchievementSms(achievement);
+            if (sent) {
+                successCount++;
+            }
+        }
+
+        Log.i(TAG, "sendAchievementBatch: Sent " + successCount + " of " + achievements.size() + " SMS");
+        return successCount;
+    }
+
+    /**
      * Private helper method to send SMS using Android SmsManager.
      *
      * @param phoneNumber E.164 formatted phone number
