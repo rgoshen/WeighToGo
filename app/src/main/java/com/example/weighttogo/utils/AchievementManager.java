@@ -96,7 +96,7 @@ public class AchievementManager {
             achievement.setAchievementType("GOAL_REACHED");
             achievement.setTitle("Goal Reached!");
             achievement.setDescription("Congratulations! You've reached your goal weight of " +
-                    String.format("%.1f %s", goalWeight, activeGoal.getGoalUnit()));
+                    WeightUtils.formatWeightWithUnit(goalWeight, activeGoal.getGoalUnit()));
             achievement.setValue(goalWeight);
             achievement.setAchievedAt(LocalDateTime.now());
             achievement.setNotified(false);
@@ -373,8 +373,8 @@ public class AchievementManager {
             achievement.setUserId(userId);
             achievement.setAchievementType("NEW_LOW");
             achievement.setTitle("New Low!");
-            achievement.setDescription(String.format("You've reached a new lowest weight of %.1f %s!",
-                    newWeight, unit));
+            achievement.setDescription("You've reached a new lowest weight of " +
+                    WeightUtils.formatWeightWithUnit(newWeight, unit) + "!");
             achievement.setValue(newWeight);
             achievement.setAchievedAt(LocalDateTime.now());
             achievement.setNotified(false);
