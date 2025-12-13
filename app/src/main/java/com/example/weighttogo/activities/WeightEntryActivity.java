@@ -11,13 +11,21 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
 import com.example.weighttogo.R;
+import com.example.weighttogo.database.AchievementDAO;
+import com.example.weighttogo.database.GoalWeightDAO;
+import com.example.weighttogo.database.UserDAO;
 import com.example.weighttogo.database.UserPreferenceDAO;
 import com.example.weighttogo.database.WeighToGoDBHelper;
 import com.example.weighttogo.database.WeightEntryDAO;
+import com.example.weighttogo.models.Achievement;
 import com.example.weighttogo.models.WeightEntry;
+import com.example.weighttogo.utils.AchievementManager;
 import com.example.weighttogo.utils.DateUtils;
+import com.example.weighttogo.utils.SMSNotificationManager;
 import com.example.weighttogo.utils.SessionManager;
 import com.example.weighttogo.utils.WeightUtils;
+
+import java.util.List;
 import com.google.android.material.button.MaterialButton;
 
 import java.time.LocalDate;
@@ -109,6 +117,8 @@ public class WeightEntryActivity extends AppCompatActivity {
     private WeighToGoDBHelper dbHelper;
     private WeightEntryDAO weightEntryDAO;
     private UserPreferenceDAO userPreferenceDAO;
+    private AchievementManager achievementManager;
+    private SMSNotificationManager smsManager;
 
     // =============================================================================================
     // STATE
@@ -201,7 +211,17 @@ public class WeightEntryActivity extends AppCompatActivity {
         dbHelper = WeighToGoDBHelper.getInstance(this);
         weightEntryDAO = new WeightEntryDAO(dbHelper);
         userPreferenceDAO = new UserPreferenceDAO(dbHelper);
-        Log.d(TAG, "initDataLayer: Data layer initialized");
+
+        // Initialize achievement system (Phase 7.5)
+        AchievementDAO achievementDAO = new AchievementDAO(dbHelper);
+        GoalWeightDAO goalWeightDAO = new GoalWeightDAO(dbHelper);
+        achievementManager = new AchievementManager(achievementDAO, goalWeightDAO, weightEntryDAO);
+
+        // Initialize SMS notification manager (Phase 7.5)
+        UserDAO userDAO = new UserDAO(dbHelper);
+        smsManager = SMSNotificationManager.getInstance(this, userDAO, userPreferenceDAO, achievementDAO);
+
+        Log.d(TAG, "initDataLayer: Data layer initialized with achievement and SMS managers");
     }
 
     /**
@@ -638,6 +658,18 @@ public class WeightEntryActivity extends AppCompatActivity {
 
         if (weightId > 0) {
             Log.i(TAG, "createNewEntry: Successfully created weight entry: " + weightId);
+
+            // Check for achievements (Phase 7.5)
+            List<Achievement> newAchievements = achievementManager.checkAchievements(userId, weight);
+
+            // Send SMS for each new achievement
+            for (Achievement achievement : newAchievements) {
+                boolean sent = smsManager.sendAchievementSms(achievement);
+                if (sent) {
+                    Log.i(TAG, "createNewEntry: Achievement SMS sent: " + achievement.getAchievementType());
+                }
+            }
+
             Toast.makeText(this, "Entry saved successfully", Toast.LENGTH_SHORT).show();
             setResult(RESULT_OK);
             finish();
@@ -672,6 +704,18 @@ public class WeightEntryActivity extends AppCompatActivity {
 
         if (rowsUpdated == 1) {
             Log.i(TAG, "updateExistingEntry: Successfully updated weight entry: " + editWeightId);
+
+            // Check for achievements (Phase 7.5)
+            List<Achievement> newAchievements = achievementManager.checkAchievements(userId, weight);
+
+            // Send SMS for each new achievement
+            for (Achievement achievement : newAchievements) {
+                boolean sent = smsManager.sendAchievementSms(achievement);
+                if (sent) {
+                    Log.i(TAG, "updateExistingEntry: Achievement SMS sent: " + achievement.getAchievementType());
+                }
+            }
+
             Toast.makeText(this, "Entry updated successfully", Toast.LENGTH_SHORT).show();
             setResult(RESULT_OK);
             finish();
