@@ -64,6 +64,34 @@ public final class ValidationUtils {
         throw new AssertionError("ValidationUtils is a utility class and should not be instantiated");
     }
 
+    // =============================================================================================
+    // NULL/EMPTY CHECKING
+    // =============================================================================================
+
+    /**
+     * Checks if a string is null, empty, or contains only whitespace.
+     * This is a centralized null-checking method to eliminate duplicate code patterns
+     * throughout the codebase (DRY principle).
+     *
+     * **Usage Example:**
+     * <pre>
+     * if (ValidationUtils.isNullOrEmpty(username)) {
+     *     // Show error: "Username is required"
+     *     return;
+     * }
+     * </pre>
+     *
+     * @param value the string to check
+     * @return true if the string is null, empty (""), or whitespace-only ("   ")
+     */
+    public static boolean isNullOrEmpty(@Nullable String value) {
+        return value == null || value.trim().isEmpty();
+    }
+
+    // =============================================================================================
+    // USERNAME & PASSWORD VALIDATION
+    // =============================================================================================
+
     /**
      * Validates a username against security requirements.
      *
