@@ -263,11 +263,11 @@ public class GoalDialogFragment extends DialogFragment {
         textSelectedTargetDate = dialogView.findViewById(R.id.text_selected_target_date);
 
         // Set current weight display
-        textCurrentWeight.setText(String.format("%.1f %s", currentWeight, currentUnit));
+        textCurrentWeight.setText(WeightUtils.formatWeightWithUnit(currentWeight, currentUnit));
 
         // Pre-fill goal weight if in edit mode
         if (existingGoal != null) {
-            inputGoalWeight.setText(String.format("%.1f", existingGoal.getGoalWeight()));
+            inputGoalWeight.setText(WeightUtils.formatWeight(existingGoal.getGoalWeight()));
 
             // Show target date if exists
             if (selectedTargetDate != null) {
@@ -292,7 +292,7 @@ public class GoalDialogFragment extends DialogFragment {
             double displayWeight = "kg".equals(currentUnit)
                 ? WeightUtils.convertKgToLbs(currentWeight)
                 : currentWeight;
-            textCurrentWeight.setText(String.format("%.1f lbs", displayWeight));
+            textCurrentWeight.setText(WeightUtils.formatWeightWithUnit(displayWeight, "lbs"));
         });
 
         unitKg.setOnClickListener(v -> {
@@ -302,7 +302,7 @@ public class GoalDialogFragment extends DialogFragment {
             double displayWeight = "lbs".equals(currentUnit)
                 ? WeightUtils.convertLbsToKg(currentWeight)
                 : currentWeight;
-            textCurrentWeight.setText(String.format("%.1f kg", displayWeight));
+            textCurrentWeight.setText(WeightUtils.formatWeightWithUnit(displayWeight, "kg"));
         });
     }
 
