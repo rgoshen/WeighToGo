@@ -1,6 +1,7 @@
 package com.example.weighttogo.activities;
 
 import android.os.Bundle;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -27,6 +28,7 @@ public class SettingsActivity extends AppCompatActivity {
     private static final String TAG = "SettingsActivity";
 
     // UI Elements
+    private ImageButton backButton;
     private TextView unitLbs;
     private TextView unitKg;
 
@@ -42,15 +44,10 @@ public class SettingsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
 
-        // Enable up button for navigation back to MainActivity
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        }
-
         initDataLayer();
         initViews();
+        setupClickListeners();
         loadCurrentPreference();
-        setupWeightUnitToggle();
     }
 
     /**
@@ -65,6 +62,7 @@ public class SettingsActivity extends AppCompatActivity {
      * Initialize view references
      */
     private void initViews() {
+        backButton = findViewById(R.id.backButton);
         unitLbs = findViewById(R.id.unitLbs);
         unitKg = findViewById(R.id.unitKg);
     }
@@ -79,9 +77,13 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     /**
-     * Setup click listeners for weight unit toggle buttons
+     * Setup click listeners for all interactive elements
      */
-    private void setupWeightUnitToggle() {
+    private void setupClickListeners() {
+        // Back button navigation
+        backButton.setOnClickListener(v -> finish());
+
+        // Weight unit toggle
         unitLbs.setOnClickListener(v -> saveWeightUnit("lbs"));
         unitKg.setOnClickListener(v -> saveWeightUnit("kg"));
     }

@@ -230,7 +230,7 @@ public class MainActivity extends AppCompatActivity
                 // Already on home, do nothing
                 return true;
             } else if (itemId == R.id.nav_trends) {
-                Toast.makeText(this, "Trends - Coming in Phase 6", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Trends - Coming soon", Toast.LENGTH_SHORT).show();
                 return true;
             } else if (itemId == R.id.nav_goals) {
                 Intent intent = new Intent(this, GoalsActivity.class);
