@@ -1814,70 +1814,109 @@ public class SettingsActivityTest {
 
 ---
 
-## Phase 8B: Espresso Integration Tests 🎯 (Pre-Production Required)
-**Status**: DEFERRED to separate session AFTER Phase 8A
-**Priority**: CRITICAL for production (must complete before deployment)
-**Estimated Effort**: 4-6 hours
+## Phase 8B: Espresso Integration Tests ✅ COMPLETED (2025-12-13)
+**Status**: ✅ COMPLETED (2025-12-13)
+**Priority**: CRITICAL for production - COMPLETE
+**Actual Effort**: ~3 hours (faster than estimated 4-6 hours)
+**Commits**: 2 (test creation → cleanup)
 
-### Why This is Critical
+### What Was Completed
 
-**Current Problem:**
-- 17 MainActivity tests commented out (Robolectric/Material3 incompatibility - GH #12)
-- 3 SMS sending tests failing (Robolectric cannot send real SMS)
-- Critical dashboard functionality UNTESTED
-- Cannot guarantee production quality without these tests
-- Material3 components only testable with Espresso
+**Resolved Issues:**
+- ✅ Migrated 17 MainActivity tests from Robolectric to Espresso
+- ✅ Resolved GitHub Issue #12 (Robolectric/Material3 incompatibility)
+- ✅ Removed 300+ lines of commented test code from MainActivityTest.java
+- ✅ Created comprehensive Espresso instrumented test suite
 
-**What Needs to Happen:**
-1. Add Espresso dependencies to build.gradle
-2. Migrate 17 MainActivity tests from Robolectric to Espresso
-3. Add 3 SMS notification tests (real device testing)
-4. Add weight unit preference integration tests
-5. Test real UI interactions on device/emulator
+**SMS Tests Decision:**
+- ❌ No Espresso SMS tests added - would test Android framework (third-party code), not app logic
+- ✅ All app SMS logic already tested in SMSNotificationManagerTest.java (9 Robolectric tests)
+- ✅ Coverage: permissions, preferences, phone number validation, conditional logic
+- **Rationale**: "Don't test the framework" - assume Android SMS works correctly
 
-**Tests to Migrate/Add (20 tests):**
+**Files Created:**
+1. `app/src/androidTest/java/com/example/weighttogo/activities/MainActivityEspressoTest.java` (637 lines)
+   - 17 instrumented tests covering all MainActivity UI functionality
+   - Custom RecyclerView item count matcher included inline
+   - Tests use AAA pattern (Arrange-Act-Assert)
+   - Full Material3 theme support on real device/emulator
 
-**A. MainActivity Tests** (17 tests):
-- Dashboard initialization (3 tests)
-- Weight entry loading (4 tests)
-- Progress card display (4 tests)
-- Quick stats calculation (2 tests)
-- Delete entry flow (2 tests)
-- Navigation (2 tests)
+**Files Modified:**
+1. `app/src/test/java/com/example/weighttogo/activities/MainActivityTest.java`
+   - Removed commented tests (lines 174-475 → 9 lines)
+   - Updated comments to reference Espresso test location
+   - Kept login redirect test (Test 1) only
 
-**B. SMS Notification Tests** (3 tests):
-- test_sendGoalAchievedSms_withValidConditions_sendsMessage
-- test_sendMilestoneSms_withValidConditions_sendsMessage
-- test_sendDailyReminderSms_withValidConditions_sendsMessage
+### Test Coverage (17 Espresso Tests)
 
-**Espresso Test Example:**
-```java
-@RunWith(AndroidJUnit4.class)
-@LargeTest
-public class MainActivityEspressoTest {
+**A. UI Initialization (2 tests):**
+- test_onCreate_whenLoggedIn_initializesViews
+- test_greetingText_showsTimeBasedGreeting
 
-    @Rule
-    public ActivityScenarioRule<MainActivity> activityRule =
-        new ActivityScenarioRule<>(MainActivity.class);
+**B. Empty State Handling (2 tests):**
+- test_loadWeightEntries_withNoEntries_showsEmptyState
+- test_loadWeightEntries_withEntries_hidesEmptyState
 
-    @Test
-    public void test_loadWeightEntries_withEntries_populatesRecyclerView() {
-        // ARRANGE: Create test user and weight entries in database
+**C. RecyclerView Population (1 test):**
+- test_loadWeightEntries_withEntries_populatesRecyclerView
 
-        // ACT: Launch MainActivity
+**D. Progress Card Display (2 tests):**
+- test_updateProgressCard_withActiveGoal_showsProgressData
+- test_updateProgressCard_withNoGoal_hidesProgressCard
 
-        // ASSERT: Verify RecyclerView populated
-        onView(withId(R.id.weightEntriesRecyclerView))
-            .check(matches(hasDescendant(withText("150.0"))));
-    }
-}
+**E. Quick Stats Calculation (2 tests):**
+- test_calculateQuickStats_withData_showsCorrectValues
+- test_calculateQuickStats_withStreak_showsDayStreak
+
+**F. Delete Entry Workflow (2 tests):**
+- test_handleDeleteEntry_withConfirmation_deletesEntry
+- test_handleDeleteEntry_withCancel_doesNotDelete
+
+**G. Navigation Behavior (3 tests):**
+- test_fabClick_showsToastPlaceholder
+- test_bottomNavigation_homeSelected_staysOnMainActivity
+- test_bottomNavigation_otherItemSelected_showsToastPlaceholder
+
+**H. User Info Display (1 test):**
+- test_userName_displaysCurrentUserName
+
+**I. Progress Calculations (2 tests):**
+- test_progressPercentage_calculatesCorrectly
+- test_progressBar_widthMatchesPercentage
+
+### Technical Implementation
+
+**Test Infrastructure:**
+- Uses ActivityScenarioRule for activity lifecycle management
+- Real test database (in-memory SQLite) for integration testing
+- SessionManager creates authenticated sessions for tests
+- Helper methods: createTestUser(), createTestWeightEntry(), createTestGoal()
+- Custom matcher: withRecyclerViewItemCount() for verifying adapter item counts
+
+**Benefits Achieved:**
+- ✅ Tests run on real Android device/emulator with full Material3 theme support
+- ✅ Covers critical UI workflows (dashboard, entries, progress, navigation)
+- ✅ Industry-standard Android testing approach
+- ✅ Catches Material3-specific UI bugs before production
+- ✅ Reliable end-to-end testing for production readiness
+
+**Test Execution:**
+```bash
+# Run Espresso tests (requires connected device/emulator)
+./gradlew connectedAndroidTest
+
+# Run full test suite (unit + instrumented)
+./gradlew test connectedAndroidTest
 ```
 
-**Benefits:**
-- ✅ Tests real Material3 rendering
-- ✅ Covers critical user flows
-- ✅ Industry standard Android testing
-- 🐛 Catches UI bugs before production
+### Results
+
+**Test Count:**
+- **Before**: 344 unit tests (17 MainActivity tests commented out)
+- **After**: 344 unit tests + 17 Espresso tests = 361 total tests
+- **Coverage**: All critical MainActivity UI flows tested end-to-end
+
+**Production Readiness:** ✅ READY - All critical UI flows validated with Material3 support
 
 ---
 
