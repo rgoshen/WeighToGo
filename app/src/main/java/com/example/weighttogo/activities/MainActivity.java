@@ -9,6 +9,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.VisibleForTesting;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -88,7 +89,7 @@ public class MainActivity extends AppCompatActivity
 
     // State
     private long currentUserId;
-    private List<WeightEntry> weightEntries;
+    private List<WeightEntry> weightEntries = new ArrayList<>();  // Initialized at declaration to prevent NPE
     private GoalWeight activeGoal;
 
     @Override
@@ -130,7 +131,9 @@ public class MainActivity extends AppCompatActivity
      * @return true if authenticated, false otherwise
      */
     private boolean checkAuthentication() {
-        sessionManager = SessionManager.getInstance(this);
+        if (sessionManager == null) {
+            sessionManager = SessionManager.getInstance(this);
+        }
 
         if (!sessionManager.isLoggedIn()) {
             Intent intent = new Intent(this, LoginActivity.class);
@@ -145,14 +148,100 @@ public class MainActivity extends AppCompatActivity
 
     /**
      * Initialize database and DAOs.
+     * Only initializes if not already set (allows test injection).
      */
     private void initDataLayer() {
-        dbHelper = WeighToGoDBHelper.getInstance(this);
-        userDAO = new UserDAO(dbHelper);
-        weightEntryDAO = new WeightEntryDAO(dbHelper);
-        goalWeightDAO = new GoalWeightDAO(dbHelper);
-        weightEntries = new ArrayList<>();
+        if (dbHelper == null) {
+            dbHelper = WeighToGoDBHelper.getInstance(this);
+        }
+        if (userDAO == null) {
+            userDAO = new UserDAO(dbHelper);
+        }
+        if (weightEntryDAO == null) {
+            weightEntryDAO = new WeightEntryDAO(dbHelper);
+        }
+        if (goalWeightDAO == null) {
+            goalWeightDAO = new GoalWeightDAO(dbHelper);
+        }
     }
+
+    // =============================================================================================
+    // TESTING SETTERS (Package-Private)
+    // =============================================================================================
+
+    /**
+     * Set UserDAO instance (for testing only).
+     *
+     * @param userDAO the UserDAO instance to use
+     * @throws IllegalArgumentException if userDAO is null
+     */
+    @VisibleForTesting
+    void setUserDAO(UserDAO userDAO) {
+        if (userDAO == null) {
+            throw new IllegalArgumentException("UserDAO cannot be null");
+        }
+        this.userDAO = userDAO;
+    }
+
+    /**
+     * Set WeightEntryDAO instance (for testing only).
+     *
+     * @param weightEntryDAO the WeightEntryDAO instance to use
+     * @throws IllegalArgumentException if weightEntryDAO is null
+     */
+    @VisibleForTesting
+    void setWeightEntryDAO(WeightEntryDAO weightEntryDAO) {
+        if (weightEntryDAO == null) {
+            throw new IllegalArgumentException("WeightEntryDAO cannot be null");
+        }
+        this.weightEntryDAO = weightEntryDAO;
+    }
+
+    /**
+     * Set GoalWeightDAO instance (for testing only).
+     *
+     * @param goalWeightDAO the GoalWeightDAO instance to use
+     * @throws IllegalArgumentException if goalWeightDAO is null
+     */
+    @VisibleForTesting
+    void setGoalWeightDAO(GoalWeightDAO goalWeightDAO) {
+        if (goalWeightDAO == null) {
+            throw new IllegalArgumentException("GoalWeightDAO cannot be null");
+        }
+        this.goalWeightDAO = goalWeightDAO;
+    }
+
+    /**
+     * Set SessionManager instance (for testing only).
+     *
+     * @param sessionManager the SessionManager instance to use
+     * @throws IllegalArgumentException if sessionManager is null
+     */
+    @VisibleForTesting
+    void setSessionManager(SessionManager sessionManager) {
+        if (sessionManager == null) {
+            throw new IllegalArgumentException("SessionManager cannot be null");
+        }
+        this.sessionManager = sessionManager;
+    }
+
+    /**
+     * Set DBHelper instance (for testing only).
+     *
+     * @param dbHelper the WeighToGoDBHelper instance to use
+     * @throws IllegalArgumentException if dbHelper is null
+     */
+    @VisibleForTesting
+    void setDbHelper(WeighToGoDBHelper dbHelper) {
+        if (dbHelper == null) {
+            throw new IllegalArgumentException("DBHelper cannot be null");
+        }
+        this.dbHelper = dbHelper;
+    }
+
+    // =============================================================================================
+    // VIEW INITIALIZATION
+    // =============================================================================================
 
     /**
      * Initialize all view references.

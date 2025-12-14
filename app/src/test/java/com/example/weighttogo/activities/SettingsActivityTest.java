@@ -2,6 +2,7 @@ package com.example.weighttogo.activities;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.when;
 
 import android.content.Context;
 import android.widget.TextView;
@@ -11,6 +12,7 @@ import com.example.weighttogo.database.UserDAO;
 import com.example.weighttogo.database.UserPreferenceDAO;
 import com.example.weighttogo.database.WeighToGoDBHelper;
 import com.example.weighttogo.models.User;
+import com.example.weighttogo.utils.SMSNotificationManager;
 import com.example.weighttogo.utils.SessionManager;
 
 import org.junit.After;
@@ -18,6 +20,8 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
@@ -47,46 +51,34 @@ import java.time.LocalDateTime;
  * Resolution: Will be migrated to Espresso instrumented tests in Phase 8.4
  * Tracking: Same issue affects WeightEntryActivityTest and MainActivityTest
  *
+ * **Phase 8A Refactoring**: Converted to use Mockito mocks instead of real database.
+ *
  * Follows strict TDD (RED phase): These tests MUST FAIL before implementation.
  */
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 30)
 public class SettingsActivityTest {
 
-    private Context context;
-    private WeighToGoDBHelper dbHelper;
-    private UserDAO userDAO;
-    private UserPreferenceDAO userPreferenceDAO;
-    private SessionManager sessionManager;
-    private long testUserId;
+    @Mock private UserDAO mockUserDAO;
+    @Mock private UserPreferenceDAO mockUserPreferenceDAO;
+    @Mock private SMSNotificationManager mockSmsManager;
+    @Mock private SessionManager mockSessionManager;
+
     private ActivityController<SettingsActivity> activityController;
     private SettingsActivity activity;
+    private long testUserId;
 
     @Before
     public void setUp() {
-        context = RuntimeEnvironment.getApplication();
-        dbHelper = WeighToGoDBHelper.getInstance(context);
-        userDAO = new UserDAO(dbHelper);
-        userPreferenceDAO = new UserPreferenceDAO(dbHelper);
-        sessionManager = SessionManager.getInstance(context);
+        // Initialize Mockito mocks
+        MockitoAnnotations.openMocks(this);
 
-        // Create test user
-        User testUser = new User();
-        testUser.setUsername("settings_testuser_" + System.currentTimeMillis());
-        testUser.setPasswordHash("test_hash");
-        testUser.setSalt("test_salt");
-        testUser.setPasswordAlgorithm("SHA256");
-        testUser.setCreatedAt(LocalDateTime.now());
-        testUser.setUpdatedAt(LocalDateTime.now());
-        testUser.setActive(true);
+        // Test user data
+        testUserId = 1L;
 
-        try {
-            testUserId = userDAO.insertUser(testUser);
-            testUser.setUserId(testUserId);
-            sessionManager.createSession(testUser);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to create test user", e);
-        }
+        // Set default mock behaviors
+        when(mockSessionManager.isLoggedIn()).thenReturn(true);
+        when(mockSessionManager.getCurrentUserId()).thenReturn(testUserId);
     }
 
     @After
@@ -94,10 +86,6 @@ public class SettingsActivityTest {
         if (activity != null) {
             activity.finish();
         }
-        if (testUserId > 0) {
-            userDAO.deleteUser(testUserId);
-        }
-        sessionManager.logout();
     }
 
     /**
@@ -128,8 +116,8 @@ public class SettingsActivityTest {
     @Ignore("Robolectric/Material3 incompatibility - migrate to Espresso (GH #12)")
     @Test
     public void test_onCreate_loadsCurrentWeightUnit() {
-        // ARRANGE - Set preference to "kg"
-        userPreferenceDAO.setWeightUnit(testUserId, "kg");
+        // ARRANGE - Stub preference to return "kg"
+        when(mockUserPreferenceDAO.getWeightUnit(testUserId)).thenReturn("kg");
 
         // ACT - Launch SettingsActivity
         activityController = Robolectric.buildActivity(SettingsActivity.class);
@@ -157,8 +145,8 @@ public class SettingsActivityTest {
     @Ignore("Robolectric/Material3 incompatibility - migrate to Espresso (GH #12)")
     @Test
     public void test_clickLbsToggle_savesLbsPreference() {
-        // ARRANGE - Start with "kg" preference
-        userPreferenceDAO.setWeightUnit(testUserId, "kg");
+        // ARRANGE - Stub preference to return "kg"
+        when(mockUserPreferenceDAO.getWeightUnit(testUserId)).thenReturn("kg");
 
         activityController = Robolectric.buildActivity(SettingsActivity.class);
         activity = activityController.create().start().resume().get();
@@ -168,7 +156,7 @@ public class SettingsActivityTest {
         unitLbs.performClick();
 
         // ASSERT - Preference should be saved as "lbs"
-        String savedUnit = userPreferenceDAO.getWeightUnit(testUserId);
+        String savedUnit = mockUserPreferenceDAO.getWeightUnit(testUserId);
         assertEquals("Clicking lbs should save 'lbs' preference", "lbs", savedUnit);
     }
 
@@ -192,7 +180,7 @@ public class SettingsActivityTest {
         unitKg.performClick();
 
         // ASSERT - Preference should be saved as "kg"
-        String savedUnit = userPreferenceDAO.getWeightUnit(testUserId);
+        String savedUnit = mockUserPreferenceDAO.getWeightUnit(testUserId);
         assertEquals("Clicking kg should save 'kg' preference", "kg", savedUnit);
     }
 

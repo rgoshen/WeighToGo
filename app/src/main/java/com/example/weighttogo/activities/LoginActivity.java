@@ -7,6 +7,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.VisibleForTesting;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.weighttogo.R;
@@ -79,6 +80,7 @@ public class LoginActivity extends AppCompatActivity {
     // DATA ACCESS AND SESSION
     // =============================================================================================
 
+    private WeighToGoDBHelper dbHelper;
     private UserDAO userDAO;
     private SessionManager sessionManager;
 
@@ -104,15 +106,67 @@ public class LoginActivity extends AppCompatActivity {
         setContentView(R.layout.activity_login);
 
         // Initialize data access and session management
-        WeighToGoDBHelper dbHelper = WeighToGoDBHelper.getInstance(this);
-        userDAO = new UserDAO(dbHelper);
-        sessionManager = SessionManager.getInstance(this);
+        initDataLayer();
 
         // Initialize UI components
         initViews();
 
         // Setup click listeners
         setupClickListeners();
+    }
+
+    // =============================================================================================
+    // DATA LAYER INITIALIZATION
+    // =============================================================================================
+
+    /**
+     * Initialize data access layer components.
+     * Only initializes if not already set (allows test injection).
+     */
+    private void initDataLayer() {
+        if (dbHelper == null) {
+            dbHelper = WeighToGoDBHelper.getInstance(this);
+        }
+        if (userDAO == null) {
+            userDAO = new UserDAO(dbHelper);
+        }
+        if (sessionManager == null) {
+            sessionManager = SessionManager.getInstance(this);
+        }
+    }
+
+    // =============================================================================================
+    // TESTING SETTERS (Package-Private)
+    // =============================================================================================
+
+    /**
+     * Set UserDAO instance (for testing only).
+     * Allows test code to inject mock DAOs.
+     *
+     * @param userDAO the UserDAO instance to use
+     * @throws IllegalArgumentException if userDAO is null
+     */
+    @VisibleForTesting
+    void setUserDAO(UserDAO userDAO) {
+        if (userDAO == null) {
+            throw new IllegalArgumentException("UserDAO cannot be null");
+        }
+        this.userDAO = userDAO;
+    }
+
+    /**
+     * Set SessionManager instance (for testing only).
+     * Allows test code to inject mock SessionManager.
+     *
+     * @param sessionManager the SessionManager instance to use
+     * @throws IllegalArgumentException if sessionManager is null
+     */
+    @VisibleForTesting
+    void setSessionManager(SessionManager sessionManager) {
+        if (sessionManager == null) {
+            throw new IllegalArgumentException("SessionManager cannot be null");
+        }
+        this.sessionManager = sessionManager;
     }
 
     // =============================================================================================

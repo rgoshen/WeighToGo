@@ -186,6 +186,110 @@ git checkout -b fix/bug-description
 
 ---
 
+## 🧪 Testing Strategy
+
+### When to Use Mocks vs Real Database
+
+**Use Mocks** (Mockito) for:
+- **Unit tests** - Testing business logic in isolation
+- **Activity tests** - Testing UI behavior and interactions
+- **Fast feedback** - Tests that need to run quickly
+- **Edge cases** - Simulating error conditions, null returns, etc.
+
+**Example**: `MainActivityTest` uses Mockito mocks to test authentication redirect without real database.
+
+**Use Real Database** (Integration tests) for:
+- **DAO tests** - Verifying SQL queries and database constraints
+- **Data integrity** - Testing transactions, foreign keys, unique constraints
+- **Multi-step workflows** - Testing end-to-end data flows
+- **Migration verification** - Ensuring database schema changes work correctly
+
+**Example**: `LoginActivityIntegrationTest` uses real database to verify DAO/SessionManager integration.
+
+### Dependency Injection for Testing
+
+Activities use **package-private setter injection** to allow test code to inject mocks:
+
+```java
+// Production code (Activity)
+private UserDAO userDAO;
+
+void setUserDAO(UserDAO userDAO) {
+    if (userDAO == null) {
+        throw new IllegalArgumentException("UserDAO cannot be null");
+    }
+    this.userDAO = userDAO;
+}
+
+private void initDataLayer() {
+    if (userDAO == null) {
+        userDAO = new UserDAO(WeighToGoDBHelper.getInstance(this));
+    }
+}
+```
+
+```java
+// Test code
+@Mock private UserDAO mockUserDAO;
+
+@Before
+public void setUp() {
+    MockitoAnnotations.openMocks(this);
+
+    ActivityController<MainActivity> controller = Robolectric.buildActivity(MainActivity.class);
+    activity = controller.get();
+
+    // Inject mocks BEFORE onCreate()
+    activity.setUserDAO(mockUserDAO);
+
+    // Set default behaviors
+    when(mockUserDAO.getUserById(1L)).thenReturn(testUser);
+
+    // NOW call lifecycle methods
+    controller.create().start().resume();
+}
+```
+
+### Mock Stubbing Best Practices
+
+Always stub mock method calls that return values:
+
+```java
+@Before
+public void setUp() {
+    // Stub DAO insert methods to return realistic IDs
+    when(mockWeightEntryDAO.insertWeightEntry(any(WeightEntry.class)))
+            .thenAnswer(invocation -> System.currentTimeMillis() % 1000000);
+
+    when(mockGoalWeightDAO.insertGoal(any(GoalWeight.class)))
+            .thenReturn(1L);
+
+    // Stub getter methods
+    when(mockUserDAO.getUserById(testUserId)).thenReturn(testUser);
+}
+```
+
+### Verification
+
+Use `verify()` to ensure mocked methods are called:
+
+```java
+@Test
+public void test_login_callsSessionManager() {
+    // ACT
+    loginButton.performClick();
+
+    // ASSERT
+    verify(mockSessionManager).createSession(any(User.class));
+}
+```
+
+**See Also**:
+- ADR-0005: Dependency Injection for Testing
+- `docs/architecture/WeighToGo_Database_Architecture.md` for DAO testing guidelines
+
+---
+
 ## 📏 Code Style Guidelines
 
 ### Java Style Guide

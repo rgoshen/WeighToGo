@@ -14,6 +14,7 @@ import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.VisibleForTesting;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.work.Constraints;
@@ -114,15 +115,77 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     /**
-     * Initialize database helper and DAOs
+     * Initialize database helper and DAOs.
+     * Only initializes if not already set (allows test injection).
      */
     private void initDataLayer() {
-        dbHelper = WeighToGoDBHelper.getInstance(this);
-        userPreferenceDAO = new UserPreferenceDAO(dbHelper);
-        userDAO = new UserDAO(dbHelper);
-        smsManager = SMSNotificationManager.getInstance(this, userDAO, userPreferenceDAO,
-                new AchievementDAO(dbHelper));
+        if (dbHelper == null) {
+            dbHelper = WeighToGoDBHelper.getInstance(this);
+        }
+        if (userPreferenceDAO == null) {
+            userPreferenceDAO = new UserPreferenceDAO(dbHelper);
+        }
+        if (userDAO == null) {
+            userDAO = new UserDAO(dbHelper);
+        }
+
+        // Initialize shared DAO (avoid inline instantiation for clarity)
+        AchievementDAO achievementDAO = new AchievementDAO(dbHelper);
+
+        if (smsManager == null) {
+            smsManager = SMSNotificationManager.getInstance(this, userDAO, userPreferenceDAO, achievementDAO);
+        }
     }
+
+    // =============================================================================================
+    // TESTING SETTERS (Package-Private)
+    // =============================================================================================
+
+    /**
+     * Set UserDAO instance (for testing only).
+     *
+     * @param userDAO the UserDAO instance to use
+     * @throws IllegalArgumentException if userDAO is null
+     */
+    @VisibleForTesting
+    void setUserDAO(UserDAO userDAO) {
+        if (userDAO == null) {
+            throw new IllegalArgumentException("UserDAO cannot be null");
+        }
+        this.userDAO = userDAO;
+    }
+
+    /**
+     * Set UserPreferenceDAO instance (for testing only).
+     *
+     * @param userPreferenceDAO the UserPreferenceDAO instance to use
+     * @throws IllegalArgumentException if userPreferenceDAO is null
+     */
+    @VisibleForTesting
+    void setUserPreferenceDAO(UserPreferenceDAO userPreferenceDAO) {
+        if (userPreferenceDAO == null) {
+            throw new IllegalArgumentException("UserPreferenceDAO cannot be null");
+        }
+        this.userPreferenceDAO = userPreferenceDAO;
+    }
+
+    /**
+     * Set SMSNotificationManager instance (for testing only).
+     *
+     * @param smsManager the SMSNotificationManager instance to use
+     * @throws IllegalArgumentException if smsManager is null
+     */
+    @VisibleForTesting
+    void setSMSNotificationManager(SMSNotificationManager smsManager) {
+        if (smsManager == null) {
+            throw new IllegalArgumentException("SMSNotificationManager cannot be null");
+        }
+        this.smsManager = smsManager;
+    }
+
+    // =============================================================================================
+    // VIEW INITIALIZATION
+    // =============================================================================================
 
     /**
      * Initialize view references

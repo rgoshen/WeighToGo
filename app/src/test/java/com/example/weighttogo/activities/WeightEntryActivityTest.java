@@ -12,6 +12,8 @@ import com.example.weighttogo.database.WeighToGoDBHelper;
 import com.example.weighttogo.database.WeightEntryDAO;
 import com.example.weighttogo.models.User;
 import com.example.weighttogo.models.WeightEntry;
+import com.example.weighttogo.utils.AchievementManager;
+import com.example.weighttogo.utils.SMSNotificationManager;
 import com.example.weighttogo.utils.SessionManager;
 
 import org.junit.After;
@@ -19,6 +21,8 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
@@ -31,6 +35,7 @@ import java.time.LocalDateTime;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.when;
 
 /**
  * Regression tests for WeightEntryActivity.
@@ -49,6 +54,8 @@ import static org.junit.Assert.assertTrue;
  * Resolution: Will be migrated to Espresso instrumented tests in Phase 8.4
  * Tracking: Same issue affects MainActivityTest (17 tests commented out)
  *
+ * **Phase 8A Refactoring**: Converted to use Mockito mocks instead of real database.
+ *
  * These tests document the 4 bugs found during Phase 4 manual testing:
  * 1. Number input at 0.0 appends after decimal (0.08 instead of 8)
  * 2. Default display shows 172.0 but validation rejects it
@@ -59,42 +66,27 @@ import static org.junit.Assert.assertTrue;
 @Config(sdk = 30)
 public class WeightEntryActivityTest {
 
-    private Context context;
-    private WeighToGoDBHelper dbHelper;
-    private WeightEntryDAO weightEntryDAO;
-    private UserDAO userDAO;
-    private UserPreferenceDAO userPreferenceDAO;
-    private SessionManager sessionManager;
-    private long testUserId;
-    private User testUser;
+    @Mock private WeightEntryDAO mockWeightEntryDAO;
+    @Mock private UserPreferenceDAO mockUserPreferenceDAO;
+    @Mock private AchievementManager mockAchievementManager;
+    @Mock private SMSNotificationManager mockSmsManager;
+    @Mock private SessionManager mockSessionManager;
+
     private ActivityController<WeightEntryActivity> activityController;
     private WeightEntryActivity activity;
+    private long testUserId;
 
     @Before
-    public void setUp() throws DatabaseException {
-        context = RuntimeEnvironment.getApplication();
-        dbHelper = WeighToGoDBHelper.getInstance(context);
-        weightEntryDAO = new WeightEntryDAO(dbHelper);
-        userDAO = new UserDAO(dbHelper);
-        userPreferenceDAO = new UserPreferenceDAO(dbHelper);
-        sessionManager = SessionManager.getInstance(context);
+    public void setUp() {
+        // Initialize Mockito mocks
+        MockitoAnnotations.openMocks(this);
 
-        // Create test user
-        testUser = new User();
-        testUser.setUsername("weightentry_testuser_" + System.currentTimeMillis());
-        testUser.setPasswordHash("test_hash");
-        testUser.setSalt("test_salt");
-        testUser.setPasswordAlgorithm("SHA256");
-        testUser.setDisplayName("Weight Entry Test User");
-        testUser.setCreatedAt(LocalDateTime.now());
-        testUser.setUpdatedAt(LocalDateTime.now());
-        testUser.setActive(true);
+        // Test user data
+        testUserId = 1L;
 
-        testUserId = userDAO.insertUser(testUser);
-        assertTrue("Test user should be created", testUserId > 0);
-
-        testUser.setUserId(testUserId);
-        sessionManager.createSession(testUser);
+        // Set default mock behaviors
+        when(mockSessionManager.isLoggedIn()).thenReturn(true);
+        when(mockSessionManager.getCurrentUserId()).thenReturn(testUserId);
     }
 
     @After
@@ -102,10 +94,6 @@ public class WeightEntryActivityTest {
         if (activity != null) {
             activity.finish();
         }
-        if (testUserId > 0) {
-            userDAO.deleteUser(testUserId);
-        }
-        sessionManager.logout();
     }
 
     // =============================================================================================
@@ -120,12 +108,12 @@ public class WeightEntryActivityTest {
     @Test
     public void test_handleNumberInput_withZeroWeight_replacesInsteadOfAppends() {
         // ARRANGE
-        Intent intent = new Intent(context, WeightEntryActivity.class);
+        Intent intent = new Intent(RuntimeEnvironment.getApplication(), WeightEntryActivity.class);
         intent.putExtra(WeightEntryActivity.EXTRA_USER_ID, testUserId);
         intent.putExtra(WeightEntryActivity.EXTRA_IS_EDIT_MODE, false);
 
-        activityController = Robolectric.buildActivity(WeightEntryActivity.class, intent);
-        activity = activityController.create().start().resume().get();
+        buildAndInjectActivity(intent);
+        activityController.create().start().resume();
 
         // Simulate quick adjust to get to 0.0
         TextView adjustMinusOne = activity.findViewById(R.id.adjustMinusOne);
@@ -152,12 +140,12 @@ public class WeightEntryActivityTest {
     @Test
     public void test_handleNumberInput_withDecimalPoint_preventsMultipleDecimals() {
         // ARRANGE
-        Intent intent = new Intent(context, WeightEntryActivity.class);
+        Intent intent = new Intent(RuntimeEnvironment.getApplication(), WeightEntryActivity.class);
         intent.putExtra(WeightEntryActivity.EXTRA_USER_ID, testUserId);
         intent.putExtra(WeightEntryActivity.EXTRA_IS_EDIT_MODE, false);
 
-        activityController = Robolectric.buildActivity(WeightEntryActivity.class, intent);
-        activity = activityController.create().start().resume().get();
+        buildAndInjectActivity(intent);
+        activityController.create().start().resume();
 
         // ACT - Type "1.2.5"
         activity.findViewById(R.id.numpad1).performClick();
@@ -180,12 +168,12 @@ public class WeightEntryActivityTest {
     @Test
     public void test_handleNumberInput_withMaxDigits_preventsOverflow() {
         // ARRANGE
-        Intent intent = new Intent(context, WeightEntryActivity.class);
+        Intent intent = new Intent(RuntimeEnvironment.getApplication(), WeightEntryActivity.class);
         intent.putExtra(WeightEntryActivity.EXTRA_USER_ID, testUserId);
         intent.putExtra(WeightEntryActivity.EXTRA_IS_EDIT_MODE, false);
 
-        activityController = Robolectric.buildActivity(WeightEntryActivity.class, intent);
-        activity = activityController.create().start().resume().get();
+        buildAndInjectActivity(intent);
+        activityController.create().start().resume();
 
         // ACT - Type "999.99" (5 digits, max allowed)
         activity.findViewById(R.id.numpad9).performClick();
@@ -218,12 +206,12 @@ public class WeightEntryActivityTest {
     @Test
     public void test_onCreate_addMode_initializesWithZeroPointZero() {
         // ARRANGE & ACT
-        Intent intent = new Intent(context, WeightEntryActivity.class);
+        Intent intent = new Intent(RuntimeEnvironment.getApplication(), WeightEntryActivity.class);
         intent.putExtra(WeightEntryActivity.EXTRA_USER_ID, testUserId);
         intent.putExtra(WeightEntryActivity.EXTRA_IS_EDIT_MODE, false);
 
-        activityController = Robolectric.buildActivity(WeightEntryActivity.class, intent);
-        activity = activityController.create().start().resume().get();
+        buildAndInjectActivity(intent);
+        activityController.create().start().resume();
 
         // ASSERT - Display should show "0.0" not XML default "172.0"
         TextView weightValue = activity.findViewById(R.id.weightValue);
@@ -240,12 +228,12 @@ public class WeightEntryActivityTest {
     @Test
     public void test_handleSave_withZeroWeight_allowsSave() {
         // ARRANGE
-        Intent intent = new Intent(context, WeightEntryActivity.class);
+        Intent intent = new Intent(RuntimeEnvironment.getApplication(), WeightEntryActivity.class);
         intent.putExtra(WeightEntryActivity.EXTRA_USER_ID, testUserId);
         intent.putExtra(WeightEntryActivity.EXTRA_IS_EDIT_MODE, false);
 
-        activityController = Robolectric.buildActivity(WeightEntryActivity.class, intent);
-        activity = activityController.create().start().resume().get();
+        buildAndInjectActivity(intent);
+        activityController.create().start().resume();
 
         TextView weightValue = activity.findViewById(R.id.weightValue);
         assertEquals("Weight should be 0.0", "0.0", weightValue.getText().toString());
@@ -254,7 +242,7 @@ public class WeightEntryActivityTest {
         activity.findViewById(R.id.saveButton).performClick();
 
         // ASSERT - Entry should be created with weight 0.0
-        WeightEntry savedEntry = weightEntryDAO.getLatestWeightEntry(testUserId);
+        WeightEntry savedEntry = mockWeightEntryDAO.getLatestWeightEntry(testUserId);
         assertNotNull("Entry with 0.0 weight should be saved", savedEntry);
         assertEquals("Saved weight should be 0.0", 0.0, savedEntry.getWeightValue(), 0.01);
     }
@@ -267,12 +255,12 @@ public class WeightEntryActivityTest {
     @Test
     public void test_handleSave_withAboveMaxLbs_rejectsEntry() {
         // ARRANGE
-        Intent intent = new Intent(context, WeightEntryActivity.class);
+        Intent intent = new Intent(RuntimeEnvironment.getApplication(), WeightEntryActivity.class);
         intent.putExtra(WeightEntryActivity.EXTRA_USER_ID, testUserId);
         intent.putExtra(WeightEntryActivity.EXTRA_IS_EDIT_MODE, false);
 
-        activityController = Robolectric.buildActivity(WeightEntryActivity.class, intent);
-        activity = activityController.create().start().resume().get();
+        buildAndInjectActivity(intent);
+        activityController.create().start().resume();
 
         // Type "701" lbs (above max of 700)
         activity.findViewById(R.id.numpad7).performClick();
@@ -286,7 +274,7 @@ public class WeightEntryActivityTest {
         activity.findViewById(R.id.saveButton).performClick();
 
         // ASSERT - Entry should NOT be saved
-        WeightEntry entry = weightEntryDAO.getLatestWeightEntry(testUserId);
+        WeightEntry entry = mockWeightEntryDAO.getLatestWeightEntry(testUserId);
         assertTrue("No entry should be saved (701 exceeds max 700)",
                 entry == null || entry.getWeightValue() != 701.0);
     }
@@ -303,12 +291,12 @@ public class WeightEntryActivityTest {
     @Test
     public void test_unitToggle_fromLbsToKg_convertsWeightCorrectly() {
         // ARRANGE
-        Intent intent = new Intent(context, WeightEntryActivity.class);
+        Intent intent = new Intent(RuntimeEnvironment.getApplication(), WeightEntryActivity.class);
         intent.putExtra(WeightEntryActivity.EXTRA_USER_ID, testUserId);
         intent.putExtra(WeightEntryActivity.EXTRA_IS_EDIT_MODE, false);
 
-        activityController = Robolectric.buildActivity(WeightEntryActivity.class, intent);
-        activity = activityController.create().start().resume().get();
+        buildAndInjectActivity(intent);
+        activityController.create().start().resume();
 
         // Type "120" lbs
         activity.findViewById(R.id.numpad1).performClick();
@@ -339,12 +327,12 @@ public class WeightEntryActivityTest {
     @Test
     public void test_unitToggle_fromKgToLbs_convertsWeightCorrectly() {
         // ARRANGE
-        Intent intent = new Intent(context, WeightEntryActivity.class);
+        Intent intent = new Intent(RuntimeEnvironment.getApplication(), WeightEntryActivity.class);
         intent.putExtra(WeightEntryActivity.EXTRA_USER_ID, testUserId);
         intent.putExtra(WeightEntryActivity.EXTRA_IS_EDIT_MODE, false);
 
-        activityController = Robolectric.buildActivity(WeightEntryActivity.class, intent);
-        activity = activityController.create().start().resume().get();
+        buildAndInjectActivity(intent);
+        activityController.create().start().resume();
 
         // Switch to kg first (NOTE: Unit toggle removed in Phase 6.0.2)
         // activity.findViewById(R.id.unitKg).performClick();
@@ -393,11 +381,11 @@ public class WeightEntryActivityTest {
         existingEntry.setUpdatedAt(LocalDateTime.now());
         existingEntry.setDeleted(false);
 
-        long weightId = weightEntryDAO.insertWeightEntry(existingEntry);
+        long weightId = mockWeightEntryDAO.insertWeightEntry(existingEntry);
         assertTrue("Existing entry should be created", weightId > 0);
 
         // Launch activity in edit mode
-        Intent intent = new Intent(context, WeightEntryActivity.class);
+        Intent intent = new Intent(RuntimeEnvironment.getApplication(), WeightEntryActivity.class);
         intent.putExtra(WeightEntryActivity.EXTRA_USER_ID, testUserId);
         intent.putExtra(WeightEntryActivity.EXTRA_IS_EDIT_MODE, true);
         intent.putExtra(WeightEntryActivity.EXTRA_WEIGHT_ID, weightId);
@@ -405,8 +393,8 @@ public class WeightEntryActivityTest {
         intent.putExtra(WeightEntryActivity.EXTRA_WEIGHT_UNIT, "lbs");
         intent.putExtra(WeightEntryActivity.EXTRA_WEIGHT_DATE, LocalDate.now().toString());
 
-        activityController = Robolectric.buildActivity(WeightEntryActivity.class, intent);
-        activity = activityController.create().start().resume().get();
+        buildAndInjectActivity(intent);
+        activityController.create().start().resume();
 
         // Verify entry loaded
         TextView weightValue = activity.findViewById(R.id.weightValue);
@@ -420,7 +408,7 @@ public class WeightEntryActivityTest {
         activity.findViewById(R.id.saveButton).performClick();
 
         // ASSERT - Entry should be updated in database
-        WeightEntry updatedEntry = weightEntryDAO.getWeightEntryById(weightId);
+        WeightEntry updatedEntry = mockWeightEntryDAO.getWeightEntryById(weightId);
         assertNotNull("Entry should still exist", updatedEntry);
         assertEquals("Weight should be updated to 155.0", 155.0, updatedEntry.getWeightValue(), 0.01);
     }
@@ -458,17 +446,16 @@ public class WeightEntryActivityTest {
     @Ignore("Robolectric/Material3 incompatibility - migrate to Espresso (GH #12)")
     @Test
     public void test_onCreate_loadsGlobalWeightUnit() {
-        // ARRANGE - Set user preference to "kg"
-        boolean prefSet = userPreferenceDAO.setWeightUnit(testUserId, "kg");
-        assertEquals("Preference should be set successfully", true, prefSet);
+        // ARRANGE - Stub user preference to return "kg"
+        when(mockUserPreferenceDAO.getWeightUnit(testUserId)).thenReturn("kg");
 
         // ACT - Launch WeightEntryActivity in add mode
-        Intent intent = new Intent(context, WeightEntryActivity.class);
+        Intent intent = new Intent(RuntimeEnvironment.getApplication(), WeightEntryActivity.class);
         intent.putExtra(WeightEntryActivity.EXTRA_USER_ID, testUserId);
         intent.putExtra(WeightEntryActivity.EXTRA_IS_EDIT_MODE, false);
 
-        activityController = Robolectric.buildActivity(WeightEntryActivity.class, intent);
-        activity = activityController.create().start().resume().get();
+        buildAndInjectActivity(intent);
+        activityController.create().start().resume();
 
         // ASSERT - currentUnit field should equal "kg" from preference
         String currentUnit = getCurrentUnit(activity);
@@ -486,16 +473,16 @@ public class WeightEntryActivityTest {
     @Ignore("Robolectric/Material3 incompatibility - migrate to Espresso (GH #12)")
     @Test
     public void test_onCreate_withUserPreferringKg_initializesKgUnit() {
-        // ARRANGE - Set preference to "kg"
-        userPreferenceDAO.setWeightUnit(testUserId, "kg");
+        // ARRANGE - Stub preference to return "kg"
+        when(mockUserPreferenceDAO.getWeightUnit(testUserId)).thenReturn("kg");
 
         // ACT - Launch activity
-        Intent intent = new Intent(context, WeightEntryActivity.class);
+        Intent intent = new Intent(RuntimeEnvironment.getApplication(), WeightEntryActivity.class);
         intent.putExtra(WeightEntryActivity.EXTRA_USER_ID, testUserId);
         intent.putExtra(WeightEntryActivity.EXTRA_IS_EDIT_MODE, false);
 
-        activityController = Robolectric.buildActivity(WeightEntryActivity.class, intent);
-        activity = activityController.create().start().resume().get();
+        buildAndInjectActivity(intent);
+        activityController.create().start().resume();
 
         // ASSERT - weightUnit TextView should show "kg"
         TextView weightUnit = activity.findViewById(R.id.weightUnit);
@@ -519,15 +506,40 @@ public class WeightEntryActivityTest {
         // UserPreferenceDAO.getWeightUnit() returns "lbs" by default
 
         // ACT - Launch activity
-        Intent intent = new Intent(context, WeightEntryActivity.class);
+        Intent intent = new Intent(RuntimeEnvironment.getApplication(), WeightEntryActivity.class);
         intent.putExtra(WeightEntryActivity.EXTRA_USER_ID, testUserId);
         intent.putExtra(WeightEntryActivity.EXTRA_IS_EDIT_MODE, false);
 
-        activityController = Robolectric.buildActivity(WeightEntryActivity.class, intent);
-        activity = activityController.create().start().resume().get();
+        buildAndInjectActivity(intent);
+        activityController.create().start().resume();
 
         // ASSERT - currentUnit should equal "lbs" (default from UserPreferenceDAO)
         String currentUnit = getCurrentUnit(activity);
         assertEquals("Activity should default to 'lbs'", "lbs", currentUnit);
+    }
+
+    // =============================================================================================
+    // HELPER METHODS
+    // =============================================================================================
+
+    /**
+     * Helper to build WeightEntryActivity and inject mocks BEFORE onCreate().
+     * This ensures the activity uses mocked dependencies instead of real DAOs.
+     *
+     * Usage:
+     *   buildAndInjectActivity(intent);
+     *   activityController.create().start().resume();
+     *
+     * @param intent the Intent to start the activity with
+     */
+    private void buildAndInjectActivity(Intent intent) {
+        activityController = Robolectric.buildActivity(WeightEntryActivity.class, intent);
+        activity = activityController.get();  // Get instance WITHOUT calling onCreate()
+
+        // Inject mocks BEFORE onCreate() is called
+        activity.setWeightEntryDAO(mockWeightEntryDAO);
+        activity.setUserPreferenceDAO(mockUserPreferenceDAO);
+        activity.setAchievementManager(mockAchievementManager);
+        activity.setSMSNotificationManager(mockSmsManager);
     }
 }

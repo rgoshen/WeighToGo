@@ -7,6 +7,7 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.VisibleForTesting;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
@@ -206,23 +207,100 @@ public class WeightEntryActivity extends AppCompatActivity {
 
     /**
      * Initialize database helper and DAOs.
+     * Only initializes if not already set (allows test injection).
      */
     private void initDataLayer() {
-        dbHelper = WeighToGoDBHelper.getInstance(this);
-        weightEntryDAO = new WeightEntryDAO(dbHelper);
-        userPreferenceDAO = new UserPreferenceDAO(dbHelper);
+        if (dbHelper == null) {
+            dbHelper = WeighToGoDBHelper.getInstance(this);
+        }
+        if (weightEntryDAO == null) {
+            weightEntryDAO = new WeightEntryDAO(dbHelper);
+        }
+        if (userPreferenceDAO == null) {
+            userPreferenceDAO = new UserPreferenceDAO(dbHelper);
+        }
 
-        // Initialize achievement system (Phase 7.5)
+        // Initialize shared DAOs (avoid duplicate instantiation)
         AchievementDAO achievementDAO = new AchievementDAO(dbHelper);
         GoalWeightDAO goalWeightDAO = new GoalWeightDAO(dbHelper);
-        achievementManager = new AchievementManager(achievementDAO, goalWeightDAO, weightEntryDAO);
+        UserDAO userDAO = new UserDAO(dbHelper);
+
+        // Initialize achievement system (Phase 7.5)
+        if (achievementManager == null) {
+            achievementManager = new AchievementManager(achievementDAO, goalWeightDAO, weightEntryDAO);
+        }
 
         // Initialize SMS notification manager (Phase 7.5)
-        UserDAO userDAO = new UserDAO(dbHelper);
-        smsManager = SMSNotificationManager.getInstance(this, userDAO, userPreferenceDAO, achievementDAO);
+        if (smsManager == null) {
+            smsManager = SMSNotificationManager.getInstance(this, userDAO, userPreferenceDAO, achievementDAO);
+        }
 
         Log.d(TAG, "initDataLayer: Data layer initialized with achievement and SMS managers");
     }
+
+    // =============================================================================================
+    // TESTING SETTERS (Package-Private)
+    // =============================================================================================
+
+    /**
+     * Set WeightEntryDAO instance (for testing only).
+     *
+     * @param weightEntryDAO the WeightEntryDAO instance to use
+     * @throws IllegalArgumentException if weightEntryDAO is null
+     */
+    @VisibleForTesting
+    void setWeightEntryDAO(WeightEntryDAO weightEntryDAO) {
+        if (weightEntryDAO == null) {
+            throw new IllegalArgumentException("WeightEntryDAO cannot be null");
+        }
+        this.weightEntryDAO = weightEntryDAO;
+    }
+
+    /**
+     * Set UserPreferenceDAO instance (for testing only).
+     *
+     * @param userPreferenceDAO the UserPreferenceDAO instance to use
+     * @throws IllegalArgumentException if userPreferenceDAO is null
+     */
+    @VisibleForTesting
+    void setUserPreferenceDAO(UserPreferenceDAO userPreferenceDAO) {
+        if (userPreferenceDAO == null) {
+            throw new IllegalArgumentException("UserPreferenceDAO cannot be null");
+        }
+        this.userPreferenceDAO = userPreferenceDAO;
+    }
+
+    /**
+     * Set AchievementManager instance (for testing only).
+     *
+     * @param achievementManager the AchievementManager instance to use
+     * @throws IllegalArgumentException if achievementManager is null
+     */
+    @VisibleForTesting
+    void setAchievementManager(AchievementManager achievementManager) {
+        if (achievementManager == null) {
+            throw new IllegalArgumentException("AchievementManager cannot be null");
+        }
+        this.achievementManager = achievementManager;
+    }
+
+    /**
+     * Set SMSNotificationManager instance (for testing only).
+     *
+     * @param smsManager the SMSNotificationManager instance to use
+     * @throws IllegalArgumentException if smsManager is null
+     */
+    @VisibleForTesting
+    void setSMSNotificationManager(SMSNotificationManager smsManager) {
+        if (smsManager == null) {
+            throw new IllegalArgumentException("SMSNotificationManager cannot be null");
+        }
+        this.smsManager = smsManager;
+    }
+
+    // =============================================================================================
+    // USER PREFERENCES
+    // =============================================================================================
 
     /**
      * Load user preferences from database.
