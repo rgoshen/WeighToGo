@@ -232,7 +232,7 @@ public class MainActivityEspressoTest {
         createTestWeightEntry(170.0);
 
         // Restart activity to load entries
-        activityRule.getScenario().recreate();
+        scenario.recreate();
 
         // ACT & ASSERT - Verify empty state is hidden
         onView(withId(R.id.emptyStateContainer))
@@ -257,7 +257,7 @@ public class MainActivityEspressoTest {
         createTestWeightEntry(169.0);
 
         // Restart activity to load entries
-        activityRule.getScenario().recreate();
+        scenario.recreate();
 
         // ACT & ASSERT - Verify RecyclerView has 3 items
         onView(withId(R.id.weightRecyclerView))
@@ -281,7 +281,7 @@ public class MainActivityEspressoTest {
         createTestWeightEntry(165.0);
 
         // Restart activity to load data
-        activityRule.getScenario().recreate();
+        scenario.recreate();
 
         // ACT & ASSERT - Verify progress card is visible and shows correct values
         onView(withId(R.id.progressCard))
@@ -327,7 +327,7 @@ public class MainActivityEspressoTest {
         createTestWeightEntry(165.0);  // Current: 165
 
         // Restart activity to calculate stats
-        activityRule.getScenario().recreate();
+        scenario.recreate();
 
         // ACT & ASSERT - Verify quick stats show correct values
         // Total lost: 180 - 165 = 15
@@ -350,7 +350,7 @@ public class MainActivityEspressoTest {
         createTestWeightEntryOnDate(172.0, LocalDate.now().minusDays(2));
 
         // Restart activity to calculate streak
-        activityRule.getScenario().recreate();
+        scenario.recreate();
 
         // ACT & ASSERT - Verify day streak shows "3"
         onView(withId(R.id.dayStreakValue)).check(matches(withText("3")));
@@ -517,7 +517,7 @@ public class MainActivityEspressoTest {
         createTestWeightEntry(165.0);  // Current: 165, Lost: 15, Remaining: 15 → 50%
 
         // Restart activity to calculate progress
-        activityRule.getScenario().recreate();
+        scenario.recreate();
 
         // ACT & ASSERT - Verify progress percentage is "50%"
         onView(withId(R.id.progressPercentage)).check(matches(withText("50%")));
@@ -537,7 +537,7 @@ public class MainActivityEspressoTest {
         createTestWeightEntry(165.0);
 
         // Restart activity to render progress bar
-        activityRule.getScenario().recreate();
+        scenario.recreate();
 
         // ACT & ASSERT - Verify progress bar fill view exists and is visible
         onView(withId(R.id.progressBarFill)).check(matches(isDisplayed()));
