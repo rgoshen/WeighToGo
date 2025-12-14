@@ -2245,6 +2245,70 @@ public class SettingsActivityTest {
 - ✅ SettingsActivityTest: 12 tests migrated to Espresso (Phase 9.6.3)
 - Total: 41 tests unblocked, GH #12 substantially resolved
 
+#### 9.6.4 GoalsActivity Comprehensive Testing ✅ (Completed 2025-12-13)
+**Approach:** Created first comprehensive test coverage for GoalsActivity (Phase 5 feature with 0 previous tests)
+
+**Rationale:** GoalsActivity is a critical Phase 5 feature (Goal Weight Management) that had no test coverage. Added Espresso instrumented tests for UI interactions and Robolectric unit tests for the adapter.
+
+**Completed:**
+- [x] Added package-private test setters to GoalsActivity.java (setGoalWeightDAO, setWeightEntryDAO, setUserDAO, setSessionManager) (2025-12-13)
+- [x] Created `app/src/androidTest/java/com/example/weighttogo/activities/GoalsActivityEspressoTest.java` (2025-12-13)
+  - 12 Espresso instrumented tests covering goal display, creation, editing, history, and navigation
+  - Uses ActivityScenario + Mockito mocks pattern established in previous migrations
+  - Compilation verified successfully
+- [x] Created `app/src/test/java/com/example/weighttogo/adapters/GoalHistoryAdapterTest.java` (2025-12-13)
+  - 4 Robolectric unit tests (following WeightEntryAdapterTest pattern)
+  - Tests constructor, getItemCount, updateGoals methods
+  - Avoids layout inflation complexity (tested via GoalsActivityEspressoTest instead)
+  - All tests passing
+
+**Tests Created (16 tests total):**
+
+**GoalsActivityEspressoTest.java (12 tests):**
+- [x] test_onCreate_withActiveGoal_displaysGoalCard
+  - Verifies goal card visible, empty state hidden when active goal exists
+- [x] test_onCreate_withNoActiveGoal_showsEmptyState
+  - Verifies empty state visible, FAB shown when no active goal
+- [x] test_onCreate_withGoalHistory_showsHistorySection
+  - Verifies goal history section visible when inactive goals exist
+- [x] test_onCreate_withNoGoalHistory_hidesHistorySection
+  - Verifies goal history section hidden when no inactive goals
+- [x] test_fabClick_withNoGoal_showsGoalDialogPlaceholder
+  - Verifies FAB clickable (GoalDialogFragment integration tested separately)
+- [x] test_editButton_click_showsGoalDialogPlaceholder
+  - Verifies edit button clickable
+- [x] test_deleteButton_click_deactivatesGoal
+  - Verifies delete button calls DAO.deactivateGoal() and refreshes UI
+- [x] test_backButton_finishesActivity
+  - Verifies back button navigation
+- [x] test_updateCurrentGoalCard_displaysWeights
+  - Verifies start/current/goal weights displayed correctly
+- [x] test_updateCurrentGoalCard_withTargetDate_displaysDate
+  - Verifies target date shown when set
+- [x] test_updateCurrentGoalCard_withNoTargetDate_hidesDateContainer
+  - Verifies target date hidden when not set
+- [x] test_loadGoalData_refreshesRecyclerView
+  - Verifies goal history adapter updated when data reloaded
+
+**GoalHistoryAdapterTest.java (4 tests):**
+- [x] test_constructor_withEmptyList_createsAdapter
+  - Verifies adapter creation with empty list
+- [x] test_getItemCount_withThreeGoals_returnsThree
+  - Verifies item count matches list size
+- [x] test_updateGoals_withNewGoals_updatesData
+  - Verifies updateGoals() method updates adapter data
+- [x] test_updateGoals_withNull_clearsData
+  - Verifies updateGoals(null) clears data gracefully
+
+**Test Count After Creation:**
+- Instrumented tests (Espresso): 17 MainActivity + 12 WeightEntry + 12 Settings + 12 Goals = 53 tests
+- Unit tests (Robolectric): 4 GoalHistoryAdapter tests
+- Total new tests: 16 tests
+
+**Dependencies Added:**
+- Modified GoalsActivity.java to add conditional initialization in initDataLayer() (allows test injection)
+- Added @VisibleForTesting annotation from androidx.annotation
+
 ### 9.7 Final Test Suite
 - [ ] Run `./gradlew clean test`
 - [ ] Run `./gradlew connectedAndroidTest` (if device available)
