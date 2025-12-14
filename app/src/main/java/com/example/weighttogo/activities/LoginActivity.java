@@ -207,8 +207,8 @@ public class LoginActivity extends AppCompatActivity {
         tabSignIn.setOnClickListener(v -> switchToSignInMode());
         tabRegister.setOnClickListener(v -> switchToRegisterMode());
 
-        // Forgot password (Phase 3 feature)
-        // forgotPasswordText.setOnClickListener(v -> handleForgotPassword());
+        // Forgot password (stub - shows "Coming Soon")
+        forgotPasswordText.setOnClickListener(v -> handleForgotPassword());
 
         Log.d(TAG, "setupClickListeners: Click listeners configured");
     }
@@ -601,5 +601,25 @@ public class LoginActivity extends AppCompatActivity {
         passwordInputLayout.setError(null);
 
         Log.d(TAG, "switchToRegisterMode: Switched to Register mode");
+    }
+
+    // =============================================================================================
+    // FORGOT PASSWORD (STUB)
+    // =============================================================================================
+
+    /**
+     * Handle forgot password click (stub implementation).
+     * Shows "Coming Soon" dialog.
+     *
+     * Full implementation tracked in GitHub issue.
+     */
+    private void handleForgotPassword() {
+        Log.d(TAG, "handleForgotPassword: Forgot password clicked (stub)");
+
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("Forgot Password")
+            .setMessage("Password reset functionality is coming soon!\n\nFor now, please contact support if you need to reset your password.")
+            .setPositiveButton("OK", null)
+            .show();
     }
 }

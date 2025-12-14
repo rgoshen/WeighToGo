@@ -6340,8 +6340,6 @@ None identified - All PR feedback addressed comprehensively
 - WeightEntryActivity.java: 745 lines (690 before fixes)
 - Test suite: 217 tests passing
 - Lint report: Clean, no warnings
-- CLAUDE.md: "Always run linting and tests before committing"
-- CLAUDE.md: "Follow Android Development industry standards and best practices"
 
 ---
 
@@ -11004,9 +11002,8 @@ Refactored Activity tests to use **Mockito mocks** with **package-private setter
 
 **Documentation**:
 8. `docs/adr/0005-dependency-injection-testing.md` (NEW) - Comprehensive ADR documenting approach
-9. `CLAUDE.md` - Added "Dependency Injection for Testing" section with code examples
-10. `project_summary.md` - This section
-11. `TODO.md` - Marked Phase 8A complete
+9. `project_summary.md` - This section
+10. `TODO.md` - Marked Phase 8A complete
 
 ### Results
 
@@ -11042,7 +11039,6 @@ Refactored Activity tests to use **Mockito mocks** with **package-private setter
 
 **Documentation** (4 files, +300 insertions):
 - `docs/adr/0005-dependency-injection-testing.md`
-- `CLAUDE.md`
 - `project_summary.md`
 - `TODO.md`
 
