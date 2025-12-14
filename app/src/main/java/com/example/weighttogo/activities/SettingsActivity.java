@@ -115,6 +115,57 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     /**
+     * Lifecycle callback when activity is paused (user navigates away).
+     * Automatically saves phone number if valid to prevent data loss.
+     *
+     * **Fix for Issue:** Phone number only saved when pressing keyboard "Done" button.
+     * Users expect phone number to persist when navigating away via back button,
+     * home button, or opening another app.
+     *
+     * **Implementation:**
+     * - Validates phone number using existing ValidationUtils
+     * - Formats to E.164 using existing formatPhoneE164()
+     * - Saves via existing UserDAO.updatePhoneNumber()
+     * - Silent save (no toast notification to avoid interrupting navigation)
+     *
+     * @see ValidationUtils#getPhoneValidationError(String)
+     * @see ValidationUtils#formatPhoneE164(String)
+     * @see UserDAO#updatePhoneNumber(long, String)
+     */
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        // Auto-save phone number if present
+        if (phoneNumberInput != null) {
+            String phoneInput = phoneNumberInput.getText().toString().trim();
+
+            // Only save if non-empty
+            if (!phoneInput.isEmpty()) {
+                // Validate phone number
+                String error = ValidationUtils.getPhoneValidationError(phoneInput);
+                if (error == null) {
+                    // Valid phone - format and save
+                    String e164Phone = ValidationUtils.formatPhoneE164(phoneInput);
+                    if (e164Phone != null) {
+                        long userId = SessionManager.getInstance(this).getCurrentUserId();
+                        boolean success = userDAO.updatePhoneNumber(userId, e164Phone);
+
+                        if (success) {
+                            Log.i(TAG, "onPause: Auto-saved phone number for user " + userId);
+                        } else {
+                            Log.w(TAG, "onPause: Failed to auto-save phone number");
+                        }
+                    }
+                } else {
+                    // Invalid phone - log but don't block navigation
+                    Log.d(TAG, "onPause: Skipping save for invalid phone number (error: " + error + ")");
+                }
+            }
+        }
+    }
+
+    /**
      * Initialize database helper and DAOs.
      * Only initializes if not already set (allows test injection).
      */
