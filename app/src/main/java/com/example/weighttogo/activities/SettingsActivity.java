@@ -713,6 +713,20 @@ public class SettingsActivity extends AppCompatActivity {
 
     /**
      * Handle send test message button click.
+     *
+     * **Emulator Support (NEW):**
+     * Detects if running on emulator and logs message to Logcat instead of
+     * sending real SMS (emulator SMS sending doesn't work reliably).
+     *
+     * **Security:**
+     * Phone numbers are masked in logs (show only last 4 digits) to prevent
+     * PII exposure in production logs.
+     *
+     * **Flow:**
+     * 1. Check if SMS can be sent (permissions + phone number configured)
+     * 2. Detect emulator vs real device
+     * 3. Emulator: Log test message to Logcat with masked phone
+     * 4. Real device: Send actual SMS via SmsManager
      */
     private void handleSendTestMessage() {
         long userId = SessionManager.getInstance(this).getCurrentUserId();
@@ -732,14 +746,38 @@ public class SettingsActivity extends AppCompatActivity {
             return;
         }
 
-        // Send test message using SmsManager directly
+        String testMessage = getString(R.string.sms_test_message);
+
+        // EMULATOR DETECTION: Log to Logcat instead of sending SMS
+        if (ValidationUtils.isRunningOnEmulator()) {
+            // Mask phone number for secure logging
+            String maskedPhone = ValidationUtils.maskPhoneNumber(user.getPhoneNumber());
+
+            // Log test message with clear visual separation
+            Log.i(TAG, "======================================");
+            Log.i(TAG, "TEST SMS (EMULATOR MODE)");
+            Log.i(TAG, "To: " + maskedPhone);
+            Log.i(TAG, "Message: " + testMessage);
+            Log.i(TAG, "======================================");
+
+            Toast.makeText(this,
+                    "Test message logged to Logcat (emulator mode)",
+                    Toast.LENGTH_LONG).show();
+
+            Log.i(TAG, "handleSendTestMessage: Logged test SMS to Logcat (emulator mode)");
+            return;
+        }
+
+        // REAL DEVICE: Send actual SMS
         try {
-            String testMessage = getString(R.string.sms_test_message);
             android.telephony.SmsManager smsManagerSystem = android.telephony.SmsManager.getDefault();
             smsManagerSystem.sendTextMessage(user.getPhoneNumber(), null, testMessage, null, null);
 
             Toast.makeText(this, "Test message sent!", Toast.LENGTH_SHORT).show();
-            Log.i(TAG, "handleSendTestMessage: Test SMS sent to " + user.getPhoneNumber());
+
+            // Log with masked phone number for security
+            String maskedPhone = ValidationUtils.maskPhoneNumber(user.getPhoneNumber());
+            Log.i(TAG, "handleSendTestMessage: Test SMS sent to " + maskedPhone);
 
         } catch (SecurityException e) {
             Toast.makeText(this, "SMS permission denied", Toast.LENGTH_SHORT).show();
