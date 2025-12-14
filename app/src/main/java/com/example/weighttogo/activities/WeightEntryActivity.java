@@ -220,17 +220,18 @@ public class WeightEntryActivity extends AppCompatActivity {
             userPreferenceDAO = new UserPreferenceDAO(dbHelper);
         }
 
+        // Initialize shared DAOs (avoid duplicate instantiation)
+        AchievementDAO achievementDAO = new AchievementDAO(dbHelper);
+        GoalWeightDAO goalWeightDAO = new GoalWeightDAO(dbHelper);
+        UserDAO userDAO = new UserDAO(dbHelper);
+
         // Initialize achievement system (Phase 7.5)
         if (achievementManager == null) {
-            AchievementDAO achievementDAO = new AchievementDAO(dbHelper);
-            GoalWeightDAO goalWeightDAO = new GoalWeightDAO(dbHelper);
             achievementManager = new AchievementManager(achievementDAO, goalWeightDAO, weightEntryDAO);
         }
 
         // Initialize SMS notification manager (Phase 7.5)
         if (smsManager == null) {
-            UserDAO userDAO = new UserDAO(dbHelper);
-            AchievementDAO achievementDAO = new AchievementDAO(dbHelper);
             smsManager = SMSNotificationManager.getInstance(this, userDAO, userPreferenceDAO, achievementDAO);
         }
 

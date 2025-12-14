@@ -89,7 +89,7 @@ public class MainActivity extends AppCompatActivity
 
     // State
     private long currentUserId;
-    private List<WeightEntry> weightEntries = new ArrayList<>();
+    private List<WeightEntry> weightEntries = new ArrayList<>();  // Initialized at declaration to prevent NPE
     private GoalWeight activeGoal;
 
     @Override

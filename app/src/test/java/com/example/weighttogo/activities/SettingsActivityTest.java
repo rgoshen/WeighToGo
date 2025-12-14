@@ -116,8 +116,8 @@ public class SettingsActivityTest {
     @Ignore("Robolectric/Material3 incompatibility - migrate to Espresso (GH #12)")
     @Test
     public void test_onCreate_loadsCurrentWeightUnit() {
-        // ARRANGE - Set preference to "kg"
-        mockUserPreferenceDAO.setWeightUnit(testUserId, "kg");
+        // ARRANGE - Stub preference to return "kg"
+        when(mockUserPreferenceDAO.getWeightUnit(testUserId)).thenReturn("kg");
 
         // ACT - Launch SettingsActivity
         activityController = Robolectric.buildActivity(SettingsActivity.class);
@@ -145,8 +145,8 @@ public class SettingsActivityTest {
     @Ignore("Robolectric/Material3 incompatibility - migrate to Espresso (GH #12)")
     @Test
     public void test_clickLbsToggle_savesLbsPreference() {
-        // ARRANGE - Start with "kg" preference
-        mockUserPreferenceDAO.setWeightUnit(testUserId, "kg");
+        // ARRANGE - Stub preference to return "kg"
+        when(mockUserPreferenceDAO.getWeightUnit(testUserId)).thenReturn("kg");
 
         activityController = Robolectric.buildActivity(SettingsActivity.class);
         activity = activityController.create().start().resume().get();

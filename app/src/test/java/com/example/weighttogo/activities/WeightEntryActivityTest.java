@@ -446,9 +446,8 @@ public class WeightEntryActivityTest {
     @Ignore("Robolectric/Material3 incompatibility - migrate to Espresso (GH #12)")
     @Test
     public void test_onCreate_loadsGlobalWeightUnit() {
-        // ARRANGE - Set user preference to "kg"
-        boolean prefSet = mockUserPreferenceDAO.setWeightUnit(testUserId, "kg");
-        assertEquals("Preference should be set successfully", true, prefSet);
+        // ARRANGE - Stub user preference to return "kg"
+        when(mockUserPreferenceDAO.getWeightUnit(testUserId)).thenReturn("kg");
 
         // ACT - Launch WeightEntryActivity in add mode
         Intent intent = new Intent(RuntimeEnvironment.getApplication(), WeightEntryActivity.class);
@@ -474,8 +473,8 @@ public class WeightEntryActivityTest {
     @Ignore("Robolectric/Material3 incompatibility - migrate to Espresso (GH #12)")
     @Test
     public void test_onCreate_withUserPreferringKg_initializesKgUnit() {
-        // ARRANGE - Set preference to "kg"
-        mockUserPreferenceDAO.setWeightUnit(testUserId, "kg");
+        // ARRANGE - Stub preference to return "kg"
+        when(mockUserPreferenceDAO.getWeightUnit(testUserId)).thenReturn("kg");
 
         // ACT - Launch activity
         Intent intent = new Intent(RuntimeEnvironment.getApplication(), WeightEntryActivity.class);

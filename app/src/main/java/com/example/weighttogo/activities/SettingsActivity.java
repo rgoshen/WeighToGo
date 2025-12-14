@@ -128,9 +128,12 @@ public class SettingsActivity extends AppCompatActivity {
         if (userDAO == null) {
             userDAO = new UserDAO(dbHelper);
         }
+
+        // Initialize shared DAO (avoid inline instantiation for clarity)
+        AchievementDAO achievementDAO = new AchievementDAO(dbHelper);
+
         if (smsManager == null) {
-            smsManager = SMSNotificationManager.getInstance(this, userDAO, userPreferenceDAO,
-                    new AchievementDAO(dbHelper));
+            smsManager = SMSNotificationManager.getInstance(this, userDAO, userPreferenceDAO, achievementDAO);
         }
     }
 
