@@ -43,6 +43,12 @@ public class GoalWeightDAOTest {
         goalWeightDAO = new GoalWeightDAO(dbHelper);
         userDAO = new UserDAO(dbHelper);
 
+        // Delete any existing test user from previous runs (database is singleton)
+        User existingUser = userDAO.getUserByUsername("testuser");
+        if (existingUser != null) {
+            userDAO.deleteUser(existingUser.getUserId());
+        }
+
         // Create a test user for foreign key relationships
         User testUser = new User();
         testUser.setUsername("testuser");
@@ -63,7 +69,19 @@ public class GoalWeightDAOTest {
         if (testUserId > 0) {
             userDAO.deleteUser(testUserId);
         }
-        // Don't close dbHelper - it's a singleton and other tests may need it
+
+        // Properly clean up singleton database instance
+        try {
+            if (dbHelper != null) {
+                dbHelper.close();
+            }
+        } finally {
+            dbHelper = null;
+            goalWeightDAO = null;
+            userDAO = null;
+            RuntimeEnvironment.getApplication().deleteDatabase("weigh_to_go.db");
+            WeighToGoDBHelper.resetInstance();
+        }
     }
 
     @Test

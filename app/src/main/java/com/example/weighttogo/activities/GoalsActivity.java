@@ -8,6 +8,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.VisibleForTesting;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -127,13 +128,68 @@ public class GoalsActivity extends AppCompatActivity
 
     /**
      * Initialize database and DAOs.
+     * Only initializes if not already set (allows test injection).
      */
     private void initDataLayer() {
-        dbHelper = WeighToGoDBHelper.getInstance(this);
-        goalWeightDAO = new GoalWeightDAO(dbHelper);
-        weightEntryDAO = new WeightEntryDAO(dbHelper);
-        userDAO = new UserDAO(dbHelper);
-        goalHistory = new ArrayList<>();
+        if (dbHelper == null) {
+            dbHelper = WeighToGoDBHelper.getInstance(this);
+        }
+        if (goalWeightDAO == null) {
+            goalWeightDAO = new GoalWeightDAO(dbHelper);
+        }
+        if (weightEntryDAO == null) {
+            weightEntryDAO = new WeightEntryDAO(dbHelper);
+        }
+        if (userDAO == null) {
+            userDAO = new UserDAO(dbHelper);
+        }
+        if (goalHistory == null) {
+            goalHistory = new ArrayList<>();
+        }
+    }
+
+    // =============================================================================================
+    // TESTING SETTERS (Package-Private)
+    // =============================================================================================
+
+    /**
+     * Set GoalWeightDAO instance (for testing only).
+     *
+     * @param goalWeightDAO the GoalWeightDAO instance to use
+     */
+    @VisibleForTesting
+    void setGoalWeightDAO(GoalWeightDAO goalWeightDAO) {
+        this.goalWeightDAO = goalWeightDAO;
+    }
+
+    /**
+     * Set WeightEntryDAO instance (for testing only).
+     *
+     * @param weightEntryDAO the WeightEntryDAO instance to use
+     */
+    @VisibleForTesting
+    void setWeightEntryDAO(WeightEntryDAO weightEntryDAO) {
+        this.weightEntryDAO = weightEntryDAO;
+    }
+
+    /**
+     * Set UserDAO instance (for testing only).
+     *
+     * @param userDAO the UserDAO instance to use
+     */
+    @VisibleForTesting
+    void setUserDAO(UserDAO userDAO) {
+        this.userDAO = userDAO;
+    }
+
+    /**
+     * Set SessionManager instance (for testing only).
+     *
+     * @param sessionManager the SessionManager instance to use
+     */
+    @VisibleForTesting
+    void setSessionManager(SessionManager sessionManager) {
+        this.sessionManager = sessionManager;
     }
 
     /**
