@@ -76,9 +76,7 @@ import java.time.LocalTime;
 @LargeTest
 public class MainActivityEspressoTest {
 
-    @Rule
-    public ActivityScenarioRule<MainActivity> activityRule =
-            new ActivityScenarioRule<>(MainActivity.class);
+    private ActivityScenario<MainActivity> scenario;
 
     private Context context;
     private WeighToGoDBHelper dbHelper;
@@ -96,6 +94,9 @@ public class MainActivityEspressoTest {
      * <p>
      * Creates a test database, test user, and logs in the user to simulate
      * authenticated state. This ensures MainActivity displays dashboard content.
+     * <p>
+     * IMPORTANT: Activity is launched AFTER session creation to prevent race condition
+     * where MainActivity.onCreate() checks login status before session exists.
      */
     @Before
     public void setUp() throws Exception {
@@ -118,21 +119,29 @@ public class MainActivityEspressoTest {
         testUser = createTestUser("testuser", "Test User");
         testUserId = testUser.getId();
 
-        // Log in test user
+        // Log in test user BEFORE launching activity
         sessionManager.createSession(testUserId, testUser.getUsername());
 
         // Set default weight unit preference
         userPreferenceDAO.savePreference(testUserId, "weight_unit", "lbs");
+
+        // Launch activity AFTER session is ready (prevents race condition)
+        scenario = ActivityScenario.launch(MainActivity.class);
     }
 
     /**
      * Clean up test environment after each test.
      * <p>
-     * Clears session, closes database, and resets SessionManager singleton
-     * to ensure test isolation.
+     * Closes activity scenario, clears session, closes database, and resets
+     * SessionManager singleton to ensure test isolation.
      */
     @After
     public void tearDown() {
+        // Close activity scenario first
+        if (scenario != null) {
+            scenario.close();
+        }
+
         // Clear session
         if (sessionManager != null) {
             sessionManager.clearSession();
@@ -176,6 +185,9 @@ public class MainActivityEspressoTest {
      * - Before noon (0-11): "Good morning"
      * - Noon to 6pm (12-17): "Good afternoon"
      * - After 6pm (18-23): "Good evening"
+     * <p>
+     * TODO(GH #50): Add time tolerance for hour boundary edge case
+     * See PR #47 review for recommended implementation.
      */
     @Test
     public void test_greetingText_showsTimeBasedGreeting() {
@@ -357,6 +369,9 @@ public class MainActivityEspressoTest {
      * <p>
      * NOTE: This test verifies the database operation. UI interaction with AlertDialog
      * requires additional Espresso Intents setup and is tested manually.
+     * <p>
+     * TODO(GH #48): Add proper AlertDialog interaction testing
+     * See PR #47 review for recommended implementation.
      */
     @Test
     public void test_handleDeleteEntry_withConfirmation_deletesEntry() {
@@ -382,6 +397,9 @@ public class MainActivityEspressoTest {
      * <p>
      * NOTE: This test verifies the database state. UI interaction with AlertDialog
      * requires additional Espresso Intents setup and is tested manually.
+     * <p>
+     * TODO(GH #48): Add proper AlertDialog interaction testing
+     * See PR #47 review for recommended implementation.
      */
     @Test
     public void test_handleDeleteEntry_withCancel_doesNotDelete() {
@@ -408,6 +426,9 @@ public class MainActivityEspressoTest {
      * <p>
      * NOTE: Espresso does not have built-in toast verification. This test clicks the FAB
      * and verifies no crash occurs. Manual testing required for toast content.
+     * <p>
+     * TODO(GH #49): Add toast verification using UI Automator
+     * See PR #47 review for recommended implementation.
      */
     @Test
     public void test_fabClick_showsToastPlaceholder() {
@@ -442,6 +463,9 @@ public class MainActivityEspressoTest {
      * <p>
      * NOTE: Espresso does not have built-in toast verification. This test clicks the
      * trends item and verifies no crash occurs. Manual testing required for toast content.
+     * <p>
+     * TODO(GH #49): Add toast verification using UI Automator
+     * See PR #47 review for recommended implementation.
      */
     @Test
     public void test_bottomNavigation_otherItemSelected_showsToastPlaceholder() {
