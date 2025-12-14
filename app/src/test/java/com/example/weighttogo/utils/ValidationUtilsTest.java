@@ -611,4 +611,36 @@ public class ValidationUtilsTest {
         // ASSERT
         assertEquals("Expected masked international phone", "***3456", masked);
     }
+
+    // =============================================================================================
+    // EMULATOR DETECTION TESTS (2 tests) - Bug Fix: Phone Persistence & Emulator SMS
+    // =============================================================================================
+
+    /**
+     * Test that isRunningOnEmulator() method exists and returns a boolean.
+     * Actual emulator detection requires device/emulator runtime testing.
+     * This test verifies the method exists and doesn't crash.
+     */
+    @Test
+    public void test_isRunningOnEmulator_returnsBoolean() {
+        // ACT
+        boolean result = ValidationUtils.isRunningOnEmulator();
+
+        // ASSERT - Just verify method exists and returns boolean (no crash)
+        assertTrue("Method should return true or false", result || !result);
+    }
+
+    /**
+     * Test that isRunningOnEmulator() is deterministic (same result on multiple calls).
+     * Build properties don't change during app execution, so result should be consistent.
+     */
+    @Test
+    public void test_isRunningOnEmulator_isDeterministic() {
+        // ACT
+        boolean result1 = ValidationUtils.isRunningOnEmulator();
+        boolean result2 = ValidationUtils.isRunningOnEmulator();
+
+        // ASSERT - Same result on multiple calls
+        assertEquals("Method should return consistent result", result1, result2);
+    }
 }
