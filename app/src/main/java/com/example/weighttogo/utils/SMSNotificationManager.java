@@ -397,7 +397,8 @@ public class SMSNotificationManager {
      */
     private boolean sendSms(@NonNull String phoneNumber, @NonNull String message, @NonNull String messageType) {
         try {
-            Log.d(TAG, "sendSms: Attempting to send " + messageType + " SMS to " + phoneNumber);
+            String maskedPhone = ValidationUtils.maskPhoneNumber(phoneNumber);
+            Log.d(TAG, "sendSms: Attempting to send " + messageType + " SMS to " + maskedPhone);
 
             android.telephony.SmsManager smsManager = android.telephony.SmsManager.getDefault();
             smsManager.sendTextMessage(
@@ -408,7 +409,7 @@ public class SMSNotificationManager {
                     null            // deliveryIntent (null = no delivery confirmation)
             );
 
-            Log.i(TAG, "sendSms: Successfully sent " + messageType + " SMS");
+            Log.i(TAG, "sendSms: Successfully sent " + messageType + " SMS to " + maskedPhone);
             return true;
 
         } catch (SecurityException e) {
