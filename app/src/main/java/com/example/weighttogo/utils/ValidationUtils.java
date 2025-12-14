@@ -2,6 +2,7 @@ package com.example.weighttogo.utils;
 
 import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.util.regex.Pattern;
@@ -344,5 +345,55 @@ public final class ValidationUtils {
         // Valid phone number
         Log.d(TAG, "getPhoneValidationError: phone is valid");
         return null;
+    }
+
+    // =============================================================================================
+    // PHONE NUMBER MASKING (Bug Fix: Phone Persistence & Emulator SMS Testing)
+    // =============================================================================================
+
+    /**
+     * Masks phone number for secure logging.
+     * Shows only last 4 digits for security compliance (PII protection).
+     *
+     * **Masking Rules:**
+     * - Valid phone: Show last 4 digits (e.g., "+12025551234" → "***1234")
+     * - Null/empty: Return "***NONE"
+     * - Short (<4 chars): Return "***"
+     *
+     * **Usage Example:**
+     * <pre>
+     * String masked = ValidationUtils.maskPhoneNumber("+12025551234");
+     * Log.i(TAG, "Sending SMS to: " + masked);  // Logs: "Sending SMS to: ***1234"
+     * </pre>
+     *
+     * **Security Note:** Always use this method when logging phone numbers
+     * to prevent PII exposure in logs (GDPR/compliance requirement).
+     *
+     * @param phoneNumber the phone number to mask
+     * @return masked phone number (last 4 digits visible), or "***NONE" if null/empty
+     */
+    @NonNull
+    public static String maskPhoneNumber(@Nullable String phoneNumber) {
+        // Null or empty check
+        if (isNullOrEmpty(phoneNumber)) {
+            Log.d(TAG, "maskPhoneNumber: phone is null or empty");
+            return "***NONE";
+        }
+
+        // Remove all non-digit characters for masking
+        String digitsOnly = phoneNumber.replaceAll("\\D", "");
+
+        // Short number (less than 4 digits): mask all
+        if (digitsOnly.length() < 4) {
+            Log.d(TAG, "maskPhoneNumber: phone has less than 4 digits, masking all");
+            return "***";
+        }
+
+        // Standard masking: show last 4 digits
+        String last4 = digitsOnly.substring(digitsOnly.length() - 4);
+        String masked = "***" + last4;
+
+        Log.d(TAG, "maskPhoneNumber: masked phone number (showing last 4 digits)");
+        return masked;
     }
 }
