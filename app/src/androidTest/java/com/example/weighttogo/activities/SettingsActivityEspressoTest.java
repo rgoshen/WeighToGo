@@ -663,6 +663,66 @@ public class SettingsActivityEspressoTest {
     }
 
     // ============================================================
+    // PHONE NUMBER PERSISTENCE TESTS (3 tests) - Bug Fix: Phone Persistence
+    // ============================================================
+
+    /**
+     * Test 25 (NEW): Phone number persists when navigating away without pressing Done.
+     * Tests that onPause() lifecycle method saves phone number automatically.
+     * Verifies fix for Issue: Phone number not persisting when user navigates away.
+     */
+    @Test
+    public void test_phoneNumber_persistsOnNavigateAway_withoutPressingDone() {
+        // ARRANGE - Mock successful save
+        when(mockUserDAO.updatePhoneNumber(eq(testUserId), eq("+12025551234"))).thenReturn(true);
+
+        // ACT - Type phone number but DON'T press Done (just close keyboard)
+        onView(withId(R.id.phoneNumberInput))
+                .perform(replaceText("2025551234"), closeSoftKeyboard());
+
+        // Trigger onPause by recreating activity (simulates back press)
+        scenario.recreate();
+
+        // ASSERT - Phone should be saved via onPause()
+        verify(mockUserDAO).updatePhoneNumber(eq(testUserId), eq("+12025551234"));
+    }
+
+    /**
+     * Test 26 (NEW): Invalid phone number not saved on navigate away.
+     * Tests that onPause() validates phone before saving.
+     * Verifies that invalid input doesn't corrupt database.
+     */
+    @Test
+    public void test_invalidPhoneNumber_notSavedOnNavigateAway() {
+        // ACT - Type invalid phone number
+        onView(withId(R.id.phoneNumberInput))
+                .perform(replaceText("invalid"), closeSoftKeyboard());
+
+        // Trigger onPause by recreating activity
+        scenario.recreate();
+
+        // ASSERT - updatePhoneNumber should NOT be called
+        verify(mockUserDAO, never()).updatePhoneNumber(anyLong(), anyString());
+    }
+
+    /**
+     * Test 27 (NEW): Empty phone number not saved on navigate away.
+     * Tests that onPause() skips save for empty input.
+     */
+    @Test
+    public void test_emptyPhoneNumber_notSavedOnNavigateAway() {
+        // ACT - Clear phone number field
+        onView(withId(R.id.phoneNumberInput))
+                .perform(replaceText(""), closeSoftKeyboard());
+
+        // Trigger onPause by recreating activity
+        scenario.recreate();
+
+        // ASSERT - updatePhoneNumber should NOT be called
+        verify(mockUserDAO, never()).updatePhoneNumber(anyLong(), anyString());
+    }
+
+    // ============================================================
     // HELPER METHODS
     // ============================================================
 
