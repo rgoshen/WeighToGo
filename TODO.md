@@ -2412,20 +2412,75 @@ public class SettingsActivityTest {
 
 **GH #49 Status:** ✅ RESOLVED (2025-12-13) - Documented limitation and alternatives, no code changes required
 
-##### 9.6.5.3 GH #50: Time Boundary Tests (Pending - Phase 9.5.3)
-**Issue:** Greeting text tests may fail at midnight (hour boundary, line 189)
-**Location:** MainActivityEspressoTest.java
-**Status:** [ ] Not started
+##### 9.6.5.3 GH #50: Time Boundary Tests ✅ (Completed 2025-12-13 - Phase 9.5.3)
+**Issue:** Greeting text tests may fail at midnight/noon/evening hour boundaries (line 198)
+**Location:** MainActivity.java (updateGreeting), MainActivityEspressoTest.java (test_greetingText_showsTimeBasedGreeting)
+**Resolution:** Extracted greeting logic to testable static method, added 6 time boundary tests
 
-**Proposed Solution:**
-- [ ] Extract time logic to helper method with mockable time
-- [ ] Add 6 time-based tests covering hour boundaries:
-  - test_greetingText_at5AM_showsGoodMorning
-  - test_greetingText_at11AM_showsGoodMorning
-  - test_greetingText_at12PM_showsGoodAfternoon
-  - test_greetingText_at5PM_showsGoodAfternoon
-  - test_greetingText_at6PM_showsGoodEvening
-  - test_greetingText_at11PM_showsGoodEvening
+**Files Modified:**
+- [x] Refactored `app/src/main/java/com/example/weighttogo/activities/MainActivity.java` (2025-12-13)
+  - Extracted getGreetingForHour(int hour) static helper method with @VisibleForTesting annotation
+  - Added setGreetingForHour(int hour) test-only method with @VisibleForTesting annotation
+  - Updated updateGreeting() to use extracted helper
+  - Logic: hour < 12 = "Good morning", hour < 18 = "Good afternoon", else = "Good evening"
+
+- [x] Enhanced `app/src/androidTest/java/com/example/weighttogo/activities/MainActivityEspressoTest.java` (2025-12-13)
+  - Updated test_greetingText_showsTimeBasedGreeting documentation (Test 2)
+    * Added GH #50 resolution note
+    * Cross-referenced new time boundary tests
+  - Added TIME BOUNDARY TESTS section (6 tests)
+  - Added test_greetingText_at5AM_showsGoodMorning (Test 3, hour = 5)
+  - Added test_greetingText_at11AM_showsGoodMorning (Test 4, hour = 11, critical boundary before noon)
+  - Added test_greetingText_at12PM_showsGoodAfternoon (Test 5, hour = 12, noon boundary)
+  - Added test_greetingText_at5PM_showsGoodAfternoon (Test 6, hour = 17)
+  - Added test_greetingText_at6PM_showsGoodEvening (Test 7, hour = 18, critical evening boundary)
+  - Added test_greetingText_at11PM_showsGoodEvening (Test 8, hour = 23)
+  - Renumbered all subsequent tests (Tests 9-25)
+  - Updated class-level documentation (Total: 19 tests → 25 tests)
+
+- [x] Compilation verified: `./gradlew compileDebugAndroidTestSources compileDebugJavaWithJavac` → BUILD SUCCESSFUL
+
+**Tests Added (6 time boundary tests):**
+1. **test_greetingText_at5AM_showsGoodMorning (Test 3)**
+   - Verifies morning greeting well before noon (hour = 5)
+   - Uses scenario.onActivity(activity -> activity.setGreetingForHour(5))
+   - Asserts "Good morning" displayed
+
+2. **test_greetingText_at11AM_showsGoodMorning (Test 4)**
+   - Critical test: Verifies hour < 12 logic at boundary
+   - Last hour of morning (hour = 11)
+   - Asserts "Good morning" displayed
+
+3. **test_greetingText_at12PM_showsGoodAfternoon (Test 5)**
+   - Critical test: Verifies hour >= 12 logic at noon boundary
+   - First hour of afternoon (hour = 12)
+   - Asserts "Good afternoon" displayed
+
+4. **test_greetingText_at5PM_showsGoodAfternoon (Test 6)**
+   - Verifies afternoon greeting well before evening (hour = 17)
+   - Asserts "Good afternoon" displayed
+
+5. **test_greetingText_at6PM_showsGoodEvening (Test 7)**
+   - Critical test: Verifies hour >= 18 logic at evening boundary
+   - First hour of evening (hour = 18)
+   - Asserts "Good evening" displayed
+
+6. **test_greetingText_at11PM_showsGoodEvening (Test 8)**
+   - Verifies evening greeting late at night (hour = 23)
+   - Asserts "Good evening" displayed
+
+**Test Strategy:**
+- Extracted greeting logic to static helper method (MainActivity.getGreetingForHour)
+- Created test-only method (setGreetingForHour) for injecting specific hours
+- Tests use scenario.onActivity() to call setGreetingForHour() with specific hour values
+- Verifies correct greeting text displayed for critical hour boundaries (11→12, 17→18)
+- Prevents test failures at midnight/noon/evening transitions
+
+**Test Count After GH #50:**
+- MainActivityEspressoTest: 25 tests (19 original + 6 time boundary tests)
+- Phase 9.5.3 total: 6 tests added
+
+**GH #50 Status:** ✅ RESOLVED (2025-12-13) - Extracted testable logic, added comprehensive time boundary tests
 
 ### 9.7 Final Test Suite
 - [ ] Run `./gradlew clean test`

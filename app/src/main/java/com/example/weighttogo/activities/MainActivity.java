@@ -459,16 +459,40 @@ public class MainActivity extends AppCompatActivity
      */
     private void updateGreeting() {
         int hour = LocalTime.now().getHour();
-        String greeting;
+        String greeting = getGreetingForHour(hour);
+        greetingText.setText(greeting);
+    }
 
+    /**
+     * Get greeting text for a specific hour of day.
+     * <p>
+     * Extracted for testing time boundaries (resolves GH #50).
+     *
+     * @param hour the hour of day (0-23)
+     * @return greeting string ("Good morning", "Good afternoon", or "Good evening")
+     */
+    @VisibleForTesting
+    static String getGreetingForHour(int hour) {
         if (hour < 12) {
-            greeting = "Good morning";
+            return "Good morning";
         } else if (hour < 18) {
-            greeting = "Good afternoon";
+            return "Good afternoon";
         } else {
-            greeting = "Good evening";
+            return "Good evening";
         }
+    }
 
+    /**
+     * Set greeting text for a specific hour (for testing only).
+     * <p>
+     * Allows tests to verify greeting logic at specific times without
+     * waiting for actual time boundaries. Resolves GH #50.
+     *
+     * @param hour the hour of day (0-23) to test
+     */
+    @VisibleForTesting
+    void setGreetingForHour(int hour) {
+        String greeting = getGreetingForHour(hour);
         greetingText.setText(greeting);
     }
 

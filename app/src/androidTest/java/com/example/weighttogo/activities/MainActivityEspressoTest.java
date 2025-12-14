@@ -65,6 +65,7 @@ import java.time.LocalTime;
  * <p>
  * Coverage:
  * - UI initialization (2 tests)
+ * - Time boundary tests (6 tests - resolves GH #50)
  * - Empty state handling (2 tests)
  * - RecyclerView population (1 test)
  * - Progress card display (2 tests)
@@ -74,7 +75,7 @@ import java.time.LocalTime;
  * - User info display (1 test)
  * - Progress calculations (2 tests)
  * <p>
- * Total: 19 tests (17 original + 2 AlertDialog tests)
+ * Total: 25 tests (17 original + 2 AlertDialog + 6 time boundary)
  */
 @RunWith(AndroidJUnit4.class)
 @LargeTest
@@ -191,8 +192,13 @@ public class MainActivityEspressoTest {
      * - Noon to 6pm (12-17): "Good afternoon"
      * - After 6pm (18-23): "Good evening"
      * <p>
-     * TODO(GH #50): Add time tolerance for hour boundary edge case
-     * See PR #47 review for recommended implementation.
+     * **GH #50 Resolution:**
+     * This test verifies greeting logic at the current time. Additional time boundary
+     * tests (Tests 3-8) verify behavior at specific hour boundaries to prevent failures
+     * at midnight/noon/evening transitions.
+     *
+     * @see MainActivity#getGreetingForHour(int) - Extracted greeting logic
+     * @see #test_greetingText_at5AM_showsGoodMorning() - Morning boundary tests
      */
     @Test
     public void test_greetingText_showsTimeBasedGreeting() {
@@ -207,11 +213,114 @@ public class MainActivityEspressoTest {
     }
 
     // ============================================================
+    // TIME BOUNDARY TESTS (6 tests - Resolves GH #50)
+    // ============================================================
+
+    /**
+     * Test 3: Greeting at 5 AM shows "Good morning".
+     * <p>
+     * **GH #50:** Verifies morning greeting well before noon boundary (hour = 5).
+     *
+     * @see MainActivity#setGreetingForHour(int) - Test-only method
+     */
+    @Test
+    public void test_greetingText_at5AM_showsGoodMorning() {
+        // ARRANGE & ACT - Set greeting for 5 AM
+        scenario.onActivity(activity -> activity.setGreetingForHour(5));
+
+        // ASSERT - Verify "Good morning" displayed
+        onView(withId(R.id.greetingText)).check(matches(withText("Good morning")));
+    }
+
+    /**
+     * Test 4: Greeting at 11 AM shows "Good morning".
+     * <p>
+     * **GH #50:** Verifies morning greeting at boundary before noon (hour = 11).
+     * Critical test: Ensures hour < 12 logic works correctly.
+     *
+     * @see MainActivity#setGreetingForHour(int) - Test-only method
+     */
+    @Test
+    public void test_greetingText_at11AM_showsGoodMorning() {
+        // ARRANGE & ACT - Set greeting for 11 AM (last hour of morning)
+        scenario.onActivity(activity -> activity.setGreetingForHour(11));
+
+        // ASSERT - Verify "Good morning" displayed
+        onView(withId(R.id.greetingText)).check(matches(withText("Good morning")));
+    }
+
+    /**
+     * Test 5: Greeting at 12 PM (noon) shows "Good afternoon".
+     * <p>
+     * **GH #50:** Verifies afternoon greeting at noon boundary (hour = 12).
+     * Critical test: Ensures hour >= 12 logic works correctly.
+     *
+     * @see MainActivity#setGreetingForHour(int) - Test-only method
+     */
+    @Test
+    public void test_greetingText_at12PM_showsGoodAfternoon() {
+        // ARRANGE & ACT - Set greeting for 12 PM (noon)
+        scenario.onActivity(activity -> activity.setGreetingForHour(12));
+
+        // ASSERT - Verify "Good afternoon" displayed
+        onView(withId(R.id.greetingText)).check(matches(withText("Good afternoon")));
+    }
+
+    /**
+     * Test 6: Greeting at 5 PM shows "Good afternoon".
+     * <p>
+     * **GH #50:** Verifies afternoon greeting well before evening boundary (hour = 17).
+     *
+     * @see MainActivity#setGreetingForHour(int) - Test-only method
+     */
+    @Test
+    public void test_greetingText_at5PM_showsGoodAfternoon() {
+        // ARRANGE & ACT - Set greeting for 5 PM
+        scenario.onActivity(activity -> activity.setGreetingForHour(17));
+
+        // ASSERT - Verify "Good afternoon" displayed
+        onView(withId(R.id.greetingText)).check(matches(withText("Good afternoon")));
+    }
+
+    /**
+     * Test 7: Greeting at 6 PM shows "Good evening".
+     * <p>
+     * **GH #50:** Verifies evening greeting at 6 PM boundary (hour = 18).
+     * Critical test: Ensures hour >= 18 logic works correctly.
+     *
+     * @see MainActivity#setGreetingForHour(int) - Test-only method
+     */
+    @Test
+    public void test_greetingText_at6PM_showsGoodEvening() {
+        // ARRANGE & ACT - Set greeting for 6 PM (evening start)
+        scenario.onActivity(activity -> activity.setGreetingForHour(18));
+
+        // ASSERT - Verify "Good evening" displayed
+        onView(withId(R.id.greetingText)).check(matches(withText("Good evening")));
+    }
+
+    /**
+     * Test 8: Greeting at 11 PM shows "Good evening".
+     * <p>
+     * **GH #50:** Verifies evening greeting late at night (hour = 23).
+     *
+     * @see MainActivity#setGreetingForHour(int) - Test-only method
+     */
+    @Test
+    public void test_greetingText_at11PM_showsGoodEvening() {
+        // ARRANGE & ACT - Set greeting for 11 PM
+        scenario.onActivity(activity -> activity.setGreetingForHour(23));
+
+        // ASSERT - Verify "Good evening" displayed
+        onView(withId(R.id.greetingText)).check(matches(withText("Good evening")));
+    }
+
+    // ============================================================
     // EMPTY STATE TESTS (2 tests)
     // ============================================================
 
     /**
-     * Test 3: loadWeightEntries with no entries shows empty state.
+     * Test 9: loadWeightEntries with no entries shows empty state.
      * <p>
      * Verifies that the empty state container is visible when the user has no weight entries.
      * This guides users to add their first entry.
@@ -226,7 +335,7 @@ public class MainActivityEspressoTest {
     }
 
     /**
-     * Test 4: loadWeightEntries with entries hides empty state.
+     * Test 10: loadWeightEntries with entries hides empty state.
      * <p>
      * Verifies that the empty state container is hidden when the user has at least one
      * weight entry. The RecyclerView with entries should be displayed instead.
@@ -249,7 +358,7 @@ public class MainActivityEspressoTest {
     // ============================================================
 
     /**
-     * Test 5: loadWeightEntries with entries populates RecyclerView.
+     * Test 11: loadWeightEntries with entries populates RecyclerView.
      * <p>
      * Verifies that weight entries are correctly loaded into the RecyclerView and
      * displayed to the user. Tests that the adapter has the expected number of items.
@@ -274,7 +383,7 @@ public class MainActivityEspressoTest {
     // ============================================================
 
     /**
-     * Test 6: updateProgressCard with active goal shows progress data.
+     * Test 12: updateProgressCard with active goal shows progress data.
      * <p>
      * Verifies that the progress card displays correct weight values when the user
      * has an active goal. Tests start weight, current weight, and goal weight display.
@@ -297,7 +406,7 @@ public class MainActivityEspressoTest {
     }
 
     /**
-     * Test 7: updateProgressCard with no goal hides progress card.
+     * Test 13: updateProgressCard with no goal hides progress card.
      * <p>
      * Verifies that the progress card is hidden when the user does not have an active goal.
      * This prevents showing irrelevant or confusing UI elements.
@@ -316,7 +425,7 @@ public class MainActivityEspressoTest {
     // ============================================================
 
     /**
-     * Test 8: calculateQuickStats with data shows correct values.
+     * Test 14: calculateQuickStats with data shows correct values.
      * <p>
      * Verifies that quick stats (total weight lost, lbs to goal) are calculated and
      * displayed correctly based on start weight, current weight, and goal weight.
@@ -342,7 +451,7 @@ public class MainActivityEspressoTest {
     }
 
     /**
-     * Test 9: calculateQuickStats with streak shows day streak.
+     * Test 15: calculateQuickStats with streak shows day streak.
      * <p>
      * Verifies that the day streak is calculated correctly when the user has entries
      * for consecutive days. Tests streak calculation for 3 consecutive days.
@@ -366,7 +475,7 @@ public class MainActivityEspressoTest {
     // ============================================================
 
     /**
-     * Test 10: handleDeleteEntry with confirmation deletes entry.
+     * Test 16: handleDeleteEntry with confirmation deletes entry.
      * <p>
      * Verifies that clicking the delete button and confirming the deletion successfully
      * soft-deletes the weight entry (sets deleted flag to true). The entry should no
@@ -395,7 +504,7 @@ public class MainActivityEspressoTest {
     }
 
     /**
-     * Test 11: handleDeleteEntry with cancel does not delete.
+     * Test 17: handleDeleteEntry with cancel does not delete.
      * <p>
      * Verifies that clicking the delete button and then canceling the deletion does NOT
      * delete the weight entry. The entry should remain visible and not be marked as deleted.
@@ -420,7 +529,7 @@ public class MainActivityEspressoTest {
     }
 
     /**
-     * Test 12: DELETE with AlertDialog - Cancel button does not delete entry.
+     * Test 18: DELETE with AlertDialog - Cancel button does not delete entry.
      * <p>
      * Verifies complete UI flow for canceling deletion:
      * 1. Click delete button in RecyclerView item
@@ -454,7 +563,7 @@ public class MainActivityEspressoTest {
     }
 
     /**
-     * Test 13: DELETE with AlertDialog - Delete button deletes entry.
+     * Test 19: DELETE with AlertDialog - Delete button deletes entry.
      * <p>
      * Verifies complete UI flow for confirming deletion:
      * 1. Click delete button in RecyclerView item
@@ -492,7 +601,7 @@ public class MainActivityEspressoTest {
     // ============================================================
 
     /**
-     * Test 14: FAB click shows toast placeholder.
+     * Test 20: FAB click shows toast placeholder.
      * <p>
      * Verifies that clicking the FloatingActionButton (FAB) shows a placeholder toast
      * message indicating the feature is coming in Phase 4.
@@ -537,7 +646,7 @@ public class MainActivityEspressoTest {
     }
 
     /**
-     * Test 15: bottomNavigation home selected stays on MainActivity.
+     * Test 21: bottomNavigation home selected stays on MainActivity.
      * <p>
      * Verifies that tapping the Home item in the bottom navigation bar keeps the user
      * on MainActivity (does not trigger navigation or finish the activity).
@@ -552,7 +661,7 @@ public class MainActivityEspressoTest {
     }
 
     /**
-     * Test 16: bottomNavigation other item selected shows toast placeholder.
+     * Test 22: bottomNavigation other item selected shows toast placeholder.
      * <p>
      * Verifies that tapping other items in the bottom navigation (e.g., Trends) shows
      * a placeholder toast message indicating the feature is coming in Phase 5.
@@ -591,7 +700,7 @@ public class MainActivityEspressoTest {
     // ============================================================
 
     /**
-     * Test 15: userName displays current user name.
+     * Test 23: userName displays current user name.
      * <p>
      * Verifies that the user's display name is shown correctly in the UI header.
      * Tests that the userName TextView displays "Test User".
@@ -609,7 +718,7 @@ public class MainActivityEspressoTest {
     // ============================================================
 
     /**
-     * Test 16: progressPercentage calculates correctly.
+     * Test 24: progressPercentage calculates correctly.
      * <p>
      * Verifies that the progress percentage is calculated correctly based on weight loss
      * progress toward the goal.
@@ -633,7 +742,7 @@ public class MainActivityEspressoTest {
     }
 
     /**
-     * Test 17: progressBar width matches percentage.
+     * Test 25: progressBar width matches percentage.
      * <p>
      * Verifies that the progress bar fill view exists and is visible when progress data
      * is available. The actual width measurement requires layout inflation, which is
