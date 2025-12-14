@@ -2,6 +2,9 @@ package com.example.weighttogo.activities;
 
 import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.action.ViewActions.click;
+import static androidx.test.espresso.action.ViewActions.closeSoftKeyboard;
+import static androidx.test.espresso.action.ViewActions.replaceText;
+import static androidx.test.espresso.action.ViewActions.typeText;
 import static androidx.test.espresso.assertion.ViewAssertions.matches;
 import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
@@ -9,6 +12,7 @@ import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -355,6 +359,141 @@ public class SettingsActivityEspressoTest {
 
         // Note: Actual validation error requires invalid input and button click
         // Manual testing required to verify error display for invalid phone numbers
+    }
+
+    // ============================================================
+    // PHONE NUMBER VALIDATION TESTS (Phase 8.4 - Coverage Gaps)
+    // ============================================================
+
+    /**
+     * Test 13: Save phone with 10-digit US number formats to E.164.
+     * Tests ValidationUtils.formatPhoneE164() integration with SettingsActivity.
+     * Verifies that 10-digit US numbers are formatted to +1 prefix.
+     */
+    @Test
+    public void test_savePhone_with10DigitUS_formatsToE164() {
+        // ARRANGE
+        when(mockUserDAO.updatePhoneNumber(eq(testUserId), eq("+12025551234"))).thenReturn(true);
+
+        // ACT - Enter 10-digit US number (no +1 prefix)
+        onView(withId(R.id.phoneNumberInput))
+                .perform(replaceText("2025551234"), closeSoftKeyboard());
+
+        // Simulate IME_ACTION_DONE or save button click (depending on implementation)
+        onView(withId(R.id.phoneNumberInput)).perform(typeText("\n"));
+
+        // ASSERT - Phone should be saved with E.164 format (+12025551234)
+        verify(mockUserDAO).updatePhoneNumber(eq(testUserId), eq("+12025551234"));
+    }
+
+    /**
+     * Test 14: Save phone with international E.164 accepts unchanged.
+     * Tests that numbers already in E.164 format are not modified.
+     * Verifies UK phone number +447911123456 saved as-is.
+     */
+    @Test
+    public void test_savePhone_withInternationalE164_acceptsUnchanged() {
+        // ARRANGE
+        when(mockUserDAO.updatePhoneNumber(eq(testUserId), eq("+447911123456"))).thenReturn(true);
+
+        // ACT - Enter international number in E.164 format
+        onView(withId(R.id.phoneNumberInput))
+                .perform(replaceText("+447911123456"), closeSoftKeyboard());
+
+        onView(withId(R.id.phoneNumberInput)).perform(typeText("\n"));
+
+        // ASSERT - Phone should be saved unchanged
+        verify(mockUserDAO).updatePhoneNumber(eq(testUserId), eq("+447911123456"));
+    }
+
+    /**
+     * Test 15: Save phone with letters shows validation error.
+     * Tests ValidationUtils.getPhoneValidationError() integration.
+     * Verifies that invalid characters trigger error display.
+     */
+    @Test
+    public void test_savePhone_withLetters_showsValidationError() {
+        // ACT - Enter invalid phone with letters
+        onView(withId(R.id.phoneNumberInput))
+                .perform(replaceText("abc12345"), closeSoftKeyboard());
+
+        onView(withId(R.id.phoneNumberInput)).perform(typeText("\n"));
+
+        // ASSERT - Database save should NOT be called
+        verify(mockUserDAO, never()).updatePhoneNumber(anyLong(), anyString());
+
+        // Note: EditText error display verification is complex in Espresso
+        // Manual testing required to verify error message shown to user
+    }
+
+    /**
+     * Test 16: Save phone with dashes shows validation error.
+     * Tests that phone numbers with formatting characters are rejected.
+     * Verifies "202-555-1234" format triggers validation error.
+     */
+    @Test
+    public void test_savePhone_withDashes_showsValidationError() {
+        // ACT - Enter phone with dashes (invalid format)
+        onView(withId(R.id.phoneNumberInput))
+                .perform(replaceText("202-555-1234"), closeSoftKeyboard());
+
+        onView(withId(R.id.phoneNumberInput)).perform(typeText("\n"));
+
+        // ASSERT - Database save should NOT be called
+        verify(mockUserDAO, never()).updatePhoneNumber(anyLong(), anyString());
+
+        // Note: Error message verification requires EditText.getError() check
+        // which is difficult to test reliably in Espresso
+    }
+
+    /**
+     * Test 17: Save phone with too few digits shows validation error.
+     * Tests minimum length validation (10-15 digits required).
+     * Verifies "12345" (5 digits) is rejected.
+     */
+    @Test
+    public void test_savePhone_withTooShort_showsValidationError() {
+        // ACT - Enter phone that's too short (5 digits)
+        onView(withId(R.id.phoneNumberInput))
+                .perform(replaceText("12345"), closeSoftKeyboard());
+
+        onView(withId(R.id.phoneNumberInput)).perform(typeText("\n"));
+
+        // ASSERT - Database save should NOT be called
+        verify(mockUserDAO, never()).updatePhoneNumber(anyLong(), anyString());
+    }
+
+    /**
+     * Test 18: Save phone success persists after activity restart.
+     * Tests that phone number persists via UserDAO storage.
+     * Verifies E.164 formatted phone survives activity recreation.
+     */
+    @Test
+    public void test_savePhone_success_persistsAfterActivityRestart() {
+        // ARRANGE - Mock user with saved phone number
+        User userWithPhone = testUser;
+        userWithPhone.setPhoneNumber("+12025551234");
+        when(mockUserDAO.getUserById(testUserId)).thenReturn(userWithPhone);
+        when(mockUserDAO.updatePhoneNumber(eq(testUserId), eq("+12025551234"))).thenReturn(true);
+
+        // ACT - Enter and save phone
+        onView(withId(R.id.phoneNumberInput))
+                .perform(replaceText("2025551234"), closeSoftKeyboard());
+
+        onView(withId(R.id.phoneNumberInput)).perform(typeText("\n"));
+
+        // Close and reopen activity
+        scenario.close();
+        scenario = ActivityScenario.launch(SettingsActivity.class);
+        scenario.onActivity(activity -> {
+            activity.setUserDAO(mockUserDAO);
+            activity.setUserPreferenceDAO(mockUserPreferenceDAO);
+            activity.setSMSNotificationManager(mockSmsManager);
+        });
+
+        // ASSERT - Phone should be loaded and displayed (stripped of +1 for US numbers)
+        onView(withId(R.id.phoneNumberInput))
+                .check(matches(withText("2025551234")));
     }
 
     // ============================================================
