@@ -2326,6 +2326,72 @@ public class SettingsActivityTest {
 - Modified GoalsActivity.java to add conditional initialization in initDataLayer() (allows test injection)
 - Added @VisibleForTesting annotation from androidx.annotation
 
+#### 9.6.5 GitHub Issues Resolution (Phase 9.5)
+**Rationale:** Address known testing limitations and edge cases identified during Phase 8B test migration.
+
+##### 9.6.5.1 GH #48: AlertDialog Testing ✅ (Completed 2025-12-13 - Phase 9.5.1)
+**Issue:** Delete confirmation dialogs in MainActivityEspressoTest not fully tested (lines 373, 401)
+**Location:** MainActivityEspressoTest.java
+**Resolution:** Added complete UI interaction tests for AlertDialog
+
+**Files Modified:**
+- [x] Enhanced `gradle/libs.versions.toml` (2025-12-13)
+  - Added espresso-contrib = { group = "androidx.test.espresso", name = "espresso-contrib", version.ref = "espressoCore" }
+- [x] Enhanced `app/build.gradle` (2025-12-13)
+  - Added androidTestImplementation libs.espresso.contrib
+- [x] Enhanced `app/src/androidTest/java/com/example/weighttogo/activities/MainActivityEspressoTest.java` (2025-12-13)
+  - Added import for RecyclerViewActions
+  - Updated DELETE ENTRY TESTS section (2 tests → 4 tests)
+  - Added test_deleteEntryUI_clickCancel_doesNotDelete (Test 12)
+  - Added test_deleteEntryUI_clickConfirm_deletesEntry (Test 13)
+  - Added clickChildViewWithId() helper method for RecyclerView child interactions
+  - Updated test numbers in NAVIGATION TESTS section (Tests 14-16)
+  - Updated class-level documentation (Total: 17 tests → 19 tests)
+- [x] Compilation verified: `./gradlew compileDebugAndroidTestSources` → BUILD SUCCESSFUL
+
+**Tests Added:**
+- [x] test_deleteEntryUI_clickCancel_doesNotDelete
+  - Verifies complete UI flow: Click delete button → AlertDialog appears → Click "Cancel" → Entry NOT deleted
+  - Uses RecyclerViewActions.actionOnItemAtPosition() to click delete button
+  - Uses onView(withText("Cancel")).perform(click()) for dialog interaction
+  - Asserts entry remains in database (not soft-deleted)
+- [x] test_deleteEntryUI_clickConfirm_deletesEntry
+  - Verifies complete UI flow: Click delete button → AlertDialog appears → Click "Delete" → Entry soft-deleted
+  - Uses RecyclerViewActions.actionOnItemAtPosition() to click delete button
+  - Uses onView(withText("Delete")).perform(click()) for dialog interaction
+  - Asserts entry is soft-deleted in database (deleted flag = true)
+
+**Test Count After GH #48:**
+- MainActivityEspressoTest: 19 tests (17 original + 2 AlertDialog tests)
+- Phase 9.5.1 total: 2 tests added
+
+**GH #48 Status:** ✅ RESOLVED (2025-12-13)
+
+##### 9.6.5.2 GH #49: Toast Verification (Pending - Phase 9.5.2)
+**Issue:** Toast messages cannot be verified with Espresso alone (lines 430, 467)
+**Location:** MainActivityEspressoTest.java
+**Status:** [ ] Not started
+
+**Proposed Solution:**
+- [ ] Document Toast verification limitation in test documentation
+- [ ] Consider UIAutomator dependency for Toast verification (optional)
+- [ ] Alternative: Replace critical Toasts with Snackbars (testable with Espresso)
+
+##### 9.6.5.3 GH #50: Time Boundary Tests (Pending - Phase 9.5.3)
+**Issue:** Greeting text tests may fail at midnight (hour boundary, line 189)
+**Location:** MainActivityEspressoTest.java
+**Status:** [ ] Not started
+
+**Proposed Solution:**
+- [ ] Extract time logic to helper method with mockable time
+- [ ] Add 6 time-based tests covering hour boundaries:
+  - test_greetingText_at5AM_showsGoodMorning
+  - test_greetingText_at11AM_showsGoodMorning
+  - test_greetingText_at12PM_showsGoodAfternoon
+  - test_greetingText_at5PM_showsGoodAfternoon
+  - test_greetingText_at6PM_showsGoodEvening
+  - test_greetingText_at11PM_showsGoodEvening
+
 ### 9.7 Final Test Suite
 - [ ] Run `./gradlew clean test`
 - [ ] Run `./gradlew connectedAndroidTest` (if device available)

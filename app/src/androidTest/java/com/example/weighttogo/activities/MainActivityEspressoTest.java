@@ -3,6 +3,7 @@ package com.example.weighttogo.activities;
 import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.action.ViewActions.click;
 import static androidx.test.espresso.assertion.ViewAssertions.matches;
+import static androidx.test.espresso.contrib.RecyclerViewActions.actionOnItemAtPosition;
 import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.withEffectiveVisibility;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
@@ -68,12 +69,12 @@ import java.time.LocalTime;
  * - RecyclerView population (1 test)
  * - Progress card display (2 tests)
  * - Quick stats calculation (2 tests)
- * - Delete entry workflow (2 tests)
+ * - Delete entry workflow (4 tests - includes AlertDialog interaction tests, resolves GH #48)
  * - Navigation behavior (3 tests)
  * - User info display (1 test)
  * - Progress calculations (2 tests)
  * <p>
- * Total: 17 tests
+ * Total: 19 tests (17 original + 2 AlertDialog tests)
  */
 @RunWith(AndroidJUnit4.class)
 @LargeTest
@@ -361,7 +362,7 @@ public class MainActivityEspressoTest {
     }
 
     // ============================================================
-    // DELETE ENTRY TESTS (2 tests)
+    // DELETE ENTRY TESTS (4 tests)
     // ============================================================
 
     /**
@@ -418,12 +419,80 @@ public class MainActivityEspressoTest {
         assertFalse("Entry should not be deleted", entry.isDeleted());
     }
 
+    /**
+     * Test 12: DELETE with AlertDialog - Cancel button does not delete entry.
+     * <p>
+     * Verifies complete UI flow for canceling deletion:
+     * 1. Click delete button in RecyclerView item
+     * 2. AlertDialog appears with "Delete Entry" title
+     * 3. Click "Cancel" button
+     * 4. Entry remains in database (not soft-deleted)
+     * <p>
+     * **Resolves GH #48**: Full AlertDialog interaction testing
+     *
+     * @see MainActivity#handleDeleteEntry(WeightEntry)
+     */
+    @Test
+    public void test_deleteEntryUI_clickCancel_doesNotDelete() {
+        // ARRANGE - Create a weight entry
+        long entryId = createTestWeightEntry(170.0);
+
+        // Restart activity to refresh RecyclerView
+        scenario.recreate();
+
+        // ACT - Click delete button on first RecyclerView item
+        onView(withId(R.id.weightRecyclerView))
+                .perform(actionOnItemAtPosition(0, clickChildViewWithId(R.id.deleteButton)));
+
+        // AlertDialog should appear - Click "Cancel"
+        onView(withText("Cancel")).perform(click());
+
+        // ASSERT - Verify entry is NOT soft deleted
+        WeightEntry entry = weightEntryDAO.getWeightEntryById(entryId);
+        assertNotNull("Entry should still exist after cancel", entry);
+        assertFalse("Entry should not be soft deleted after cancel", entry.isDeleted());
+    }
+
+    /**
+     * Test 13: DELETE with AlertDialog - Delete button deletes entry.
+     * <p>
+     * Verifies complete UI flow for confirming deletion:
+     * 1. Click delete button in RecyclerView item
+     * 2. AlertDialog appears with "Are you sure?" message
+     * 3. Click "Delete" button
+     * 4. Entry is soft-deleted in database (deleted flag = true)
+     * <p>
+     * **Resolves GH #48**: Full AlertDialog interaction testing
+     *
+     * @see MainActivity#handleDeleteEntry(WeightEntry)
+     */
+    @Test
+    public void test_deleteEntryUI_clickConfirm_deletesEntry() {
+        // ARRANGE - Create a weight entry
+        long entryId = createTestWeightEntry(170.0);
+
+        // Restart activity to refresh RecyclerView
+        scenario.recreate();
+
+        // ACT - Click delete button on first RecyclerView item
+        onView(withId(R.id.weightRecyclerView))
+                .perform(actionOnItemAtPosition(0, clickChildViewWithId(R.id.deleteButton)));
+
+        // AlertDialog should appear - Click "Delete" to confirm
+        onView(withText("Delete")).perform(click());
+
+        // ASSERT - Verify entry is soft deleted
+        WeightEntry entry = weightEntryDAO.getWeightEntryById(entryId);
+        assertNotNull("Entry should exist in database", entry);
+        assertTrue("Entry should be soft deleted after confirmation", entry.isDeleted());
+    }
+
     // ============================================================
     // NAVIGATION TESTS (3 tests)
     // ============================================================
 
     /**
-     * Test 12: FAB click shows toast placeholder.
+     * Test 14: FAB click shows toast placeholder.
      * <p>
      * Verifies that clicking the FloatingActionButton (FAB) shows a placeholder toast
      * message indicating the feature is coming in Phase 4.
@@ -445,7 +514,7 @@ public class MainActivityEspressoTest {
     }
 
     /**
-     * Test 13: bottomNavigation home selected stays on MainActivity.
+     * Test 15: bottomNavigation home selected stays on MainActivity.
      * <p>
      * Verifies that tapping the Home item in the bottom navigation bar keeps the user
      * on MainActivity (does not trigger navigation or finish the activity).
@@ -460,7 +529,7 @@ public class MainActivityEspressoTest {
     }
 
     /**
-     * Test 14: bottomNavigation other item selected shows toast placeholder.
+     * Test 16: bottomNavigation other item selected shows toast placeholder.
      * <p>
      * Verifies that tapping other items in the bottom navigation (e.g., Trends) shows
      * a placeholder toast message indicating the feature is coming in Phase 5.
@@ -663,6 +732,43 @@ public class MainActivityEspressoTest {
             protected boolean matchesSafely(RecyclerView recyclerView) {
                 RecyclerView.Adapter adapter = recyclerView.getAdapter();
                 return adapter != null && adapter.getItemCount() == expectedCount;
+            }
+        };
+    }
+
+    /**
+     * Custom ViewAction to click on a child view within a RecyclerView item.
+     * <p>
+     * Used for clicking buttons (like delete or edit) within RecyclerView items
+     * when testing AlertDialog interactions.
+     * <p>
+     * Usage example:
+     * <pre>
+     * onView(withId(R.id.weightRecyclerView))
+     *     .perform(actionOnItemAtPosition(0, clickChildViewWithId(R.id.deleteButton)));
+     * </pre>
+     *
+     * @param id the resource ID of the child view to click
+     * @return a ViewAction that clicks the child view
+     */
+    private static androidx.test.espresso.ViewAction clickChildViewWithId(final int id) {
+        return new androidx.test.espresso.ViewAction() {
+            @Override
+            public Matcher<View> getConstraints() {
+                return null;
+            }
+
+            @Override
+            public String getDescription() {
+                return "Click on a child view with specified id.";
+            }
+
+            @Override
+            public void perform(androidx.test.espresso.UiController uiController, View view) {
+                View v = view.findViewById(id);
+                if (v != null) {
+                    v.performClick();
+                }
             }
         };
     }
