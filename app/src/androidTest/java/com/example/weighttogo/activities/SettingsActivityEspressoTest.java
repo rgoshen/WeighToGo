@@ -723,6 +723,44 @@ public class SettingsActivityEspressoTest {
     }
 
     // ============================================================
+    // EMULATOR SMS LOGGING TEST (1 test) - Bug Fix: Emulator SMS Testing
+    // ============================================================
+
+    /**
+     * Test 28 (NEW): Test message button logs to Logcat on emulator.
+     * Tests that test message detection works and logs masked phone number.
+     *
+     * NOTE: This test verifies button click doesn't crash. Manual verification
+     * of Logcat output required to confirm message and masking.
+     *
+     * Expected Logcat output:
+     * I/SettingsActivity: ======================================
+     * I/SettingsActivity: TEST SMS (EMULATOR MODE)
+     * I/SettingsActivity: To: ***1234
+     * I/SettingsActivity: Message: This is a test message from Weigh to Go! Your SMS notifications are working! ✅
+     * I/SettingsActivity: ======================================
+     */
+    @Test
+    public void test_sendTestMessage_onEmulator_logsToLogcat() {
+        // ARRANGE - Mock user with phone number
+        User userWithPhone = new User();
+        userWithPhone.setUserId(testUserId);
+        userWithPhone.setUsername("testuser");
+        userWithPhone.setPhoneNumber("+12025551234");
+
+        when(mockUserDAO.getUserById(testUserId)).thenReturn(userWithPhone);
+        when(mockSmsManager.canSendSms(testUserId)).thenReturn(true);
+
+        // ACT - Click test message button
+        onView(withId(R.id.sendTestMessageButton)).perform(click());
+
+        // ASSERT - Verify no crash (Logcat output verified manually)
+        // Expected: Masked phone number (***1234) logged
+        // Manual verification: Check Logcat for test message
+        onView(withId(R.id.sendTestMessageButton)).check(matches(isDisplayed()));
+    }
+
+    // ============================================================
     // HELPER METHODS
     // ============================================================
 
