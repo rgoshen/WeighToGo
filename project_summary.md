@@ -11024,3 +11024,95 @@ After initial PR submission, two comprehensive code reviews identified improveme
 ---
 
 **Phase 8A Status**: ✅ COMPLETE with all PR review feedback addressed. Ready for final approval and merge to main.
+
+---
+
+## Phase 8B: Espresso Integration Tests (2025-12-13)
+
+### Problem
+
+**Robolectric/Material3 Incompatibility (GitHub Issue #12)**:
+- 17 MainActivity tests commented out due to Robolectric SDK 30 unable to resolve Material3 theme inheritance
+- Critical dashboard functionality UNTESTED (empty state, progress cards, RecyclerView, navigation)
+- Cannot guarantee production quality without end-to-end UI testing
+- Material3 components require real Android framework to test properly
+
+**SMS Testing Misconception**:
+- 3 SMS sending tests were deferred to Espresso believing they were needed
+- Analysis revealed these would test Android's `SmsManager` (third-party code), not app logic
+- All app SMS logic already tested in `SMSNotificationManagerTest.java` (9 Robolectric tests)
+
+### Solution
+
+**Migrated MainActivity tests to Espresso** - instrumented tests running on real Android device/emulator with full Material3 theme support.
+
+**Rationale for NO SMS Espresso tests**:
+- Testing principle: "Don't test the framework"
+- App conditional logic (permissions, preferences, phone number checks) already covered by 9 Robolectric tests
+- Actual SMS sending tests Android framework, not our code
+- Assume Google's Android team has thoroughly tested `SmsManager.sendTextMessage()`
+
+### Changes Made
+
+**Files Created** (1 file, +637 insertions):
+1. `app/src/androidTest/java/com/example/weighttogo/activities/MainActivityEspressoTest.java`
+   - 17 instrumented tests covering all MainActivity UI functionality
+   - Custom RecyclerView item count matcher included inline
+   - Tests use AAA pattern (Arrange-Act-Assert)
+   - Full Material3 theme support on real device/emulator
+   - Test infrastructure: ActivityScenarioRule, real database, SessionManager integration
+
+**Files Modified** (1 file, +9 insertions, -312 deletions):
+2. `app/src/test/java/com/example/weighttogo/activities/MainActivityTest.java`
+   - Removed 300+ lines of commented tests (former lines 174-475)
+   - Updated comments to reference Espresso test location
+   - Kept login redirect test (Test 1) only
+
+**Documentation** (2 files):
+3. `TODO.md` - Marked Phase 8B complete with detailed implementation summary
+4. `project_summary.md` - This section
+
+### Test Coverage (17 Espresso Tests)
+
+**A. UI Initialization (2 tests)**: view initialization, time-based greeting
+**B. Empty State Handling (2 tests)**: show/hide empty state
+**C. RecyclerView Population (1 test)**: 3 entries displayed
+**D. Progress Card Display (2 tests)**: show data with goal, hide without goal
+**E. Quick Stats Calculation (2 tests)**: weight lost calculation, day streak
+**F. Delete Entry Workflow (2 tests)**: confirm deletion, cancel deletion
+**G. Navigation Behavior (3 tests)**: FAB click, home nav, trends nav
+**H. User Info Display (1 test)**: user name display
+**I. Progress Calculations (2 tests)**: percentage calculation, progress bar rendering
+
+### Results
+
+**Test Count**:
+- **Before**: 344 unit tests (17 MainActivity tests commented out)
+- **After**: 344 unit tests + 17 Espresso tests = **361 total tests**
+- **Coverage**: All critical MainActivity UI flows tested end-to-end
+
+**Production Readiness**: ✅ READY - All critical UI flows validated with Material3 support
+
+### Lessons Learned
+
+**What Worked Well**:
+- Espresso + Real Database catches Material3-specific bugs Robolectric cannot
+- Custom matchers inline (no separate EspressoMatchers.java needed)
+- Decision to skip SMS tests (correct application of "don't test the framework" principle)
+
+**Challenges Encountered**:
+- Toast verification requires UI Automator or custom matcher
+- AlertDialog interaction complex with Espresso, verified via database state instead
+- Test execution 10x slower than Robolectric (expected and acceptable)
+
+### Commit Log
+
+**Branch**: `feature/FR8B-espresso-integration-tests`
+
+**Commits**:
+1. `cea5ace` - test: add MainActivityEspressoTest with 17 instrumented tests
+2. `1e8183c` - refactor: remove commented MainActivity tests migrated to Espresso
+
+---
+
+**Phase 8B Status**: ✅ COMPLETE. GitHub Issue #12 resolved. Ready for Phase 9 (Final Testing).
