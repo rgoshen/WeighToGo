@@ -2367,15 +2367,50 @@ public class SettingsActivityTest {
 
 **GH #48 Status:** ✅ RESOLVED (2025-12-13)
 
-##### 9.6.5.2 GH #49: Toast Verification (Pending - Phase 9.5.2)
-**Issue:** Toast messages cannot be verified with Espresso alone (lines 430, 467)
-**Location:** MainActivityEspressoTest.java
-**Status:** [ ] Not started
+##### 9.6.5.2 GH #49: Toast Verification ✅ (Completed 2025-12-13 - Phase 9.5.2)
+**Issue:** Toast messages cannot be verified with Espresso alone (lines 507, 580)
+**Location:** MainActivityEspressoTest.java (test_fabClick_showsToastPlaceholder, test_bottomNavigation_otherItemSelected_showsToastPlaceholder)
+**Resolution:** Documented Toast verification limitation and provided comprehensive alternatives
 
-**Proposed Solution:**
-- [ ] Document Toast verification limitation in test documentation
-- [ ] Consider UIAutomator dependency for Toast verification (optional)
-- [ ] Alternative: Replace critical Toasts with Snackbars (testable with Espresso)
+**Files Modified:**
+- [x] Enhanced `app/src/androidTest/java/com/example/weighttogo/activities/MainActivityEspressoTest.java` (2025-12-13)
+  - Updated test_fabClick_showsToastPlaceholder documentation (Test 14)
+  - Updated test_bottomNavigation_otherItemSelected_showsToastPlaceholder documentation (Test 16)
+  - Removed TODO(GH #49) comments (replaced with comprehensive documentation)
+  - Added "Toast Verification Limitation" section explaining Espresso limitation
+  - Documented three alternative solutions with trade-offs
+  - Updated inline comments to clarify manual verification requirement
+- [x] Compilation verified: `./gradlew compileDebugAndroidTestSources` → BUILD SUCCESSFUL
+
+**Documentation Added:**
+1. **Toast Verification Limitation:**
+   - Espresso does not have built-in support for verifying Toast messages
+   - Current tests verify no crash occurs, but cannot automatically verify toast content
+   - Manual verification required during test execution
+
+2. **Verification Strategy:**
+   - Automated: Verifies button/navigation click does not crash
+   - Manual: Developer visually confirms toast message during test execution
+
+3. **Alternative Solutions (Not Implemented):**
+   - **UIAutomator** (adds dependency): androidx.test.uiautomator:uiautomator
+     * Can verify Toast text via `UiDevice.findObject(new UiSelector().textContains("..."))`
+     * Requires additional setup and slower execution
+     * Recommended for critical user-facing toasts
+   - **Snackbar Replacement** (preferred for critical messages):
+     * Replace Toast with Snackbar for important feedback
+     * Snackbars are testable with: `onView(withText("...")).check(matches(isDisplayed()))`
+     * Not applicable for placeholder messages (current case)
+   - **Manual Testing** (current approach):
+     * Acceptable for non-critical placeholder messages
+     * Developer confirms toast during test run
+
+4. **Decision Rationale:**
+   - Manual testing is sufficient for placeholder toasts (FAB, bottom navigation)
+   - Critical user feedback should use Snackbars (Phase 4+ implementation)
+   - Future navigation implementations (Phase 5+) should use proper activities rather than toasts
+
+**GH #49 Status:** ✅ RESOLVED (2025-12-13) - Documented limitation and alternatives, no code changes required
 
 ##### 9.6.5.3 GH #50: Time Boundary Tests (Pending - Phase 9.5.3)
 **Issue:** Greeting text tests may fail at midnight (hour boundary, line 189)
