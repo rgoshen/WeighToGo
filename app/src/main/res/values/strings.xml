@@ -7,7 +7,7 @@
     <!-- Login Screen -->
     <string name="tab_sign_in">Sign In</string>
     <string name="tab_register">Register</string>
-    <string name="hint_username">Username or Email</string>
+    <string name="hint_username">Username</string>
     <string name="hint_password">Password</string>
     <string name="hint_confirm_password">Confirm Password</string>
     <string name="btn_sign_in">Sign In</string>
