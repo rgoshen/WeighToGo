@@ -12,10 +12,15 @@ A simple, effective Android mobile application for daily weight tracking and goa
 
 ---
 ![login screen](./previews/weight_tracker_login-register.jpg)
+
 ![dashboard](./previews/weight_tracker_main.jpg)
+
 ![entry screen](./previews/weight_tracker_weight_entry.jpg)
+
 ![goals](./previews/weight_tracker_goals.jpg)
+
 ![goals entry](./previews/weight_tracker_goals_entry.jpg)
+
 ![settings](./previews/weight_tracker_settings.jpg)
 ---
 ## 📱 About
