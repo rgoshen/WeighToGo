@@ -79,17 +79,6 @@
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintTop_toTopOf="parent">
 
-                    <!-- Notification Button -->
-                    <ImageButton
-                        android:id="@+id/notificationButton"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:background="@drawable/bg_header_button"
-                        android:contentDescription="@string/cd_notifications_button"
-                        android:padding="@dimen/spacing_small"
-                        android:src="@drawable/ic_notification"
-                        app:tint="@color/text_on_primary" />
-
                     <!-- Settings Button -->
                     <ImageButton
                         android:id="@+id/settingsButton"
@@ -533,18 +522,6 @@
                     android:text="@string/recent_entries"
                     android:textColor="@color/text_primary"
                     android:textSize="@dimen/text_size_title"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/viewAllButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="@dimen/touch_target_min"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:gravity="center"
-                    android:paddingHorizontal="@dimen/spacing_small"
-                    android:text="@string/view_all"
-                    android:textColor="@color/primary_teal"
-                    android:textSize="@dimen/text_size_body"
                     android:textStyle="bold" />
 
             </LinearLayout>

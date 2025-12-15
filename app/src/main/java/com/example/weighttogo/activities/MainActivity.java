@@ -51,7 +51,6 @@ public class MainActivity extends AppCompatActivity
     // UI Elements
     private TextView greetingText;
     private TextView userName;
-    private ImageButton notificationButton;
     private ImageButton settingsButton;
 
     // Progress Card
@@ -250,7 +249,6 @@ public class MainActivity extends AppCompatActivity
         // Header
         greetingText = findViewById(R.id.greetingText);
         userName = findViewById(R.id.userName);
-        notificationButton = findViewById(R.id.notificationButton);
         settingsButton = findViewById(R.id.settingsButton);
 
         // Progress Card
