@@ -62,7 +62,7 @@ We will implement a **Model-View-Controller (MVC)** architecture pattern with th
 ### 2. Package Structure
 
 ```
-com.example.weighttogo/
+weightogo/
 ├── activities/         # Controllers - UI event handling
 │   ├── LoginActivity.java
 │   ├── MainActivity.java

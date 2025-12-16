@@ -306,7 +306,7 @@
 | Step | Action | Expected Result | Status | Actual Result / Notes |
 |------|--------|----------------|--------|----------------------|
 | E3.1 | Login as `testuser1` | MainActivity displays | ☐ | |
-| E3.2 | Kill app process (ADB: `adb shell am kill com.example.weighttogo`) | App terminates | ☐ | |
+| E3.2 | Kill app process (ADB: `adb shell am kill weightogo`) | App terminates | ☐ | |
 | E3.3 | Relaunch app from launcher | App opens to MainActivity (session restored) | ☐ | |
 | E3.4 | Verify user data intact | Weight entries, goals, preferences preserved | ☐ | |
 

@@ -7,8 +7,8 @@ Usage:
 
     # Then apply to database:
     adb push test_weight_entries.sql /sdcard/
-    adb shell run-as com.example.weighttogo
-    sqlite3 /data/data/com.example.weighttogo/databases/WeighToGo.db
+    adb shell run-as weightogo
+    sqlite3 /data/data/weightogo/databases/WeighToGo.db
     .read /sdcard/test_weight_entries.sql
     .exit
     exit
@@ -140,8 +140,8 @@ Examples:
     print(f"-- Done. Total entries: {args.count}")
     print("-- Apply to database:")
     print("--   adb push <this-file>.sql /sdcard/")
-    print("--   adb shell run-as com.example.weighttogo")
-    print("--   sqlite3 /data/data/com.example.weighttogo/databases/WeighToGo.db")
+    print("--   adb shell run-as weightogo")
+    print("--   sqlite3 /data/data/weightogo/databases/WeighToGo.db")
     print("--   .read /sdcard/<this-file>.sql")
     print("--   .exit")
     print("--   exit")

@@ -1,0 +1,614 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background_secondary"
+    tools:context=".MainActivity">
+
+    <!-- Header with Gradient Background -->
+    <View
+        android:id="@+id/headerBackground"
+        android:layout_width="match_parent"
+        android:layout_height="180dp"
+        android:background="@drawable/bg_gradient_primary" />
+
+    <!-- Main Content -->
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/scrollView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:clipToPadding="false">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="96dp">
+
+            <!-- Header Content (Greeting + Actions) -->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="@dimen/spacing_xl"
+                android:paddingTop="@dimen/spacing_xxl"
+                android:paddingBottom="@dimen/spacing_large">
+
+                <!-- Greeting Section -->
+                <LinearLayout
+                    android:id="@+id/greetingContainer"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintEnd_toStartOf="@id/headerActions">
+
+                    <TextView
+                        android:id="@+id/greetingText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/greeting_morning"
+                        android:textColor="@color/text_on_primary"
+                        android:textSize="@dimen/text_size_body"
+                        android:alpha="0.9" />
+
+                    <TextView
+                        android:id="@+id/userName"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/text_on_primary"
+                        android:textSize="22sp"
+                        android:textStyle="bold"
+                        android:fontFamily="sans-serif-medium"
+                        tools:text="Rick" />
+
+                </LinearLayout>
+
+                <!-- Header Action Buttons -->
+                <LinearLayout
+                    android:id="@+id/headerActions"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent">
+
+                    <!-- Settings Button -->
+                    <ImageButton
+                        android:id="@+id/settingsButton"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_marginStart="@dimen/spacing_medium"
+                        android:background="@drawable/bg_header_button"
+                        android:contentDescription="@string/cd_settings_button"
+                        android:padding="@dimen/spacing_small"
+                        android:src="@drawable/ic_settings"
+                        app:tint="@color/text_on_primary" />
+
+                </LinearLayout>
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <!-- Progress Card (overlaps header) -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/progressCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="@dimen/spacing_large"
+                android:layout_marginTop="@dimen/spacing_small"
+                app:cardBackgroundColor="@color/card_background"
+                app:cardCornerRadius="@dimen/corner_radius_xl"
+                app:cardElevation="@dimen/elevation_raised"
+                app:strokeWidth="0dp">
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="@dimen/spacing_xl">
+
+                    <!-- Progress Header Row -->
+                    <TextView
+                        android:id="@+id/progressTitle"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:text="@string/progress_to_goal"
+                        android:textColor="@color/text_primary"
+                        android:textSize="@dimen/text_size_input"
+                        android:textStyle="bold"
+                        android:fontFamily="sans-serif-medium"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintEnd_toStartOf="@id/btnEditGoalFromCard" />
+
+                    <!-- Edit Goal Button -->
+                    <ImageButton
+                        android:id="@+id/btnEditGoalFromCard"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:layout_marginEnd="@dimen/spacing_small"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:src="@drawable/ic_edit"
+                        android:contentDescription="@string/cd_edit_goal"
+                        android:visibility="gone"
+                        app:layout_constraintEnd_toStartOf="@id/trendBadge"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toBottomOf="@id/progressTitle" />
+
+                    <!-- Trend Badge -->
+                    <TextView
+                        android:id="@+id/trendBadge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_badge_trend_down"
+                        android:drawableStart="@drawable/ic_trending_down"
+                        android:drawablePadding="@dimen/spacing_micro"
+                        android:drawableTint="@color/trend_down"
+                        android:paddingHorizontal="@dimen/spacing_medium"
+                        android:paddingVertical="@dimen/spacing_small"
+                        android:textColor="@color/trend_down"
+                        android:textSize="@dimen/text_size_small"
+                        android:textStyle="bold"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        tools:text="↓ 2.5 lbs" />
+
+                    <!-- Subtitle -->
+                    <TextView
+                        android:id="@+id/progressSubtitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/spacing_micro"
+                        android:text="@string/progress_subtitle"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="@dimen/text_size_small"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/progressTitle" />
+
+                    <!-- Weight Stats Row -->
+                    <LinearLayout
+                        android:id="@+id/weightStatsRow"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/spacing_large"
+                        android:gravity="center"
+                        android:orientation="horizontal"
+                        app:layout_constraintTop_toBottomOf="@id/progressSubtitle">
+
+                        <!-- Start Weight -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/startWeightValue"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="sans-serif-medium"
+                                android:textColor="@color/text_primary"
+                                android:textSize="28sp"
+                                android:textStyle="bold"
+                                tools:text="185" />
+
+                            <TextView
+                                android:id="@+id/startWeightUnit"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="12sp"
+                                tools:text="kg" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="@dimen/spacing_micro"
+                                android:text="@string/start_weight"
+                                android:textAllCaps="true"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="@dimen/text_size_small"
+                                android:letterSpacing="0.05" />
+
+                        </LinearLayout>
+
+                        <!-- Divider -->
+                        <View
+                            android:layout_width="1dp"
+                            android:layout_height="48dp"
+                            android:background="@color/divider" />
+
+                        <!-- Current Weight (highlighted) -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/currentWeightValue"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="sans-serif-medium"
+                                android:textColor="@color/primary_teal"
+                                android:textSize="28sp"
+                                android:textStyle="bold"
+                                tools:text="172" />
+
+                            <TextView
+                                android:id="@+id/currentWeightUnit"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="12sp"
+                                tools:text="kg" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="@dimen/spacing_micro"
+                                android:text="@string/current_weight"
+                                android:textAllCaps="true"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="@dimen/text_size_small"
+                                android:letterSpacing="0.05" />
+
+                        </LinearLayout>
+
+                        <!-- Divider -->
+                        <View
+                            android:layout_width="1dp"
+                            android:layout_height="48dp"
+                            android:background="@color/divider" />
+
+                        <!-- Goal Weight -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/goalWeightValue"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="sans-serif-medium"
+                                android:textColor="@color/text_primary"
+                                android:textSize="28sp"
+                                android:textStyle="bold"
+                                tools:text="165" />
+
+                            <TextView
+                                android:id="@+id/goalWeightUnit"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="12sp"
+                                tools:text="kg" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="@dimen/spacing_micro"
+                                android:text="@string/goal_weight"
+                                android:textAllCaps="true"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="@dimen/text_size_small"
+                                android:letterSpacing="0.05" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <!-- Progress Bar -->
+                    <FrameLayout
+                        android:id="@+id/progressBarContainer"
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/progress_bar_height"
+                        android:layout_marginTop="@dimen/spacing_large"
+                        android:background="@drawable/bg_progress_track"
+                        app:layout_constraintTop_toBottomOf="@id/weightStatsRow">
+
+                        <View
+                            android:id="@+id/progressBarFill"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:background="@drawable/bg_progress_fill" />
+
+                    </FrameLayout>
+
+                    <!-- Progress Labels -->
+                    <TextView
+                        android:id="@+id/progressStartLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/spacing_small"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="@dimen/text_size_small"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/progressBarContainer"
+                        tools:text="Started Oct 1" />
+
+                    <TextView
+                        android:id="@+id/progressPercentage"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/spacing_small"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="@dimen/text_size_small"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/progressBarContainer"
+                        tools:text="68% Complete" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Quick Stats Row -->
+            <LinearLayout
+                android:id="@+id/quickStatsRow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_large"
+                android:layout_marginHorizontal="@dimen/spacing_large"
+                android:orientation="horizontal">
+
+                <!-- Total Lost Card -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="@dimen/spacing_small"
+                    app:cardBackgroundColor="@color/card_background"
+                    app:cardCornerRadius="@dimen/corner_radius_large"
+                    app:cardElevation="@dimen/elevation_card"
+                    app:strokeWidth="0dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:padding="@dimen/spacing_standard">
+
+                        <ImageView
+                            android:layout_width="@dimen/icon_size_medium"
+                            android:layout_height="@dimen/icon_size_medium"
+                            android:src="@drawable/ic_trending_down"
+                            android:contentDescription="@null"
+                            app:tint="@color/primary_teal" />
+
+                        <TextView
+                            android:id="@+id/totalLostValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/spacing_small"
+                            android:fontFamily="sans-serif-medium"
+                            android:textColor="@color/text_primary"
+                            android:textSize="@dimen/text_size_title"
+                            android:textStyle="bold"
+                            tools:text="-13" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/total_lost"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="@dimen/text_size_micro" />
+
+                    </LinearLayout>
+
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- lbs to Goal Card -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginHorizontal="@dimen/spacing_small"
+                    app:cardBackgroundColor="@color/card_background"
+                    app:cardCornerRadius="@dimen/corner_radius_large"
+                    app:cardElevation="@dimen/elevation_card"
+                    app:strokeWidth="0dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:padding="@dimen/spacing_standard">
+
+                        <ImageView
+                            android:layout_width="@dimen/icon_size_medium"
+                            android:layout_height="@dimen/icon_size_medium"
+                            android:src="@drawable/ic_goal"
+                            android:contentDescription="@null"
+                            app:tint="@color/primary_teal" />
+
+                        <TextView
+                            android:id="@+id/lbsToGoalValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/spacing_small"
+                            android:fontFamily="sans-serif-medium"
+                            android:textColor="@color/text_primary"
+                            android:textSize="@dimen/text_size_title"
+                            android:textStyle="bold"
+                            tools:text="7" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/lbs_to_goal"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="@dimen/text_size_micro" />
+
+                    </LinearLayout>
+
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Day Streak Card -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="@dimen/spacing_small"
+                    app:cardBackgroundColor="@color/card_background"
+                    app:cardCornerRadius="@dimen/corner_radius_large"
+                    app:cardElevation="@dimen/elevation_card"
+                    app:strokeWidth="0dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:padding="@dimen/spacing_standard">
+
+                        <ImageView
+                            android:layout_width="@dimen/icon_size_medium"
+                            android:layout_height="@dimen/icon_size_medium"
+                            android:src="@drawable/ic_chart"
+                            android:contentDescription="@null"
+                            app:tint="@color/warning" />
+
+                        <TextView
+                            android:id="@+id/dayStreakValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/spacing_small"
+                            android:fontFamily="sans-serif-medium"
+                            android:textColor="@color/text_primary"
+                            android:textSize="@dimen/text_size_title"
+                            android:textStyle="bold"
+                            tools:text="14" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/day_streak"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="@dimen/text_size_micro" />
+
+                    </LinearLayout>
+
+                </com.google.android.material.card.MaterialCardView>
+
+            </LinearLayout>
+
+            <!-- Section Header -->
+            <LinearLayout
+                android:id="@+id/sectionHeader"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_large"
+                android:layout_marginHorizontal="@dimen/spacing_large"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:fontFamily="sans-serif-medium"
+                    android:text="@string/recent_entries"
+                    android:textColor="@color/text_primary"
+                    android:textSize="@dimen/text_size_title"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+
+            <!-- RecyclerView for Weight Entries -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/weightRecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_medium"
+                android:clipToPadding="false"
+                android:nestedScrollingEnabled="false"
+                android:paddingHorizontal="@dimen/spacing_large"
+                tools:itemCount="4"
+                tools:listitem="@layout/item_weight_entry" />
+
+            <!-- Empty State Container -->
+            <LinearLayout
+                android:id="@+id/emptyStateContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_xxl"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:paddingHorizontal="@dimen/spacing_xxl"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <ImageView
+                    android:layout_width="64dp"
+                    android:layout_height="64dp"
+                    android:alpha="0.5"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_scale"
+                    app:tint="@color/text_hint" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/spacing_standard"
+                    android:text="@string/no_entries"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="@dimen/text_size_title"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/spacing_small"
+                    android:text="@string/start_tracking"
+                    android:textColor="@color/text_hint"
+                    android:textSize="@dimen/text_size_body" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+    <!-- Floating Action Button (square-ish with rounded corners) -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/addEntryFab"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="@dimen/spacing_xl"
+        android:layout_marginBottom="100dp"
+        android:contentDescription="@string/cd_add_weight_button"
+        app:backgroundTint="@color/primary_teal"
+        app:elevation="@dimen/elevation_fab"
+        app:fabCustomSize="64dp"
+        app:maxImageSize="28dp"
+        app:shapeAppearanceOverlay="@style/ShapeAppearance.WeightOgO.FAB"
+        app:srcCompat="@drawable/ic_add"
+        app:tint="@color/text_on_primary" />
+
+    <!-- Bottom Navigation -->
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNavigation"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/bottom_nav_height"
+        android:layout_gravity="bottom"
+        android:background="@color/background_primary"
+        app:elevation="@dimen/elevation_raised"
+        app:itemIconTint="@color/bottom_nav_color"
+        app:itemTextColor="@color/bottom_nav_color"
+        app:labelVisibilityMode="labeled"
+        app:menu="@menu/bottom_nav_menu" />
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

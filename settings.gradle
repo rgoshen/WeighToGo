@@ -19,5 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "WeightToGo"
-include ':app'
+rootProject.name = "WeighToGo"
+include ':weightogo'

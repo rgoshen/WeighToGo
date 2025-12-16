@@ -1,0 +1,108 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme -->
+    <style name="Base.Theme.WeightOgO" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Primary colors -->
+        <item name="colorPrimary">@color/primary_teal</item>
+        <item name="colorPrimaryDark">@color/primary_dark</item>
+        <item name="colorOnPrimary">@color/text_on_primary</item>
+
+        <!-- Secondary/Accent colors -->
+        <item name="colorSecondary">@color/accent_green</item>
+        <item name="colorOnSecondary">@color/text_on_primary</item>
+
+        <!-- Surface colors -->
+        <item name="colorSurface">@color/background_primary</item>
+        <item name="colorOnSurface">@color/text_primary</item>
+        <item name="colorSurfaceVariant">@color/surface_variant</item>
+
+        <!-- Background -->
+        <item name="android:colorBackground">@color/background_secondary</item>
+        <item name="colorOnBackground">@color/text_primary</item>
+
+        <!-- Error colors -->
+        <item name="colorError">@color/error</item>
+        <item name="colorOnError">@color/text_on_primary</item>
+
+        <!-- Status bar -->
+        <item name="android:statusBarColor">@color/status_bar</item>
+        <item name="android:navigationBarColor">@color/navigation_bar</item>
+    </style>
+
+    <style name="Theme.WeightOgO" parent="Base.Theme.WeightOgO" />
+
+    <!-- Login screen with transparent status bar -->
+    <style name="Theme.WeightOgO.Login" parent="Theme.WeightOgO">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowTranslucentStatus">true</item>
+    </style>
+
+    <!-- Text Styles -->
+    <style name="TextAppearance.WeightOgO.Display" parent="TextAppearance.Material3.DisplaySmall">
+        <item name="android:textSize">@dimen/text_size_display</item>
+        <item name="android:textColor">@color/text_on_primary</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+    <style name="TextAppearance.WeightOgO.Headline" parent="TextAppearance.Material3.HeadlineSmall">
+        <item name="android:textSize">@dimen/text_size_headline</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+    <style name="TextAppearance.WeightOgO.Title" parent="TextAppearance.Material3.TitleMedium">
+        <item name="android:textSize">@dimen/text_size_title</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+    <style name="TextAppearance.WeightOgO.Body" parent="TextAppearance.Material3.BodyMedium">
+        <item name="android:textSize">@dimen/text_size_body</item>
+        <item name="android:textColor">@color/text_secondary</item>
+    </style>
+
+    <style name="TextAppearance.WeightOgO.Label" parent="TextAppearance.Material3.LabelMedium">
+        <item name="android:textSize">@dimen/text_size_small</item>
+        <item name="android:textColor">@color/text_secondary</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:letterSpacing">0.05</item>
+    </style>
+
+    <!-- Button Styles -->
+    <style name="Widget.WeightOgO.Button.Primary" parent="Widget.Material3.Button">
+        <item name="android:layout_height">@dimen/button_height_standard</item>
+        <item name="cornerRadius">@dimen/corner_radius_button</item>
+        <item name="backgroundTint">@color/button_primary</item>
+        <item name="android:textAllCaps">false</item>
+    </style>
+
+    <style name="Widget.WeightOgO.Button.Secondary" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="android:layout_height">@dimen/button_height_standard</item>
+        <item name="cornerRadius">@dimen/corner_radius_button</item>
+        <item name="strokeColor">@color/primary_teal</item>
+        <item name="android:textColor">@color/primary_teal</item>
+        <item name="android:textAllCaps">false</item>
+    </style>
+
+    <!-- Card Style -->
+    <style name="Widget.WeightOgO.Card" parent="Widget.Material3.CardView.Elevated">
+        <item name="cardCornerRadius">@dimen/corner_radius_card</item>
+        <item name="cardElevation">@dimen/elevation_card</item>
+        <item name="cardBackgroundColor">@color/card_background</item>
+    </style>
+
+    <!-- Input Field Style -->
+    <style name="Widget.WeightOgO.TextInputLayout" parent="Widget.Material3.TextInputLayout.OutlinedBox">
+        <item name="boxCornerRadiusTopStart">@dimen/corner_radius_input</item>
+        <item name="boxCornerRadiusTopEnd">@dimen/corner_radius_input</item>
+        <item name="boxCornerRadiusBottomStart">@dimen/corner_radius_input</item>
+        <item name="boxCornerRadiusBottomEnd">@dimen/corner_radius_input</item>
+        <item name="boxStrokeColor">@color/input_stroke_focused</item>
+        <item name="hintTextColor">@color/primary_teal</item>
+    </style>
+
+    <!-- FAB Shape (rounded square like in design) -->
+    <style name="ShapeAppearance.WeightOgO.FAB" parent="ShapeAppearance.Material3.Corner.Large">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">20dp</item>
+    </style>
+</resources>

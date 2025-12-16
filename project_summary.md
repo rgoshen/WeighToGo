@@ -1756,7 +1756,7 @@ BUILD SUCCESSFUL in 9s
 java.lang.IllegalStateException: You need to use a Theme.AppCompat theme (or descendant) with this activity.
 at androidx.appcompat.app.AppCompatDelegateImpl.createSubDecor(AppCompatDelegateImpl.java:902)
 at androidx.appcompat.app.AppCompatDelegateImpl.setContentView(AppCompatDelegateImpl.java:748)
-at com.example.weighttogo.activities.MainActivity.onCreate(MainActivity.java:91)
+at weightogo.activities.MainActivity.onCreate(MainActivity.java:91)
 ```
 
 **Root Cause**: Robolectric SDK 30 cannot properly resolve Material3 theme inheritance
@@ -5537,7 +5537,7 @@ if (usernameExists(user.getUsername())) {
 
 **Error**:
 ```
-com.example.weighttogo.database.DuplicateUsernameException: Username 'user2' already exists
+weightogo.database.DuplicateUsernameException: Username 'user2' already exists
 ```
 
 **Fix**: Made usernames unique per test using System.currentTimeMillis().

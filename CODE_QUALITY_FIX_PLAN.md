@@ -95,8 +95,8 @@ Log.d(TAG, "updatePhoneNumber: Setting phone to " +
 
 **Step 4: Commit**
 ```bash
-git add app/src/main/java/com/example/weighttogo/database/UserDAO.java
-git add app/src/test/java/com/example/weighttogo/database/UserDAOTest.java
+git add app/src/main/java/com/example/weightogo/database/UserDAO.java
+git add app/src/test/java/com/example/weightogo/database/UserDAOTest.java
 git commit -m "fix(security): mask phone number in UserDAO logs
 
 - Replace plain-text phone logging with ValidationUtils.maskPhoneNumber()
@@ -214,8 +214,8 @@ Log.i(TAG, "Session cleared for user_id: " + userId);
 
 **Step 4: Commit**
 ```bash
-git add app/src/main/java/com/example/weighttogo/utils/SessionManager.java
-git add app/src/test/java/com/example/weighttogo/utils/SessionManagerTest.java
+git add app/src/main/java/com/example/weightogo/utils/SessionManager.java
+git add app/src/test/java/com/example/weightogo/utils/SessionManagerTest.java
 git commit -m "fix(security): remove username from SessionManager logs
 
 - Replace username logging with user_id only
@@ -341,9 +341,10 @@ if (weightId > 0) {
 #### TDD Fix Steps
 
 **Step 1: Create Repository Interface (DIP Compliance)**
+
 ```java
-// File: app/src/main/java/com/example/weighttogo/repository/WeightEntryRepository.java
-package com.example.weighttogo.repository;
+// File: app/src/main/java/com/example/weightogo/repository/WeightEntryRepository.java
+package weightogo.repository;
 
 public interface WeightEntryRepository {
     /**
@@ -372,7 +373,7 @@ public class SaveResult {
 
 **Step 2: Write Integration Test (RED)**
 ```java
-// File: app/src/test/java/com/example/weighttogo/repository/WeightEntryRepositoryImplTest.java
+// File: app/src/test/java/com/example/weightogo/repository/WeightEntryRepositoryImplTest.java
 @RunWith(RobolectricTestRunner.class)
 public class WeightEntryRepositoryImplTest {
 
@@ -425,12 +426,14 @@ public class WeightEntryRepositoryImplTest {
 ```
 
 **Step 3: Implement Repository (GREEN)**
+
 ```java
-// File: app/src/main/java/com/example/weighttogo/repository/WeightEntryRepositoryImpl.java
-package com.example.weighttogo.repository;
+// File: app/src/main/java/com/example/weightogo/repository/WeightEntryRepositoryImpl.java
+package weightogo.repository;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
+
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -460,12 +463,12 @@ public class WeightEntryRepositoryImpl implements WeightEntryRepository {
                 if (weightId > 0) {
                     // Achievement checking on background thread
                     List<Achievement> achievements =
-                        achievementManager.checkAchievements(userId, weight);
+                            achievementManager.checkAchievements(userId, weight);
 
                     result = new SaveResult(true, weightId, achievements, null);
                 } else {
                     result = new SaveResult(false, -1, null,
-                        "Duplicate entry for this date");
+                            "Duplicate entry for this date");
                 }
 
                 // Post result to main thread via LiveData
@@ -473,7 +476,7 @@ public class WeightEntryRepositoryImpl implements WeightEntryRepository {
 
             } catch (Exception e) {
                 SaveResult errorResult = new SaveResult(false, -1, null,
-                    "Error: " + e.getMessage());
+                        "Error: " + e.getMessage());
                 resultLiveData.postValue(errorResult);
             }
         });
@@ -492,7 +495,7 @@ public class WeightEntryRepositoryImpl implements WeightEntryRepository {
                 SaveResult result;
                 if (rowsUpdated > 0) {
                     List<Achievement> achievements =
-                        achievementManager.checkAchievements(userId, weight);
+                            achievementManager.checkAchievements(userId, weight);
 
                     result = new SaveResult(true, entry.getEntryId(), achievements, null);
                 } else {
@@ -503,7 +506,7 @@ public class WeightEntryRepositoryImpl implements WeightEntryRepository {
 
             } catch (Exception e) {
                 SaveResult errorResult = new SaveResult(false, -1, null,
-                    "Error: " + e.getMessage());
+                        "Error: " + e.getMessage());
                 resultLiveData.postValue(errorResult);
             }
         });
@@ -662,9 +665,9 @@ if (BuildConfig.DEBUG) {
 
 **Step 7: Commit**
 ```bash
-git add app/src/main/java/com/example/weighttogo/repository/
-git add app/src/main/java/com/example/weighttogo/activities/WeightEntryActivity.java
-git add app/src/test/java/com/example/weighttogo/repository/
+git add app/src/main/java/com/example/weightogo/repository/
+git add app/src/main/java/com/example/weightogo/activities/WeightEntryActivity.java
+git add app/src/test/java/com/example/weightogo/repository/
 git commit -m "fix(performance): move database operations off UI thread
 
 - Create WeightEntryRepository interface (DIP compliance)
@@ -712,7 +715,7 @@ CLAUDE.md: MVC Architecture, TDD"
 
 **Step 1: Write Espresso UI Test (RED)**
 ```java
-// File: app/src/androidTest/java/com/example/weighttogo/activities/WeightEntryActivityAccessibilityTest.java
+// File: app/src/androidTest/java/com/example/weightogo/activities/WeightEntryActivityAccessibilityTest.java
 @RunWith(AndroidJUnit4.class)
 public class WeightEntryActivityAccessibilityTest {
 
@@ -831,7 +834,7 @@ public class WeightEntryActivityAccessibilityTest {
 ```bash
 git add app/src/main/res/layout/activity_weight_entry.xml
 git add app/src/main/res/values/strings.xml
-git add app/src/androidTest/java/com/example/weighttogo/activities/WeightEntryActivityAccessibilityTest.java
+git add app/src/androidTest/java/com/example/weightogo/activities/WeightEntryActivityAccessibilityTest.java
 git commit -m "fix(accessibility): add contentDescription to numpad buttons
 
 - Add contentDescription for buttons 4-9, decimal, and zero
@@ -925,7 +928,7 @@ public void test_deleteButton_meetsTouchTargetMinimum() {
 **Step 4: Commit**
 ```bash
 git add app/src/main/res/layout/item_weight_entry.xml
-git add app/src/androidTest/java/com/example/weighttogo/adapters/WeightEntryAdapterAccessibilityTest.java
+git add app/src/androidTest/java/com/example/weightogo/adapters/WeightEntryAdapterAccessibilityTest.java
 git commit -m "fix(accessibility): increase edit/delete button touch targets to 48dp
 
 - Increase ImageButton size from 36dp to 48dp
@@ -1079,7 +1082,7 @@ public class ColorContrastTest {
 **Step 6: Commit**
 ```bash
 git add app/src/main/res/values/colors.xml
-git add app/src/androidTest/java/com/example/weighttogo/ColorContrastTest.java
+git add app/src/androidTest/java/com/example/weightogo/ColorContrastTest.java
 git commit -m "fix(accessibility): improve color contrast to meet WCAG AA standards
 
 - Darken text_secondary from #757575 to #616161 (4.19:1 → 5.74:1)
@@ -1127,13 +1130,15 @@ CLAUDE.md: Accessibility & Inclusivity (WCAG 2.1 AA)"
 #### TDD Fix Steps
 
 **Step 1: Create SettingsViewModel**
+
 ```java
-// File: app/src/main/java/com/example/weighttogo/viewmodel/SettingsViewModel.java
-package com.example.weighttogo.viewmodel;
+// File: app/src/main/java/com/example/weightogo/viewmodel/SettingsViewModel.java
+package weightogo.viewmodel;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
+
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -1330,10 +1335,10 @@ public class SettingsActivityOrientationTest {
 
 **Step 6: Commit**
 ```bash
-git add app/src/main/java/com/example/weighttogo/viewmodel/SettingsViewModel.java
-git add app/src/main/java/com/example/weighttogo/activities/SettingsActivity.java
-git add app/src/test/java/com/example/weighttogo/viewmodel/SettingsViewModelTest.java
-git add app/src/androidTest/java/com/example/weighttogo/activities/SettingsActivityOrientationTest.java
+git add app/src/main/java/com/example/weightogo/viewmodel/SettingsViewModel.java
+git add app/src/main/java/com/example/weightogo/activities/SettingsActivity.java
+git add app/src/test/java/com/example/weightogo/viewmodel/SettingsViewModelTest.java
+git add app/src/androidTest/java/com/example/weightogo/activities/SettingsActivityOrientationTest.java
 git commit -m "fix(memory): use ViewModel to prevent data loss on configuration change
 
 - Create SettingsViewModel with lifecycle-aware executor
@@ -1425,9 +1430,10 @@ public class ProgressCalculatorTest {
 ```
 
 **Step 2: Create Model Class (GREEN)**
+
 ```java
-// File: app/src/main/java/com/example/weighttogo/models/ProgressCalculator.java
-package com.example.weighttogo.models;
+// File: app/src/main/java/com/example/weightogo/models/ProgressCalculator.java
+package weightogo.models;
 
 public final class ProgressCalculator {
 
@@ -1496,9 +1502,9 @@ private void animateProgressBar(int percentage) {
 
 **Step 5: Commit**
 ```bash
-git add app/src/main/java/com/example/weighttogo/models/ProgressCalculator.java
-git add app/src/main/java/com/example/weighttogo/activities/MainActivity.java
-git add app/src/test/java/com/example/weighttogo/models/ProgressCalculatorTest.java
+git add app/src/main/java/com/example/weightogo/models/ProgressCalculator.java
+git add app/src/main/java/com/example/weightogo/activities/MainActivity.java
+git add app/src/test/java/com/example/weightogo/models/ProgressCalculatorTest.java
 git commit -m "refactor(mvc): extract progress calculation to Model layer
 
 - Create ProgressCalculator utility class with business logic
@@ -1615,11 +1621,13 @@ public class CursorMapperTest {
 ```
 
 **Step 2: Create Utility Class (GREEN)**
+
 ```java
-// File: app/src/main/java/com/example/weighttogo/utils/CursorMapper.java
-package com.example.weighttogo.utils;
+// File: app/src/main/java/com/example/weightogo/utils/CursorMapper.java
+package weightogo.utils;
 
 import android.database.Cursor;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -1683,13 +1691,13 @@ public final class CursorMapper {
     public static LocalDateTime getDateTimeOrNull(Cursor cursor, String columnName) {
         String dateStr = getStringOrNull(cursor, columnName);
         return dateStr != null ?
-            LocalDateTime.parse(dateStr, DateTimeFormatter.ISO_LOCAL_DATE_TIME) : null;
+                LocalDateTime.parse(dateStr, DateTimeFormatter.ISO_LOCAL_DATE_TIME) : null;
     }
 
     public static LocalDate getDateOrNull(Cursor cursor, String columnName) {
         String dateStr = getStringOrNull(cursor, columnName);
         return dateStr != null ?
-            LocalDate.parse(dateStr, DateTimeFormatter.ISO_LOCAL_DATE) : null;
+                LocalDate.parse(dateStr, DateTimeFormatter.ISO_LOCAL_DATE) : null;
     }
 }
 ```
@@ -1746,9 +1754,9 @@ private User mapCursorToUser(Cursor cursor) {
 
 **Step 6: Commit**
 ```bash
-git add app/src/main/java/com/example/weighttogo/utils/CursorMapper.java
-git add app/src/main/java/com/example/weighttogo/database/*DAO.java
-git add app/src/test/java/com/example/weighttogo/utils/CursorMapperTest.java
+git add app/src/main/java/com/example/weightogo/utils/CursorMapper.java
+git add app/src/main/java/com/example/weightogo/database/*DAO.java
+git add app/src/test/java/com/example/weightogo/utils/CursorMapperTest.java
 git commit -m "refactor(dry): create CursorMapper utility to eliminate duplication
 
 - Create CursorMapper with typed cursor extraction methods

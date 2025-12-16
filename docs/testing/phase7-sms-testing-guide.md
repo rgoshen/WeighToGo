@@ -429,7 +429,7 @@ adb logcat -s SMSNotificationManager DailyReminderWorker
 **Step 5: Verify Database**
 ```bash
 # Pull database from emulator
-adb pull /data/data/com.example.weighttogo/databases/weigh_to_go.db
+adb pull /data/data/weightogodatabases/weigh_to_go.db
 
 # Open with SQLite browser to verify:
 # - Phone number stored in E.164 format
@@ -549,7 +549,7 @@ adb logcat -s DailyReminderWorker
 adb logcat -s SettingsActivity
 
 # All WeightToGo logs
-adb logcat | grep "com.example.weighttogo"
+adb logcat | grep "weightogo"
 ```
 
 ### Common Issues
@@ -567,10 +567,10 @@ adb logcat | grep "com.example.weighttogo"
 **Debug Steps:**
 ```bash
 # Check phone number in database
-adb shell "run-as com.example.weighttogo cat databases/weigh_to_go.db" | strings | grep "+1"
+adb shell "run-as weightogo cat databases/weigh_to_go.db" | strings | grep "+1"
 
 # Verify SMS permission
-adb shell dumpsys package com.example.weighttogo | grep SEND_SMS
+adb shell dumpsys package weightogo| grep SEND_SMS
 
 # Check SmsManager logs
 adb logcat -s SmsManager
@@ -588,14 +588,13 @@ adb logcat -s SmsManager
 
 2. Verify permission in system:
    ```bash
-   adb shell dumpsys package com.example.weighttogo | grep "android.permission.SEND_SMS"
+   adb shell dumpsys package weightogo| grep "android.permission.SEND_SMS"
    # Should show: granted=true
    ```
 
 3. Clear app data and retry:
    ```bash
-   adb shell pm clear com.example.weighttogo
-   ```
+   adb shell pm clear weightogo   ```
 
 #### Issue: Daily Reminder Not Firing
 
@@ -604,12 +603,12 @@ adb logcat -s SmsManager
 **Debug Steps:**
 1. Check WorkManager status:
    ```bash
-   adb shell dumpsys jobscheduler | grep "com.example.weighttogo"
+   adb shell dumpsys jobscheduler | grep "weightogo"
    ```
 
 2. Verify reminder preference:
    ```bash
-   adb shell "run-as com.example.weighttogo cat databases/weigh_to_go.db" | strings | grep "sms_reminder_enabled"
+   adb shell "run-as weightogo cat databases/weigh_to_go.db" | strings | grep "sms_reminder_enabled"
    # Should show: sms_reminder_enabled|true
    ```
 
@@ -638,7 +637,7 @@ adb logcat -s SmsManager
 
 2. Check database writes:
    ```bash
-   adb shell "run-as com.example.weighttogo cat databases/weigh_to_go.db" | strings | grep "sms_"
+   adb shell "run-as weightogo cat databases/weigh_to_go.db" | strings | grep "sms_"
    ```
 
 3. Verify SessionManager has valid userId:
@@ -666,7 +665,7 @@ adb logcat -s SmsManager
 
 3. Verify preference toggles:
    ```bash
-   adb shell "run-as com.example.weighttogo cat databases/weigh_to_go.db" | strings | grep "sms_goal_alerts"
+   adb shell "run-as weightogo cat databases/weigh_to_go.db" | strings | grep "sms_goal_alerts"
    # Should show: sms_goal_alerts|true
    ```
 
@@ -690,7 +689,7 @@ Pull and inspect database for debugging:
 
 ```bash
 # Pull database
-adb pull /data/data/com.example.weighttogo/databases/weigh_to_go.db
+adb pull /data/data/weightogodatabases/weigh_to_go.db
 
 # Open with sqlite3
 sqlite3 weigh_to_go.db

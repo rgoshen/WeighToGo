@@ -1040,7 +1040,7 @@ WeighToGo_Database_Architecture.md is the source of truth specification document
 
 **Phase 3: Refactor - MainActivity**
 - [x] Modify `activities/MainActivity.java`
-  - [x] Add import: `com.example.weighttogo.fragments.GoalDialogFragment`
+  - [x] Add import: `weightogo.fragments.GoalDialogFragment`
   - [x] Implement `GoalDialogFragment.GoalDialogListener` interface
   - [x] REMOVE lines 411-607 (~197 lines):
     - [x] Remove showSetGoalDialog() method
@@ -1062,7 +1062,7 @@ WeighToGo_Database_Architecture.md is the source of truth specification document
 
 **Phase 4: Refactor - GoalsActivity**
 - [x] Modify `activities/GoalsActivity.java`
-  - [x] Add import: `com.example.weighttogo.fragments.GoalDialogFragment`
+  - [x] Add import: `weightogo.fragments.GoalDialogFragment`
   - [x] Implement `GoalDialogFragment.GoalDialogListener` interface
   - [x] MODIFY setupFAB() method (lines 184-195):
     - [x] Replace navigation intent with showSetGoalDialog() call
