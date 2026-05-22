@@ -3,6 +3,9 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   plugins: [react()],
+  // Pre-bundle React, Emotion, and MUI together and dedupe React so a single
+  // React instance reaches MUI's ThemeProvider. Without this the dev server
+  // splits React across pre-bundles and ThemeProvider's hooks fail at runtime.
   resolve: {
     dedupe: ['react', 'react-dom'],
   },

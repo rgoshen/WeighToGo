@@ -77,6 +77,29 @@ issues were resolved.
   pre-commit hooks, which are recommended for a later documentation
   pass.
 
+**Reviews**
+
+- Three review passes — code, adversarial, and security — were run on
+  the branch before the merge gate.
+- The code and adversarial reviews both flagged that the backend pinned
+  Python 3.13 while the project targets 3.12; the pin was corrected to
+  3.12 so the declared minimum is the version actually run. The
+  adversarial review confirmed the scaffold is architecture-neutral —
+  it introduces no organize-by-technical-layer folders and does not
+  pre-empt the later domain-architecture phase. A clarifying comment
+  was added to the Vite config explaining why React, the styling
+  library, and Material UI are pre-bundled together.
+- The security review found no committed secrets, no workflow
+  script-injection, and least-privilege workflow permissions. Its one
+  recommendation — pinning third-party CI actions to commit SHAs — is
+  noted as future repository-wide hardening, deferred for consistency
+  with the existing Android workflow.
+- One naming inconsistency was surfaced for a decision rather than
+  changed: the database identifier `weightogo` and the Python package
+  `weighttogo` differ by one letter. Both spellings are taken directly
+  from the SRS, so the scaffold matches the authoritative specification
+  as written.
+
 ---
 
 ## Phase 2 Follow-up — Documentation Hygiene (2026-05-22)
