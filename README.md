@@ -4,7 +4,7 @@
 
 A simple, effective Android mobile application for daily weight tracking and goal achievement. Built with Java and Android Studio for CS 360: Mobile Architecture & Programming at Southern New Hampshire University.
 
-![Android CI](https://github.com/rgoshen/WeightToGo/actions/workflows/android-ci.yml/badge.svg)
+![Android CI](https://github.com/rgoshen-snhu/WeighToGo/actions/workflows/android-ci.yml/badge.svg)
 ![Android](https://img.shields.io/badge/Android-14+-3DDC84?style=flat&logo=android&logoColor=white)
 ![Java](https://img.shields.io/badge/Java-21-ED8B00?style=flat&logo=openjdk&logoColor=white)
 ![Gradle](https://img.shields.io/badge/Gradle-8.2+-02303A?style=flat&logo=gradle&logoColor=white)
@@ -95,15 +95,15 @@ Before you begin, ensure you have the following installed:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/rgoshen/weigh-to-go.git
-cd weigh-to-go
+git clone https://github.com/rgoshen-snhu/WeighToGo.git
+cd WeighToGo
 ```
 
 ### 2. Open in Android Studio
 
 1. Launch Android Studio
 2. Select **File → Open**
-3. Navigate to the cloned `weigh-to-go` directory
+3. Navigate to the cloned `WeighToGo` directory
 4. Click **OK** and wait for Gradle sync to complete
 
 ### 3. Configure SDK (if needed)
@@ -145,7 +145,7 @@ cd weigh-to-go
 ## 📁 Project Structure
 
 ```
-weigh-to-go/
+WeighToGo/
 ├── app/
 │   ├── src/
 │   │   ├── main/
@@ -501,8 +501,8 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 
 If you encounter any issues or have questions:
 
-1. Check the [Issues](https://github.com/rgoshen/weigh-to-go/issues) page
-2. Review the [Wiki](https://github.com/rgoshen/weigh-to-go/wiki) (if available)
+1. Check the [Issues](https://github.com/rgoshen-snhu/WeighToGo/issues) page
+2. Review the [Wiki](https://github.com/rgoshen-snhu/WeighToGo/wiki) (if available)
 3. Create a new issue with detailed information
 
 ---
