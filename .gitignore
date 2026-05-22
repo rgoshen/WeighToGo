@@ -261,3 +261,9 @@ coverage/
 playwright-report/
 # Local environment overrides
 *.local
+
+### Environment files
+# Never commit real environment files; keep the example templates tracked
+.env
+.env.*
+!.env.example
