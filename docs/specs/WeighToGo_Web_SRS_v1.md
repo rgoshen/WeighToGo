@@ -7,7 +7,7 @@
 | Document Title | Weigh to Go! Web Application, Software Requirements Specification |
 | Document Version | 1.0 |
 | Status | Draft |
-| Last Updated | 2026-05-21 |
+| Last Updated | 2026-05-22 |
 | Author | Rick Goshen |
 | Course | CS 499, Computer Science Capstone |
 | Institution | Southern New Hampshire University |
@@ -46,7 +46,7 @@
 
 This document specifies the requirements for the Weigh to Go! web application. The web application is a full-stack rebuild of the existing Weigh to Go! Android artifact, originally built in CS 360 (November 2025). The rebuild serves as the capstone artifact for CS 499 and demonstrates competency across software design, algorithms, and database engineering.
 
-This specification is the authoritative source for what the system does, what it does not do, and the standards it meets. It is structured so that any engineer (including AI coding assistants) can read it and produce work that satisfies the requirements without further clarification.
+This specification is the authoritative source for what the system does, what it does not do, and the standards it meets. It is structured so that any engineer can read it and produce work that satisfies the requirements without further clarification.
 
 ### 1.2 Background
 
@@ -441,15 +441,15 @@ All file moves use `git mv` (or equivalent index operations) so that `git log --
 
 ### 5.6 Branch and Tag Strategy
 
-The Android artifact's final commit before the restructure is tagged `v1.0.0-android` to mark the mobile-only era. The restructure itself is a structural change and is not separately tagged. Subsequent web milestones receive their own tags as they ship.
+The Android artifact's final commit before the restructure is tagged `v1.0.0-android` to mark the mobile-only era. The restructure itself is a structural change and is not separately tagged. The web application is in initial, pre-1.0 development and uses `0.x` development versioning; each milestone ships under its own tag, and the `1.0.0` release marks the final capstone submission. Exact tag values are confirmed when each tag is applied.
 
 | Tag | Meaning |
 | --- | --- |
 | `v1.0.0-android` | Final state of Android-only repository, before restructure |
-| `v2.0.0-m2` | Milestone 2 deliverable (auth + weight entry vertical slice) |
-| `v2.1.0-m3` | Milestone 3 deliverable (algorithms enhancement) |
-| `v2.2.0-m4` | Milestone 4 deliverable (database enhancement) |
-| `v2.3.0-final` | Final capstone submission |
+| `v0.1.0` | Milestone 2 deliverable (auth + weight entry vertical slice) |
+| `v0.2.0` | Milestone 3 deliverable (algorithms enhancement) |
+| `v0.3.0` | Milestone 4 deliverable (database enhancement) |
+| `v1.0.0` | Final capstone submission |
 
 ---
 
@@ -1782,7 +1782,7 @@ Milestone 2 is complete when all of the following hold:
 - [ ] Every `[M2]` non-functional requirement from section 7 is verifiable
 - [ ] The application can be cloned, set up, and run by following the README in under 15 minutes on a clean machine
 - [ ] The narrative document is written and reviewed against the rubric
-- [ ] The repository is tagged `v2.0.0-m2`
+- [ ] The repository is tagged `v0.1.0`
 
 ### 14.3 Definition of Done (Final Project)
 
@@ -1791,7 +1791,7 @@ The final project is complete when:
 - [ ] Every functional requirement (not just M2 ones) is either implemented or deliberately deferred with documented rationale
 - [ ] The ePortfolio is live, complete, and reviewed
 - [ ] All three narrative documents are present and submitted
-- [ ] The repository is tagged `v2.3.0-final`
+- [ ] The repository is tagged `v1.0.0`
 
 ---
 

@@ -68,7 +68,8 @@ python3 scripts/generate_test_weight_entries.py --count 200 --start-weight 180 -
 
 # Apply to database
 adb push test_data.sql /sdcard/
-adb shell run-as weightogosqlite3 /data/data/weightogodatabases/WeighToGo.db
+adb shell run-as com.example.weightogo
+sqlite3 /data/data/com.example.weightogo/databases/weigh_to_go.db
 .read /sdcard/test_data.sql
 .exit
 exit
@@ -94,7 +95,7 @@ exit
 
 3. **After Testing**:
    - Complete Test Summary section in checklist
-   - Update `project_summary.md` with findings
+   - Record the findings in `../../SUMMARY.md`
    - Create GitHub issues for bugs found
    - Attach checklist to final documentation
 
@@ -184,7 +185,6 @@ These manual tests **complement** (not replace) automated tests:
 ## Related Documentation
 
 - **Android Development Journal**: `../history/android_summary.md`
-- **TODO**: `../../TODO.md` - Phase 9.6 completion tracking
 - **Database Architecture**: `../architecture/WeighToGo_Database_Architecture.md`
 - **Design Specifications**: `../design/Weight_Tracker_Figma_Design_Specifications.md`
 - **Requirements**: `../requirements/CS360_Project_Three_Requirements.md`
