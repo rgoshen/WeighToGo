@@ -7,11 +7,11 @@
 | Document Title | Weigh to Go! Web Application, Software Requirements Specification |
 | Document Version | 1.0 |
 | Status | Draft |
-| Last Updated | 2026-05-20 |
+| Last Updated | 2026-05-21 |
 | Author | Rick Goshen |
 | Course | CS 499, Computer Science Capstone |
 | Institution | Southern New Hampshire University |
-| Artifact Repository | github.com/rgoshen-snhu/cs360-WeightToGoMobile (pending restructure) |
+| Artifact Repository | github.com/rgoshen-snhu/WeighToGo (pending restructure) |
 | Predecessor Artifact | Weigh to Go! (Android, CS 360, November 2025) |
 
 ---
@@ -355,7 +355,7 @@ This blend is documented in `[ADR-0007]` (planned). The decision builds on the e
 
 ### 5.1 Current Repository State
 
-The artifact currently lives at `github.com/rgoshen-snhu/cs360-WeightToGoMobile`. The repository contains the Android application, six ADRs in `/docs/adr/`, a database architecture specification, design specifications, requirements documents, HTML mockups, and a GitHub Actions workflow for Android CI. The root directory contains Android-specific build files including `build.gradle`, `settings.gradle`, `gradle.properties`, and `gradlew`.
+The artifact currently lives at `github.com/rgoshen-snhu/WeighToGo`. The repository contains the Android application, six ADRs in `/docs/adr/`, a database architecture specification, design specifications, requirements documents, HTML mockups, and a GitHub Actions workflow for Android CI. The root directory contains Android-specific build files including `build.gradle`, `settings.gradle`, `gradle.properties`, and `gradlew`.
 
 The Android codebase consists of 32 Java files across activities, adapters, database, models, utilities, and constants, plus XML layouts, resources, and 373 passing tests. The repository's identity is platform-bound, both in its name and its root-level tooling. Adding a Python backend and a TypeScript frontend at the same root would create root-level naming conflicts and obscure the artifact's evolution.
 
@@ -1895,11 +1895,11 @@ This SRS draws on the following source documents from the existing artifact and 
 | CS 499 Module One Assignment (v6) | `/CS_499_Module_One_Assignment_v6.docx` |
 | CS 499 Final Project Guidelines and Rubric | `/CS_499_Final_Project_Guidelines_and_Rubric.md` |
 | CS 499 Code Review Checklist | `/cs499_code_review_checklist.md` |
-| Android Weight Tracking App Requirements (v2) | `cs360-WeightToGoMobile:/docs/requirements/Weight_Tracking_App_Requirements_v2.md` |
-| Android Database Architecture | `cs360-WeightToGoMobile:/docs/architecture/WeighToGo_Database_Architecture.md` |
-| Figma Design Specifications | `cs360-WeightToGoMobile:/docs/design/Weight_Tracker_Figma_Design_Specifications.md` |
-| Figma Quick Start Guide | `cs360-WeightToGoMobile:/docs/design/Weight_Tracker_Figma_Quick_Start_Guide.md` |
-| ADR-0001 through ADR-0006 | `cs360-WeightToGoMobile:/docs/adr/` |
+| Android Weight Tracking App Requirements (v2) | `WeighToGo:/docs/requirements/Weight_Tracking_App_Requirements_v2.md` |
+| Android Database Architecture | `WeighToGo:/docs/architecture/WeighToGo_Database_Architecture.md` |
+| Figma Design Specifications | `WeighToGo:/docs/design/Weight_Tracker_Figma_Design_Specifications.md` |
+| Figma Quick Start Guide | `WeighToGo:/docs/design/Weight_Tracker_Figma_Quick_Start_Guide.md` |
+| ADR-0001 through ADR-0006 | `WeighToGo:/docs/adr/` |
 
 ---
 

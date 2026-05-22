@@ -67,14 +67,14 @@ Before contributing, ensure you have:
 2. **Clone** your fork locally:
 
 ```bash
-git clone https://github.com/YOUR-USERNAME/weigh-to-go.git
-cd weigh-to-go
+git clone https://github.com/YOUR-USERNAME/WeighToGo.git
+cd WeighToGo
 ```
 
 3. **Add upstream** remote:
 
 ```bash
-git remote add upstream https://github.com/ORIGINAL-OWNER/weigh-to-go.git
+git remote add upstream https://github.com/rgoshen-snhu/WeighToGo.git
 ```
 
 4. **Keep your fork synced**:
@@ -95,7 +95,7 @@ Found a bug? Please help us fix it!
 
 **Before submitting a bug report:**
 
-1. Check the [existing issues](https://github.com/yourusername/weigh-to-go/issues) to avoid duplicates
+1. Check the [existing issues](https://github.com/rgoshen-snhu/WeighToGo/issues) to avoid duplicates
 2. Ensure you're using the latest version
 3. Collect information about the bug:
    - Android version and device model
@@ -608,8 +608,8 @@ We use the [All Contributors](https://allcontributors.org/) specification. Contr
 
 ## ❓ Questions?
 
-- **General questions:** Open a [Discussion](https://github.com/yourusername/weigh-to-go/discussions)
-- **Bug or feature:** Open an [Issue](https://github.com/yourusername/weigh-to-go/issues)
+- **General questions:** Open a [Discussion](https://github.com/rgoshen-snhu/WeighToGo/discussions)
+- **Bug or feature:** Open an [Issue](https://github.com/rgoshen-snhu/WeighToGo/issues)
 - **Security issues:** Email the maintainer directly (do not open a public issue)
 
 ---
