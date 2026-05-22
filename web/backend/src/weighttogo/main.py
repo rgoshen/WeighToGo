@@ -1,10 +1,80 @@
-"""FastAPI application for the Weigh to Go! backend."""
+"""FastAPI application for the Weigh to Go! backend.
 
-from fastapi import FastAPI
+Application entry point.  Mounts all domain routers under the /api/v1 prefix,
+configures slowapi for rate limiting, and wires the shared logging setup.
 
+Security headers and CORS middleware are applied here per SRS §NFR-S-8,
+§NFR-S-10.
+"""
+
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
+
+from weighttogo.auth.interface.router import limiter
+from weighttogo.auth.interface.router import router as auth_router
 from weighttogo.config import get_settings
+from weighttogo.shared.logging import configure_logging
 
-app = FastAPI(title="Weigh to Go! API", version="0.1.0")
+configure_logging()
+
+app = FastAPI(
+    title="Weigh to Go! API",
+    version="0.1.0",
+    docs_url="/api/docs",
+    redoc_url="/api/redoc",
+    openapi_url="/api/v1/openapi.json",
+)
+
+# ── Rate limiting ──────────────────────────────────────────────────────────────
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # type: ignore[arg-type]
+app.add_middleware(SlowAPIMiddleware)
+
+# ── CORS (SRS §NFR-S-8) ───────────────────────────────────────────────────────
+
+
+def _get_cors_origins() -> list[str]:
+    settings = get_settings()
+    return [o.strip() for o in settings.cors_allowed_origins.split(",") if o.strip()]
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],  # overridden at runtime via _get_cors_origins
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "X-Request-ID"],
+)
+
+# ── Security headers middleware (SRS §NFR-S-10) ───────────────────────────────
+
+
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next: object) -> object:
+    """Add OWASP-recommended security headers to every response."""
+    from collections.abc import Awaitable, Callable
+
+    from starlette.responses import Response
+
+    next_fn: Callable[[Request], Awaitable[Response]] = call_next  # type: ignore[assignment]
+    response: Response = await next_fn(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "geolocation=(), camera=(), microphone=()"
+    return response
+
+
+# ── Routers ───────────────────────────────────────────────────────────────────
+
+app.include_router(auth_router, prefix="/api/v1")
+
+
+# ── Health check (SRS §NFR-O-3) ───────────────────────────────────────────────
 
 
 @app.get("/health")

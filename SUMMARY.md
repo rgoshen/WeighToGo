@@ -7,6 +7,33 @@ issues were resolved.
 
 ---
 
+## [2026-05-22 23:30] Commit Summary
+
+**Change Type:** Feature
+**Scope:** auth/infrastructure (models, repositories), auth/interface (router, schemas), shared/db, main, alembic
+
+**Summary:**
+Phase 6 auth backend — infrastructure adapters, FastAPI interface layer, and Alembic migration.
+Adds SQLAlchemy ORM models (UserModel, RefreshTokenModel), SQLAlchemy repository adapters,
+FastAPI router with all five auth endpoints (/register, /login, /logout, /refresh, /me),
+Pydantic request/response schemas, slowapi rate limiting, security headers middleware,
+shared DB dependency, and Alembic migration 0001 for users + refresh_tokens tables.
+16 integration tests added; all 98 tests pass; mypy strict and ruff pass; 93% coverage.
+
+**Rationale:**
+Integration tests use in-memory SQLite (StaticPool) — avoids needing a PostgreSQL server in
+CI while exercising the full HTTP → use-case → repository stack.  Rate limiting disabled in
+tests via `limiter.enabled = False` pattern.  B008 (Depends() in default args) suppressed for
+interface/router.py — unavoidable FastAPI pattern.  Naive datetime from SQLite treated as UTC
+in entity `is_valid()` and `is_locked()` for test compatibility.
+
+**References:**
+- SRS §9.3 (auth endpoints), §FR-A-1 to FR-A-5, §NFR-S-3, NFR-S-5, NFR-S-8, NFR-S-10
+- SRS §8.2.1, §8.2.2 (users and refresh_tokens schema)
+- ADR-0013 (refresh token rotation)
+
+---
+
 ## [2026-05-22 22:00] Commit Summary
 
 **Change Type:** Feature

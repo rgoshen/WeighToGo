@@ -9,6 +9,7 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
+from weighttogo.auth.infrastructure.models import Base  # noqa: F401 (triggers model registration)
 from weighttogo.config import get_settings
 
 # The Alembic Config object provides access to the values in alembic.ini.
@@ -18,9 +19,8 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# No models are defined yet; autogenerate support is wired up when the
-# domain layer introduces SQLAlchemy models in a later phase.
-target_metadata = None
+# Point autogenerate at the shared declarative base so it can detect changes.
+target_metadata = Base.metadata
 
 
 def run_migrations_offline() -> None:

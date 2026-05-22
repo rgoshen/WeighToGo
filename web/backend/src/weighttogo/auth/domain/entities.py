@@ -51,7 +51,11 @@ class User:
         """
         if self.locked_until is None:
             return False
-        return datetime.now(UTC) < self.locked_until
+        locked = self.locked_until
+        if locked.tzinfo is None:
+            # Naive datetime from SQLite — treat as UTC
+            locked = locked.replace(tzinfo=UTC)
+        return datetime.now(UTC) < locked
 
     def record_failed_login(self) -> None:
         """Increment the consecutive failed-login counter.
@@ -110,7 +114,11 @@ class RefreshToken:
         """
         if self.revoked_at is not None:
             return False
-        return datetime.now(UTC) < self.expires_at
+        expires = self.expires_at
+        if expires.tzinfo is None:
+            # Naive datetime from SQLite — treat as UTC
+            expires = expires.replace(tzinfo=UTC)
+        return datetime.now(UTC) < expires
 
     def revoke(self) -> None:
         """Mark the token as revoked by setting ``revoked_at`` to now.

@@ -17,6 +17,8 @@ dependencies = [
     "python-jose[cryptography]>=3.3",
     "slowapi>=0.1.9",
     "bcrypt>=4.0",
+    "pydantic[email]>=2.9",
+    "email-validator>=2.0",
 ]
 
 [dependency-groups]
@@ -55,6 +57,9 @@ convention = "google"
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["D"]
 "alembic/versions/*" = ["D", "F401"]
+# FastAPI requires Depends() in default argument positions (B008).
+# This is the established pattern in the FastAPI ecosystem and cannot be avoided.
+"src/weighttogo/*/interface/router.py" = ["B008"]
 
 [tool.mypy]
 python_version = "3.12"

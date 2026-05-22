@@ -93,7 +93,8 @@ class AuthenticateUser:
         if user is None or not user.is_active:
             # Perform a dummy verify to keep response time indistinguishable
             # (timing-safe enumeration guard — SRS §FR-A-9, §NFR-S-7).
-            _dummy = "$2b$12$dummyhashfortimingxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+            # This is a pre-computed bcrypt hash of the string "dummy".
+            _dummy = "$2b$12$E.tGVanjTJxSN1desdDo.ui1bZYKlcpEsw7y26MnyKjmQBJaQ7/.C"
             self._password_adapter.verify(cmd.password, _dummy)
             raise InvalidCredentialsError()
 
