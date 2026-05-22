@@ -7,7 +7,7 @@
 | Enhancement Category | One: Software Design and Engineering |
 | Status | Active |
 | Authoritative Spec | `/docs/specs/WeighToGo_Web_SRS_v1.md` |
-| Last Updated | 2026-05-20 |
+| Last Updated | 2026-05-22 |
 
 ---
 
@@ -31,7 +31,7 @@ Read these before generating the detailed plan. The SRS is the source of truth w
 | Document | Location | Key Sections for M2 |
 | --- | --- | --- |
 | **Software Requirements Specification** | `/docs/specs/WeighToGo_Web_SRS_v1.md` | §4 Architecture, §5 Restructure Plan, §6 Functional Requirements (M2-tagged), §7 Non-Functional Requirements, §10 Frontend Specification, §11 Quality Engineering, §14 Acceptance Criteria, Appendix A (ADR Index) |
-| **CS 499 Code Review Checklist** | `/docs/standards/cs499_code_review_checklist.md` | Program-standard review framework. Applied as self-review gate during Step 7 before tagging `v2.0.0-m2`. |
+| **CS 499 Code Review Checklist** | `/docs/standards/cs499_code_review_checklist.md` | Program-standard review framework. Applied as self-review gate during Step 7 before tagging `v0.1.0`. |
 | **Existing ADRs** | `/docs/adr/0001-*.md` through `/docs/adr/0006-*.md` | Context on Android-era decisions. New ADRs build on or supersede these where the rebuild changes the answer. |
 | **Android Database Architecture** | `/docs/architecture/WeighToGo_Database_Architecture.md` | Original schema. Informs the web rebuild's data model. Superseded by SRS §8 for the web side. |
 
@@ -67,7 +67,7 @@ Wire the authentication system end-to-end from frontend form through backend dom
 
 ### Step 7: Documentation and Closeout
 
-Author the seven new ADRs (see Section 4 below). Update the README at the repo root with project overview, quickstart instructions for both stacks, and a pointer to the SRS. Generate and commit the OpenAPI snapshot to `/docs/api/openapi.json`. Self-review the M2 code against the CS 499 Code Review Checklist at `/docs/standards/cs499_code_review_checklist.md`. Draft the M2 narrative document addressing the four rubric prompts. Tag the repository `v2.0.0-m2`.
+Author the seven new ADRs (see Section 4 below). Update the README at the repo root with project overview, quickstart instructions for both stacks, and a pointer to the SRS. Generate and commit the OpenAPI snapshot to `/docs/api/openapi.json`. Self-review the M2 code against the CS 499 Code Review Checklist at `/docs/standards/cs499_code_review_checklist.md`. Draft the M2 narrative document addressing the four rubric prompts. Tag the repository `v0.1.0`.
 
 ---
 
@@ -96,7 +96,7 @@ Project-wide constraints — TDD discipline, security baseline, strict typing, i
 M2-specific additions:
 
 - The vertical slice in Step 6 must demonstrate the full three-pattern architecture working end-to-end before M2 is considered complete.
-- All seven new ADRs must be written before the `v2.0.0-m2` tag is applied, not after.
+- All seven new ADRs must be written before the `v0.1.0` tag is applied, not after.
 
 ---
 
@@ -113,7 +113,7 @@ Per SRS §14.2:
 - [ ] README at the repo root is updated with quickstart instructions for both stacks
 - [ ] All existing Android tests still pass after the restructure
 - [ ] The M2 narrative document is drafted and reviewed against the rubric
-- [ ] The repository is tagged `v2.0.0-m2`
+- [ ] The repository is tagged `v0.1.0`
 
 ---
 
