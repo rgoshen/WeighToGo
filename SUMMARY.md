@@ -7,6 +7,34 @@ issues were resolved.
 
 ---
 
+## [2026-05-23 00:00] Commit Summary
+
+**Change Type:** Feature / Fix
+**Scope:** auth security tests, integration conftest, shared/db session lifecycle
+
+**Summary:**
+Phase 6 security tests and DB session lifecycle fix. Adds 14 security-focused integration
+tests covering PII masking in logs, account lockout progression (5 failures → 423 Locked),
+username enumeration prevention, HTTP-only cookies, and token replay protection. Fixes a
+critical bug: FastAPI throws HTTPException into generator dependencies which was causing
+the DB to rollback valid domain changes (e.g. failed-login counter increments). The fix
+commits on HTTPException and only rolls back on unexpected exceptions. 110 tests pass,
+92% total coverage, domain layer at 100%.
+
+**Rationale:**
+The HTTPException-as-rollback bug is subtle: Python's generator protocol distinguishes
+`gen.close()` (throws `GeneratorExit`) from `gen.throw(exc)` (throws the actual exception).
+FastAPI uses `gen.throw(HTTPException)` to propagate expected route errors, but this was
+silently rolling back failed-login counter increments via `except Exception: rollback`.
+Fixed in both the integration test conftest and the production `shared/db.py`.
+
+**References:**
+- SRS §FR-A-9 (enumeration prevention), §FR-A-10 (PII logging), §NFR-S-6 (lockout)
+- SRS §NFR-Priv-1 (PII masking), §NFR-S-3 (HTTP-only cookies)
+- ADR-0013 (refresh token rotation / replay protection)
+
+---
+
 ## [2026-05-22 23:30] Commit Summary
 
 **Change Type:** Feature
