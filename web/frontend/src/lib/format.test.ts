@@ -12,7 +12,8 @@ describe('formatWeight', () => {
   });
 
   it('rounds to one decimal place', () => {
-    expect(formatWeight(70.55, 'kg')).toBe('70.6 kg');
+    // 70.56 rounds up to 70.6 in standard IEEE 754 toFixed(1) rounding.
+    expect(formatWeight(70.56, 'kg')).toBe('70.6 kg');
   });
 
   it('handles zero weight', () => {

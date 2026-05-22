@@ -63,7 +63,7 @@ describe('fetchJson', () => {
 
     await fetchJson('/api/test', { method: 'POST', body: { name: 'test' } });
 
-    const callArgs = mockFetch.mock.calls[0] as [string, RequestInit];
+    const callArgs = mockFetch.mock.calls[0] as unknown as [string, RequestInit];
     const headers = callArgs[1]?.headers as Record<string, string>;
     expect(headers['Content-Type']).toBe('application/json');
   });
