@@ -4,6 +4,9 @@
 # slot, so the Python pre-commit framework runs the backend (ruff) and the
 # frontend (eslint, prettier) checks rather than competing with a second
 # manager. Activate locally once with: pre-commit install
+#
+# The frontend hooks shell out to the project's own npm scripts and so
+# require `npm install` to have been run in web/frontend.
 
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
@@ -21,13 +24,13 @@ repos:
     hooks:
       - id: frontend-lint
         name: eslint (frontend lint)
-        entry: "bash -c 'cd web/frontend && npm run lint'"
+        entry: "bash -c 'cd web/frontend && if [ ! -d node_modules ]; then echo frontend dependencies missing, run npm --prefix web/frontend install; exit 1; fi; npm run lint'"
         language: system
         files: ^web/frontend/.*\.(ts|tsx)$
         pass_filenames: false
       - id: frontend-format
         name: prettier (frontend format check)
-        entry: "bash -c 'cd web/frontend && npm run format:check'"
+        entry: "bash -c 'cd web/frontend && if [ ! -d node_modules ]; then echo frontend dependencies missing, run npm --prefix web/frontend install; exit 1; fi; npm run format:check'"
         language: system
-        files: ^web/frontend/
+        files: ^web/frontend/.*\.(ts|tsx|js|jsx|json|css|html|md|ya?ml)$
         pass_filenames: false
