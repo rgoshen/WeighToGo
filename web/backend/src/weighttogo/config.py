@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     )
 
     environment: Literal["development", "test", "production"] = "development"
-    database_url: str = "postgresql+psycopg://weightogo:weightogo@localhost:5432/weightogo_dev"
+    database_url: str = "postgresql+psycopg://weighttogo:weighttogo@localhost:5432/weighttogo_dev"
 
 
 settings = Settings()

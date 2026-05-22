@@ -94,11 +94,12 @@ issues were resolved.
   recommendation — pinning third-party CI actions to commit SHAs — is
   noted as future repository-wide hardening, deferred for consistency
   with the existing Android workflow.
-- One naming inconsistency was surfaced for a decision rather than
-  changed: the database identifier `weightogo` and the Python package
-  `weighttogo` differ by one letter. Both spellings are taken directly
-  from the SRS, so the scaffold matches the authoritative specification
-  as written.
+- A naming inconsistency the reviews raised — the database identifier
+  `weightogo` versus the Python package `weighttogo` — was resolved by
+  standardizing the web project on `weighttogo`. The database
+  identifiers, the `.env.example`, the Docker Compose definition, and
+  the SRS examples were all updated to match. The preserved Android
+  artifact keeps its own `weightogo` package and is unaffected.
 
 ---
 

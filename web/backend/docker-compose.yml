@@ -6,18 +6,18 @@
 services:
   postgres:
     image: postgres:16
-    container_name: weightogo-postgres
+    container_name: weighttogo-postgres
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-weightogo}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-weightogo}
-      POSTGRES_DB: ${POSTGRES_DB:-weightogo_dev}
+      POSTGRES_USER: ${POSTGRES_USER:-weighttogo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-weighttogo}
+      POSTGRES_DB: ${POSTGRES_DB:-weighttogo_dev}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test:
-        ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-weightogo} -d ${POSTGRES_DB:-weightogo_dev}"]
+        ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-weighttogo} -d ${POSTGRES_DB:-weighttogo_dev}"]
       interval: 5s
       timeout: 5s
       retries: 5
