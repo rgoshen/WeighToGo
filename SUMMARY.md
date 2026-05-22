@@ -7,6 +7,22 @@ issues were resolved.
 
 ---
 
+## [2026-05-22 00:01] Commit Summary
+
+**Change Type:** Test
+**Scope:** backend/architecture
+
+**Summary:**
+Add a failing architecture smoke test that invokes import-linter against pyproject.toml. The test asserts returncode == 0; it fails RED because no [tool.importlinter] configuration exists yet.
+
+**Rationale:**
+TDD red phase: writing the test first makes the acceptance criterion explicit before any configuration is added. The test will go green once import-linter contracts are configured in the next commit.
+
+**References:**
+- Issue: Phase 4 backend architecture
+
+---
+
 ## [2026-05-22 00:00] Commit Summary
 
 **Change Type:** Feature
