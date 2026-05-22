@@ -7,6 +7,22 @@ issues were resolved.
 
 ---
 
+## [2026-05-22 00:04] Commit Summary
+
+**Change Type:** Feature
+**Scope:** backend/shared
+
+**Summary:**
+Implement weighttogo.shared.exceptions (DomainError hierarchy: ValidationError, NotFoundError, ConflictError) and weighttogo.shared.logging (get_logger() returning a structlog lazy proxy, mask_pii() redacting email patterns with a compiled regex). All 17 tests pass. Test corrections were required to match structlog's actual lazy-proxy behavior: get_logger() returns a BoundLoggerLazyProxy that exposes bind()/info()/debug() via __getattr__, not a BoundLogger directly.
+
+**Rationale:**
+These cross-cutting utilities belong in shared/ so every bounded context can emit structured logs and raise domain errors without duplicating the setup. Keeping them in the domain-free shared/ layer ensures no framework coupling is introduced through logging or error handling.
+
+**References:**
+- Issue: Phase 4 backend architecture
+
+---
+
 ## [2026-05-22 00:03] Commit Summary
 
 **Change Type:** Test
