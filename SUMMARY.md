@@ -7,6 +7,38 @@ issues were resolved.
 
 ---
 
+## [2026-05-23 01:00] Commit Summary
+
+**Change Type:** Fix
+**Scope:** config, auth/interface/router
+
+**Summary:**
+SECRET_KEY now typed as SecretStr with a field validator rejecting blank, whitespace-only, and sub-32-character values. cookie_secure property derived from environment (True in production, False elsewhere). JwtAdapter receives the unwrapped secret string. Auth cookies now carry the Secure flag in production. 8 new config tests cover all rejection paths and the production/development cookie flag.
+
+**Rationale:**
+PR #27 security review (critical): A blank or trivially short SECRET_KEY could start the service with a forgeable signing key. PR #27 review (high): Hard-coded secure=False meant production cookies could be sent over plain HTTP.
+
+**References:**
+- PR: #27
+
+---
+
+## [2026-05-23 01:01] Commit Summary
+
+**Change Type:** Fix
+**Scope:** auth/interface/router, auth/application/refresh_session, auth/domain/ports, auth/infrastructure/repositories
+
+**Summary:**
+Logout no longer requires a valid access token — it operates on the refresh cookie directly and always clears auth cookies. /refresh and /me check is_active and return 401 for deactivated accounts. Refresh rotation now calls get_by_hash_for_update (SELECT FOR UPDATE on PostgreSQL, no-op on SQLite) to prevent TOCTOU race on concurrent rotations. Added get_by_hash_for_update to IRefreshTokenRepository port and SqlAlchemyRefreshTokenRepository. 5 new integration tests cover all three findings.
+
+**Rationale:**
+PR #27 security review (high): Logout requiring a valid access token left live refresh tokens when the access token expired. (high): Inactive accounts could keep refreshing. (high): Concurrent refresh requests could both observe the same token as valid before either write committed.
+
+**References:**
+- PR: #27
+
+---
+
 ## [2026-05-23 00:00] Commit Summary
 
 **Change Type:** Feature / Fix

@@ -17,6 +17,8 @@ Cookie names:
 
 from __future__ import annotations
 
+import contextlib
+
 import structlog
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, Response, status
 from slowapi import Limiter
@@ -57,11 +59,6 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 # Cookie configuration (SRS §NFR-S-3)
 _ACCESS_COOKIE = "access_token"
 _REFRESH_COOKIE = "refresh_token"
-_COOKIE_KWARGS: dict[str, object] = {
-    "httponly": True,
-    "samesite": "strict",
-    "secure": False,  # set to True in production — overridden per environment
-}
 
 # Generic error body — identical for all auth failures (SRS §FR-A-9, §NFR-S-7)
 _GENERIC_AUTH_ERROR = {"detail": "Invalid credentials."}
@@ -73,7 +70,7 @@ _GENERIC_AUTH_ERROR = {"detail": "Invalid credentials."}
 def _get_jwt_adapter() -> JwtAdapter:
     """Return a JwtAdapter configured from settings."""
     settings = get_settings()
-    return JwtAdapter(secret_key=settings.secret_key)
+    return JwtAdapter(secret_key=settings.secret_key.get_secret_value())
 
 
 def _get_password_adapter() -> BcryptPasswordAdapter:
@@ -118,17 +115,22 @@ def _set_auth_cookies(
     from weighttogo.config import Settings
 
     s = settings if isinstance(settings, Settings) else get_settings()
+    cookie_kwargs = {
+        "httponly": True,
+        "samesite": "strict",
+        "secure": s.cookie_secure,
+    }
     response.set_cookie(
         key=_ACCESS_COOKIE,
         value=access_token,
         max_age=s.access_token_expire_minutes * 60,
-        **_COOKIE_KWARGS,  # type: ignore[arg-type]
+        **cookie_kwargs,  # type: ignore[arg-type]
     )
     response.set_cookie(
         key=_REFRESH_COOKIE,
         value=raw_refresh,
         max_age=s.refresh_token_expire_days * 24 * 60 * 60,
-        **_COOKIE_KWARGS,  # type: ignore[arg-type]
+        **cookie_kwargs,  # type: ignore[arg-type]
     )
 
 
@@ -298,23 +300,26 @@ def logout(
     response: Response,
     refresh_token: str | None = Cookie(default=None, alias=_REFRESH_COOKIE),
     session: Session = Depends(get_db_session),
-    _current_user_id: int = Depends(get_current_user_id),
 ) -> None:
     """Revoke the refresh token and clear session cookies.
 
+    Does not require a valid access token — clients must be able to log out
+    even after the 15-minute access token has expired.  Auth cookies are always
+    cleared regardless of token state.
+
     Args:
         response: The outgoing HTTP response (used to clear cookies).
-        refresh_token: The refresh token from the cookie.
+        refresh_token: The refresh token from the cookie (optional).
         session: The active database session.
-        _current_user_id: Enforces authentication (unused value).
     """
     if refresh_token is not None:
         token_repo = SqlAlchemyRefreshTokenRepository(session)
         revoke_uc = RevokeSession(token_repo=token_repo)
-        revoke_uc.execute(RevokeSessionCommand(raw_refresh_token=refresh_token))
+        with contextlib.suppress(InvalidCredentialsError):
+            revoke_uc.execute(RevokeSessionCommand(raw_refresh_token=refresh_token))
 
     _clear_auth_cookies(response)
-    logger.info("user_logged_out", user_id=_current_user_id)
+    logger.info("user_logged_out")
 
 
 @router.post(
@@ -372,11 +377,18 @@ def refresh(
             detail=_GENERIC_AUTH_ERROR["detail"],
         ) from exc
 
-    # Look up the user from the new token's user_id
-
+    # Look up the user and verify they are still active
     new_user_id = jwt_adapter.verify_access_token(tokens.access_token)
     user = user_repo.get_by_id(new_user_id)
-    if user is None:
+    if user is None or not user.is_active:
+        # Deactivated account — revoke the whole token family and deny access
+        if user is None:
+            pass
+        else:
+            token_repo.revoke_family(
+                token_repo.get_by_hash(jwt_adapter.hash_token(refresh_token)).family_id  # type: ignore[union-attr]
+            )
+        _clear_auth_cookies(response)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated.")
 
     _set_auth_cookies(response, tokens.access_token, tokens.raw_refresh_token, settings)
@@ -412,7 +424,7 @@ def me(
     """
     user_repo = SqlAlchemyUserRepository(session)
     user = user_repo.get_by_id(current_user_id)
-    if user is None:
+    if user is None or not user.is_active:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated.")
 
     return UserResponse(

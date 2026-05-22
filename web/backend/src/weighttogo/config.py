@@ -8,6 +8,7 @@ raise a ``ValidationError`` at startup rather than silently using a wrong value.
 from functools import lru_cache
 from typing import Literal
 
+from pydantic import SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -20,7 +21,8 @@ class Settings(BaseSettings):
         database_url: Full SQLAlchemy-compatible PostgreSQL connection string.
             Required — no default.
         secret_key: HMAC-SHA-256 signing key for JWT tokens.  Must be at least
-            32 bytes (256 bits) of random material.  Required — no default.
+            32 characters of non-whitespace random material.  Required — no default.
+            Stored as ``SecretStr`` so the value is never accidentally logged.
         access_token_expire_minutes: JWT access token lifetime in minutes
             (SRS §FR-A-2, §NFR-S-3).
         refresh_token_expire_days: Refresh token lifetime in days
@@ -32,6 +34,8 @@ class Settings(BaseSettings):
         cors_allowed_origins: Comma-separated list of allowed CORS origins.
             Wildcards are never accepted (SRS §NFR-S-8).
         log_level: Minimum log severity passed to stdlib logging.
+        cookie_secure: Whether auth cookies carry the ``Secure`` attribute.
+            Derived from ``environment``: always ``True`` in production.
     """
 
     model_config = SettingsConfigDict(
@@ -47,7 +51,7 @@ class Settings(BaseSettings):
 
     # ── Auth (SRS §12.5.1) ────────────────────────────────────────────────────
 
-    secret_key: str  # required — no default; must be ≥32 random bytes
+    secret_key: SecretStr  # required — no default; must be ≥32 non-whitespace chars
     access_token_expire_minutes: int = 15
     refresh_token_expire_days: int = 7
     max_login_attempts: int = 5
@@ -60,6 +64,31 @@ class Settings(BaseSettings):
     # ── Observability ─────────────────────────────────────────────────────────
 
     log_level: str = "INFO"
+
+    # ── Derived properties ────────────────────────────────────────────────────
+
+    @property
+    def cookie_secure(self) -> bool:
+        """Return True when cookies must carry the Secure attribute.
+
+        Always True in production; False in development and test so that
+        local HTTP development servers work without TLS.
+        """
+        return self.environment == "production"
+
+    # ── Validators ────────────────────────────────────────────────────────────
+
+    @field_validator("secret_key", mode="before")
+    @classmethod
+    def _validate_secret_key(cls, v: object) -> object:
+        """Reject blank, whitespace-only, or too-short secret keys."""
+        raw = v.get_secret_value() if isinstance(v, SecretStr) else str(v) if v is not None else ""
+        stripped = raw.strip()
+        if not stripped:
+            raise ValueError("SECRET_KEY must not be blank or whitespace-only.")
+        if len(stripped) < 32:
+            raise ValueError(f"SECRET_KEY must be at least 32 characters; got {len(stripped)}.")
+        return v
 
 
 @lru_cache

@@ -78,3 +78,86 @@ def test_settings_secret_key_is_required(
 
     with pytest.raises(ValidationError):
         Settings()  # type: ignore[call-arg]
+
+
+def test_settings_secret_key_rejects_blank(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """A blank SECRET_KEY must raise ValidationError at startup."""
+    monkeypatch.setenv("DATABASE_URL", "postgresql+psycopg://test:test@localhost:5432/test")
+    monkeypatch.setenv("SECRET_KEY", "")
+    monkeypatch.chdir(tmp_path)
+
+    with pytest.raises(ValidationError):
+        Settings()  # type: ignore[call-arg]
+
+
+def test_settings_secret_key_rejects_whitespace_only(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """A whitespace-only SECRET_KEY must raise ValidationError."""
+    monkeypatch.setenv("DATABASE_URL", "postgresql+psycopg://test:test@localhost:5432/test")
+    monkeypatch.setenv("SECRET_KEY", "   ")
+    monkeypatch.chdir(tmp_path)
+
+    with pytest.raises(ValidationError):
+        Settings()  # type: ignore[call-arg]
+
+
+def test_settings_secret_key_rejects_short_value(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """A SECRET_KEY shorter than 32 characters must raise ValidationError."""
+    monkeypatch.setenv("DATABASE_URL", "postgresql+psycopg://test:test@localhost:5432/test")
+    monkeypatch.setenv("SECRET_KEY", "a" * 31)
+    monkeypatch.chdir(tmp_path)
+
+    with pytest.raises(ValidationError):
+        Settings()  # type: ignore[call-arg]
+
+
+def test_settings_secret_key_accepts_32_char_value(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """A SECRET_KEY of exactly 32 characters must be accepted."""
+    monkeypatch.setenv("DATABASE_URL", "postgresql+psycopg://test:test@localhost:5432/test")
+    monkeypatch.setenv("SECRET_KEY", "a" * 32)
+    monkeypatch.chdir(tmp_path)
+
+    settings = Settings()  # type: ignore[call-arg]
+
+    assert settings.secret_key.get_secret_value() == "a" * 32
+
+
+def test_settings_cookie_secure_is_false_in_development(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """cookie_secure must be False in the development environment."""
+    monkeypatch.setenv("DATABASE_URL", "postgresql+psycopg://test:test@localhost:5432/test")
+    monkeypatch.setenv("SECRET_KEY", "a" * 32)
+    monkeypatch.setenv("ENVIRONMENT", "development")
+    monkeypatch.chdir(tmp_path)
+
+    settings = Settings()  # type: ignore[call-arg]
+
+    assert settings.cookie_secure is False
+
+
+def test_settings_cookie_secure_is_true_in_production(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """cookie_secure must be True in the production environment."""
+    monkeypatch.setenv("DATABASE_URL", "postgresql+psycopg://test:test@localhost:5432/test")
+    monkeypatch.setenv("SECRET_KEY", "a" * 32)
+    monkeypatch.setenv("ENVIRONMENT", "production")
+    monkeypatch.chdir(tmp_path)
+
+    settings = Settings()  # type: ignore[call-arg]
+
+    assert settings.cookie_secure is True
