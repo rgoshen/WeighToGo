@@ -90,10 +90,11 @@ issues were resolved.
   was added to the Vite config explaining why React, the styling
   library, and Material UI are pre-bundled together.
 - The security review found no committed secrets, no workflow
-  script-injection, and least-privilege workflow permissions. Its one
-  recommendation — pinning third-party CI actions to commit SHAs — is
-  noted as future repository-wide hardening, deferred for consistency
-  with the existing Android workflow.
+  script-injection, and least-privilege workflow permissions. Its
+  recommendation to pin third-party CI actions to commit SHAs was
+  applied repository-wide: every action across all five workflows and
+  the ruff pre-commit hook is now pinned to a commit SHA with a version
+  comment.
 - A naming inconsistency the reviews raised — the database identifier
   `weightogo` versus the Python package `weighttogo` — was resolved by
   standardizing the web project on `weighttogo`. The database
