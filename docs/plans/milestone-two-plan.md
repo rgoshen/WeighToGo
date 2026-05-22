@@ -42,7 +42,7 @@ Read these before generating the detailed plan. The SRS is the source of truth w
 
 ## 3. Implementation Sequence
 
-Seven high-level steps. Claude Code expands each into detailed sub-tasks with affected files, approach, risks, and testing strategy. Each step ends with a green CI run and all coverage thresholds met before moving to the next.
+Seven high-level steps. Each is expanded into detailed sub-tasks with affected files, approach, risks, and testing strategy. Each step ends with a green CI run and all coverage thresholds met before moving to the next.
 
 ### Step 1: Repository Restructure
 
@@ -94,7 +94,7 @@ SRS Appendix A is updated to reflect this numbering.
 
 ## 5. M2-Specific Constraints
 
-Project-wide constraints (TDD discipline, security baseline, strict typing, import linters, branching strategy, lint/test gates, commit conventions) are documented in `/CLAUDE.md` and `/web/CLAUDE.md`. Claude Code reads those files automatically when working in this repo. Refer to them for execution rules.
+Project-wide constraints (TDD discipline, security baseline, strict typing, import linters, branching strategy, lint/test gates, commit conventions) are documented in `/CLAUDE.md` and `/web/CLAUDE.md`. Refer to them for execution rules.
 
 M2-specific additions:
 

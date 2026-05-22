@@ -46,7 +46,7 @@
 
 This document specifies the requirements for the Weigh to Go! web application. The web application is a full-stack rebuild of the existing Weigh to Go! Android artifact, originally built in CS 360 (November 2025). The rebuild serves as the capstone artifact for CS 499 and demonstrates competency across software design, algorithms, and database engineering.
 
-This specification is the authoritative source for what the system does, what it does not do, and the standards it meets. It is structured so that any engineer (including AI coding assistants) can read it and produce work that satisfies the requirements without further clarification.
+This specification is the authoritative source for what the system does, what it does not do, and the standards it meets. It is structured so that any engineer can read it and produce work that satisfies the requirements without further clarification.
 
 ### 1.2 Background
 

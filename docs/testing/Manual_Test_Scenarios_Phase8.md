@@ -160,7 +160,6 @@ For each test scenario:
 ## References
 
 - **GitHub Issue #49:** Espresso Toast verification limitation with Material3
-- **Phase 8 Plan:** `/Users/richardgoshen/.claude/plans/dreamy-jingling-spark.md`
 - **Android Testing Best Practices:** https://developer.android.com/training/testing/fundamentals
 - **WorkManager Testing Guide:** https://developer.android.com/topic/libraries/architecture/workmanager/how-to/testing-210
 
