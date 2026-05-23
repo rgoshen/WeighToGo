@@ -7,6 +7,27 @@ issues were resolved.
 
 ---
 
+## [2026-05-23 PR #30 Review] fix(weight): get_by_id must exclude soft-deleted; add get_by_id_including_deleted for idempotent delete
+
+**Change Type:** Fix
+**Scope:** Backend — `weight_tracking` domain port, SQLAlchemy adapter, DeleteWeightEntry use case
+
+**Summary:**
+Fixed a port-contract violation in `SqlAlchemyWeightEntryRepository.get_by_id`. The query filtered only on `(entry_id, user_id)` and so returned soft-deleted rows, while the `IWeightEntryRepository.get_by_id` port docstring stipulates "an active entry by primary key". As a result, `GET /api/v1/weight-entries/{id}` and `PUT /api/v1/weight-entries/{id}` against a soft-deleted entry returned `200` (and mutated the deleted row, on PUT) instead of `404`. Added `is_deleted=False` to the `get_by_id` query so it now matches every other read method in the class (`list_for_user`, `count_for_user`, `get_latest_for_user`, `exists_for_user_on_date`). To preserve the idempotent re-delete semantics in `DeleteWeightEntry` (which previously relied on `get_by_id` returning a soft-deleted row to distinguish "already deleted" from "never existed"), added a sibling port method `get_by_id_including_deleted` with a SQLAlchemy implementation and routed `DeleteWeightEntry` to use it. Added two regression integration tests: `test_get_soft_deleted_entry_returns_404` and `test_update_soft_deleted_entry_returns_404`. Updated `test_repository_port.py` stub and `test_delete_weight_entry_use_case.py` mock targets to match the new port surface.
+
+**Rationale:**
+Two viable approaches: (1) collapse delete idempotency by accepting 204 even for entries that never existed (a single-method change, but it broadens "deleted" semantics and would have flipped the existing `test_delete_nonexistent_entry_returns_404` to expect 204); (2) keep the existing 404-vs-204 distinction and add an explicit port method for the soft-delete-aware path. Chose (2) because it preserves spec-aligned REST semantics (404 on truly missing, 204 on idempotent re-delete) and makes the soft-delete-aware lookup an explicit named affordance rather than a subtle property of a generic `get_by_id`.
+
+**Bug Fix Context:**
+Root cause: `SqlAlchemyWeightEntryRepository.get_by_id` omitted `is_deleted=False` while all sibling reads enforced it; the gap was previously masked by `DeleteWeightEntry` compensating with its own `entry.is_deleted` check. The read and update paths did not compensate, so soft-deleted rows leaked through. Fix isolates the soft-delete-aware behavior behind `get_by_id_including_deleted` and restores port-contract conformance for `get_by_id`.
+
+**References:**
+- PR #30 reviewer comment on `repositories.py` L94–L112 vs. `ports.py` L33–L45
+- SRS §FR-W-3 (get/update return 404 when entry not found), §FR-W-4 (delete is idempotent)
+- Phase 8 Implementation Plan subtasks 4 (port surface), 9 (DeleteWeightEntry use case)
+
+---
+
 ## [2026-05-23 Phase 8 E2E Fix] test(e2e): wait for post-login redirect and disambiguate delete locator
 
 **Change Type:** Fix

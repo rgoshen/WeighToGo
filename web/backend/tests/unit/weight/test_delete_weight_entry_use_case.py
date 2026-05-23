@@ -39,7 +39,7 @@ def _run(repo: MagicMock, user_id: int = 1, entry_id: int = 1) -> None:
 
 def test_delete_weight_entry_happy_path_calls_soft_delete_and_save() -> None:
     repo = MagicMock()
-    repo.get_by_id.return_value = _make_entry()
+    repo.get_by_id_including_deleted.return_value = _make_entry()
     _run(repo)
     saved_entry: WeightEntry = repo.save.call_args[0][0]
     assert saved_entry.is_deleted is True
@@ -48,7 +48,7 @@ def test_delete_weight_entry_happy_path_calls_soft_delete_and_save() -> None:
 
 def test_delete_weight_entry_not_found_raises_not_found() -> None:
     repo = MagicMock()
-    repo.get_by_id.return_value = None
+    repo.get_by_id_including_deleted.return_value = None
     with pytest.raises(WeightEntryNotFoundError):
         _run(repo)
 
@@ -56,6 +56,6 @@ def test_delete_weight_entry_not_found_raises_not_found() -> None:
 def test_delete_weight_entry_already_deleted_is_idempotent() -> None:
     """Re-deleting an already-deleted entry must succeed without an extra save."""
     repo = MagicMock()
-    repo.get_by_id.return_value = _make_entry(is_deleted=True)
+    repo.get_by_id_including_deleted.return_value = _make_entry(is_deleted=True)
     _run(repo)  # must not raise
     repo.save.assert_not_called()

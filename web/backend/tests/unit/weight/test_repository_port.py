@@ -25,6 +25,9 @@ def test_concrete_class_satisfying_port_passes_isinstance_check() -> None:
         def get_by_id(self, entry_id: int, user_id: int) -> WeightEntry | None:
             return None
 
+        def get_by_id_including_deleted(self, entry_id: int, user_id: int) -> WeightEntry | None:
+            return None
+
         def list_for_user(
             self, user_id: int, limit: int, before_id: int | None
         ) -> list[WeightEntry]:

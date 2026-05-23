@@ -120,6 +120,17 @@ def test_get_nonexistent_entry_returns_404(client: TestClient) -> None:
     assert resp.status_code == 404
 
 
+def test_get_soft_deleted_entry_returns_404(client: TestClient) -> None:
+    """Port contract: get_by_id returns an active entry. A soft-deleted entry
+    must surface as 404 from GET /weight-entries/{id} (PR #30 review)."""
+    _register_and_login(client)
+    create_resp = client.post("/api/v1/weight-entries", json=_valid_payload())
+    entry_id = create_resp.json()["entry_id"]
+    client.delete(f"/api/v1/weight-entries/{entry_id}")
+    resp = client.get(f"/api/v1/weight-entries/{entry_id}")
+    assert resp.status_code == 404
+
+
 # ── Update ────────────────────────────────────────────────────────────────────
 
 
@@ -133,6 +144,21 @@ def test_update_entry_returns_200_with_new_value(client: TestClient) -> None:
     )
     assert resp.status_code == 200
     assert resp.json()["weight_value"] == 180.0
+
+
+def test_update_soft_deleted_entry_returns_404(client: TestClient) -> None:
+    """Port contract: get_by_id returns an active entry. A PUT against a
+    soft-deleted entry must surface as 404, not mutate the deleted row
+    (PR #30 review)."""
+    _register_and_login(client)
+    create_resp = client.post("/api/v1/weight-entries", json=_valid_payload())
+    entry_id = create_resp.json()["entry_id"]
+    client.delete(f"/api/v1/weight-entries/{entry_id}")
+    resp = client.put(
+        f"/api/v1/weight-entries/{entry_id}",
+        json=_valid_payload(weight_value=180.0),
+    )
+    assert resp.status_code == 404
 
 
 def test_update_entry_conflict_date_returns_409(client: TestClient) -> None:

@@ -34,12 +34,34 @@ class IWeightEntryRepository(Protocol):
     def get_by_id(self, entry_id: int, user_id: int) -> WeightEntry | None:
         """Look up an active entry by primary key, scoped to *user_id*.
 
+        Soft-deleted entries are excluded — callers that need to inspect a
+        deleted row (e.g. delete idempotency) must use
+        ``get_by_id_including_deleted``.
+
         Args:
             entry_id: The surrogate primary key.
             user_id: The requesting user's ID (ownership check).
 
         Returns:
-            The matching entity, or ``None`` if not found or owned by another user.
+            The matching active entity, or ``None`` if not found, owned by
+            another user, or soft-deleted.
+        """
+        ...
+
+    def get_by_id_including_deleted(self, entry_id: int, user_id: int) -> WeightEntry | None:
+        """Look up an entry by primary key including soft-deleted rows.
+
+        Exists to support the idempotent re-delete path in ``DeleteWeightEntry``,
+        which must distinguish "already deleted" from "never existed".  All
+        other read paths must use ``get_by_id``.
+
+        Args:
+            entry_id: The surrogate primary key.
+            user_id: The requesting user's ID (ownership check).
+
+        Returns:
+            The matching entity (active or soft-deleted), or ``None`` if not
+            found or owned by another user.
         """
         ...
 

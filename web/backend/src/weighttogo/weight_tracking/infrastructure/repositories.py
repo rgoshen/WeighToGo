@@ -93,15 +93,37 @@ class SqlAlchemyWeightEntryRepository:
         return _entry_to_domain(row)
 
     def get_by_id(self, entry_id: int, user_id: int) -> WeightEntry | None:
-        """Look up an entry by primary key, scoped to *user_id*.
+        """Look up an active entry by primary key, scoped to *user_id*.
+
+        Soft-deleted rows are excluded per the port contract.
 
         Args:
             entry_id: The surrogate primary key.
             user_id: The requesting user's ID.
 
         Returns:
-            The matching domain entity, or ``None`` if not found or owned by
-            another user.
+            The matching active domain entity, or ``None`` if not found, owned
+            by another user, or soft-deleted.
+        """
+        row = (
+            self._session.query(WeightEntryModel)
+            .filter_by(entry_id=entry_id, user_id=user_id, is_deleted=False)
+            .first()
+        )
+        return _entry_to_domain(row) if row else None
+
+    def get_by_id_including_deleted(self, entry_id: int, user_id: int) -> WeightEntry | None:
+        """Look up an entry by primary key including soft-deleted rows.
+
+        Used by ``DeleteWeightEntry`` to support idempotent re-delete.
+
+        Args:
+            entry_id: The surrogate primary key.
+            user_id: The requesting user's ID.
+
+        Returns:
+            The matching domain entity (active or soft-deleted), or ``None`` if
+            not found or owned by another user.
         """
         row = (
             self._session.query(WeightEntryModel)

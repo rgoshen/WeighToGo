@@ -40,7 +40,9 @@ class DeleteWeightEntry:
             WeightEntryNotFoundError: When the entry does not exist or belongs
                 to a different user (not raised for already-deleted entries).
         """
-        entry = self._repo.get_by_id(entry_id=command.entry_id, user_id=command.user_id)
+        entry = self._repo.get_by_id_including_deleted(
+            entry_id=command.entry_id, user_id=command.user_id
+        )
         if entry is None:
             raise WeightEntryNotFoundError()
 
