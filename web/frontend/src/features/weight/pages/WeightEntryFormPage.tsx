@@ -32,9 +32,11 @@ export function WeightEntryFormPage() {
       : null;
   const isEditMode = entryId !== null;
 
-  const { data: existingEntry, isLoading: isLoadingEntry } = useWeightEntry(
-    isEditMode ? entryId : null,
-  );
+  const {
+    data: existingEntry,
+    isLoading: isLoadingEntry,
+    isError: entryFetchFailed,
+  } = useWeightEntry(isEditMode ? entryId : null);
 
   const createMutation = useCreateWeightEntry();
   const updateMutation = useUpdateWeightEntry();
@@ -68,8 +70,12 @@ export function WeightEntryFormPage() {
     );
   }
 
-  // Non-numeric entryId in the URL (e.g. /weight/abc/edit)
-  if (entryIdStr !== undefined && entryId === null) {
+  // Non-numeric entryId in the URL (e.g. /weight/abc/edit), or the entry
+  // could not be fetched (e.g. it was soft-deleted, never existed, or the
+  // caller does not own it). Without this branch the form would render
+  // blank and a PUT on submit would surface as 404 with no useful UI
+  // (PR #30 review).
+  if ((entryIdStr !== undefined && entryId === null) || entryFetchFailed) {
     return (
       <Box component="main">
         <Typography variant="h4" component="h1" gutterBottom>

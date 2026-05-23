@@ -7,6 +7,27 @@ issues were resolved.
 
 ---
 
+## [2026-05-23 PR #30 Review] fix(weight): render not-found state when edit-form fetch fails
+
+**Change Type:** Fix
+**Scope:** Frontend — `WeightEntryFormPage` + tests
+
+**Summary:**
+The edit form destructured only `data` and `isLoading` from `useWeightEntry`. When the fetch errored (entry deleted, never existed, owned by a different user), `existingEntry` was `undefined`, `defaultValues` was `undefined`, and the page silently rendered a blank form. Submitting then issued a `PUT` that returned 404, and the form's error handler only surfaced 409/422 — the user got no useful feedback. Now we also destructure `isError` and reuse the existing not-found UI block (already present for the non-numeric `/weight/abc/edit` path). One additional condition; same component output.
+
+Added test: `'renders not-found state when edit-mode entry fetch returns 404'` — mocks `weightClient.get` to reject with `ApiError(404)` and asserts the not-found heading is shown and the form is NOT rendered (so a submit cannot fire an additional 404 PUT).
+
+**Rationale:**
+The cleanest fix reuses the existing not-found block rather than introducing a new one or a per-error toast — the symptoms (blank form, missing entry) and remedy (not-found page) are identical between "non-numeric URL" and "fetch failed", so one branch covers both. Considered a `404 specifically` check on the error status, but the form has no actionable state for any failure mode (network error, 5xx, soft-deleted) — collapsing to a single error branch is simpler and still correct.
+
+**Bug Fix Context:**
+Root cause: query error state (`isError`) was never read by the page; the component proceeded to render the form regardless. The fix consumes that state and short-circuits to the existing not-found UI.
+
+**References:**
+- PR #30 reviewer comment on `WeightEntryFormPage.tsx:83-91`
+
+---
+
 ## [2026-05-23 PR #30 Review] feat(weight): paginate weight history with Load more
 
 **Change Type:** Feature

@@ -86,6 +86,16 @@ describe('WeightEntryFormPage', () => {
     await waitFor(() => expect(screen.getByText(/entry already exists/i)).toBeInTheDocument());
   });
 
+  it('renders not-found state when edit-mode entry fetch returns 404', async () => {
+    vi.spyOn(weightClient, 'get').mockRejectedValue(new ApiError(404, 'Not Found'));
+    render(<WeightEntryFormPage />, { wrapper: wrapper('/weight/9999/edit') });
+    await waitFor(() =>
+      expect(screen.getByRole('heading', { name: /not found/i })).toBeInTheDocument(),
+    );
+    // Form must not render; a blank form on a deleted entry would PUT 404 on submit.
+    expect(screen.queryByLabelText(/weight value/i)).not.toBeInTheDocument();
+  });
+
   it('calls weightClient.update on submit in edit mode', async () => {
     vi.spyOn(weightClient, 'get').mockResolvedValue({
       entry_id: 1,
