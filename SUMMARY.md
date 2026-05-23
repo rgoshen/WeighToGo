@@ -7,6 +7,23 @@ issues were resolved.
 
 ---
 
+## [2026-05-23 Phase 8 Subtask 1] feat(db): add weight_entries migration (FR-W-1..5)
+
+**Change Type:** Feature
+**Scope:** Database / Alembic
+
+**Summary:**
+Created migration `0002_weight_entries.py` implementing SRS §8.2.3. The migration creates the `weight_entries` table with 10 columns, 5 named CHECK constraints (`weight_entries_value_positive`, `weight_entries_value_max`, `weight_entries_unit_valid`, `weight_entries_observation_not_future`, `weight_entries_deletion_consistency`), and 2 partial indexes (`idx_weight_entries_user_date_active` UNIQUE partial, `idx_weight_entries_user_observation_desc`). Partial index WHERE clauses use `postgresql_where` for SQLite test compatibility. Written TDD: 5 failing tests → migration → 5 green.
+
+**Rationale:**
+Database-level constraints are the last line of defence for value-domain rules, closing the Android code review finding (SRS §1.2). Using `postgresql_where` follows the 0001 migration pattern.
+
+**References:**
+- SRS §8.2.3, §8.3
+- Phase 8 Implementation Plan subtask 1
+
+---
+
 ## [2026-05-23] Task 20 — Documentation sweep and Phase 7 closeout
 
 **Change Type:** Docs
