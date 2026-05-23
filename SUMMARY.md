@@ -7,6 +7,23 @@ issues were resolved.
 
 ---
 
+## [2026-05-23 Phase 8 Subtasks 31–33] feat(frontend): replace stub pages with real weight and dashboard pages
+
+**Change Type:** Feature
+**Scope:** Frontend — weight history, entry form, and dashboard pages
+
+**Summary:**
+Replaced all three stub pages with full implementations. WeightHistoryPage: loading spinner, empty state CTA, WeightEntryTable with ConfirmDeleteDialog for delete flow. WeightEntryFormPage: create/edit mode detection via useParams, pre-population in edit mode, 409 conflict error display, numeric entryId validation. DashboardPage: 3-card grid for populated users, EmptyState CTA for new users. Deleted old stub test files and wrote new comprehensive tests. 213 frontend tests, 92.81% branch coverage (above 90% threshold).
+
+**Rationale:**
+The 409 conflict error is caught in the mutation `onError` callback and displayed as an Alert above the form (pattern from plan §6.3). Non-numeric entryId in the URL renders a "Not Found" heading rather than crashing.
+
+**References:**
+- SRS §10.1, §10.3, §FR-W-1..5, §FR-D-1
+- Phase 8 Implementation Plan subtasks 31–33
+
+---
+
 ## [2026-05-23 Phase 8 Subtasks 27–30] feat(frontend): add weight and dashboard UI components
 
 **Change Type:** Feature

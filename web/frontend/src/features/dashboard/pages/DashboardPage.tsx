@@ -1,26 +1,56 @@
 /**
- * Dashboard page stub.
+ * Dashboard page (FR-D-1).
  *
- * The full dashboard (recent weight trend chart, last entry summary, quick-log
- * shortcut) is implemented in Phase 6 and Phase 7.
- *
- * Requirements: SRS §3.1 FR-04, FR-05.
+ * Displays a summary of the user's weight tracking progress.  When the user
+ * has no entries, a full-width empty state with a CTA is shown instead.
+ * Loading states use MUI Skeleton via the individual card components.
  */
 
-import { Box, Typography } from '@mui/material';
+import { Box, Button, Grid, Typography } from '@mui/material';
+import { Link as RouterLink } from 'react-router-dom';
+import { EmptyState } from '../../../components/EmptyState';
+import { GoalProgressPlaceholderCard } from '../components/GoalProgressPlaceholderCard';
+import { LatestEntryCard } from '../components/LatestEntryCard';
+import { TotalEntriesCard } from '../components/TotalEntriesCard';
+import { useDashboardSummary } from '../hooks/useDashboardSummary';
 
 /**
  * Dashboard landing page rendered at /.
  */
 export function DashboardPage() {
+  const { data, isLoading } = useDashboardSummary();
+
+  const isEmpty = !isLoading && data !== undefined && data.total_entries === 0;
+
   return (
     <Box component="main">
       <Typography variant="h4" component="h1" gutterBottom>
         Dashboard
       </Typography>
-      <Typography variant="body1" color="text.secondary">
-        Your weight summary will appear here once Phase 6 is complete.
-      </Typography>
+
+      {isEmpty ? (
+        <EmptyState
+          title="No entries yet"
+          description="Start tracking your progress by logging your first weight entry."
+          action={
+            <Button component={RouterLink} to="/weight/new" variant="contained">
+              Add your first entry
+            </Button>
+          }
+        />
+      ) : (
+        <Grid container spacing={3}>
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <LatestEntryCard entry={data?.latest_entry} isLoading={isLoading} />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <TotalEntriesCard total={data?.total_entries ?? 0} isLoading={isLoading} />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <GoalProgressPlaceholderCard />
+          </Grid>
+        </Grid>
+      )}
     </Box>
   );
 }
