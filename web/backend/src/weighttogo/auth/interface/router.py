@@ -101,7 +101,11 @@ _GENERIC_AUTH_ERROR = {"detail": "Invalid credentials."}
 def _get_jwt_adapter() -> JwtAdapter:
     """Return a JwtAdapter configured from settings."""
     settings = get_settings()
-    return JwtAdapter(secret_key=settings.secret_key.get_secret_value())
+    return JwtAdapter(
+        secret_key=settings.secret_key.get_secret_value(),
+        issuer=settings.jwt_issuer,
+        audience=settings.jwt_audience,
+    )
 
 
 def _get_password_adapter() -> BcryptPasswordAdapter:

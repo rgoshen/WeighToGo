@@ -42,12 +42,22 @@ class JwtAdapter:
     Args:
         secret_key: The HMAC signing key (at least 32 random bytes).
         algorithm: The signing algorithm (must be ``'HS256'``).
+        issuer: Expected ``iss`` claim value.
+        audience: Expected ``aud`` claim value.
     """
 
-    def __init__(self, secret_key: str, algorithm: str = "HS256") -> None:
-        """Initialise the adapter with the signing key and algorithm."""
+    def __init__(
+        self,
+        secret_key: str,
+        algorithm: str = "HS256",
+        issuer: str = "weighttogo-api",
+        audience: str = "weighttogo-clients",
+    ) -> None:
+        """Initialise the adapter with the signing key, algorithm, and claim values."""
         self._secret = secret_key
         self._algorithm = algorithm
+        self._issuer = issuer
+        self._audience = audience
 
     # ── Access tokens ─────────────────────────────────────────────────────────
 
@@ -71,6 +81,8 @@ class JwtAdapter:
             "exp": now + ttl,
             "jti": secrets.token_hex(16),
             "typ": TokenType.ACCESS,
+            "iss": self._issuer,
+            "aud": self._audience,
         }
         token: str = jwt.encode(claims, self._secret, algorithm=self._algorithm)
         return token
@@ -94,13 +106,23 @@ class JwtAdapter:
                 token,
                 self._secret,
                 algorithms=[self._algorithm],
+                audience=self._audience,
+                issuer=self._issuer,
                 options={"require_exp": True},
             )
-            return int(payload["sub"])
         except ExpiredSignatureError as exc:
             raise TokenExpiredError("Access token has expired.") from exc
         except JWTError as exc:
             raise InvalidTokenError("Token verification failed.") from exc
+
+        # Explicit claim checks — python-jose may skip missing aud/iss silently.
+        if payload.get("typ") != TokenType.ACCESS:
+            raise InvalidTokenError("Invalid token type.")
+        if payload.get("iss") != self._issuer:
+            raise InvalidTokenError("Invalid token issuer.")
+        if payload.get("aud") != self._audience:
+            raise InvalidTokenError("Invalid token audience.")
+        return int(payload["sub"])
 
     # ── Refresh tokens ────────────────────────────────────────────────────────
 

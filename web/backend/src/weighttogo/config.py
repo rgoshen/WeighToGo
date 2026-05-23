@@ -60,6 +60,8 @@ class Settings(BaseSettings):
     # ── Security ──────────────────────────────────────────────────────────────
 
     cors_allowed_origins: str = "http://localhost:5173"  # override in prod
+    jwt_issuer: str = "weighttogo-api"
+    jwt_audience: str = "weighttogo-clients"
     # When True the rate limiter reads the rightmost IP in X-Forwarded-For
     # instead of REMOTE_ADDR. Only enable when a trusted reverse proxy is in
     # front of the API; never enable if clients can set this header directly.

@@ -7,6 +7,22 @@ issues were resolved.
 
 ---
 
+## [2026-05-22 10:12] Commit Summary
+
+**Change Type:** Fix
+**Scope:** auth/infrastructure/jwt_adapter, config
+
+**Summary:**
+`JwtAdapter.issue_access_token` now embeds `iss` and `aud` claims. `verify_access_token` passes `audience=` and `issuer=` to `jwt.decode` and then explicitly checks `typ`, `iss`, and `aud` after decode (python-jose silently skips missing claims). Added `jwt_issuer`/`jwt_audience` settings with sensible defaults.
+
+**Rationale:**
+Without `typ`/`aud`/`iss` validation, a refresh token minted with the same secret and algorithm could be replayed as an access token. PR #27 code review finding C13.
+
+**References:**
+- PR: #27 (C13)
+
+---
+
 ## [2026-05-22 10:11] Commit Summary
 
 **Change Type:** Fix
