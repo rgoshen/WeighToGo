@@ -7,6 +7,22 @@ issues were resolved.
 
 ---
 
+## [2026-05-22 10:06] Commit Summary
+
+**Change Type:** Fix
+**Scope:** main
+
+**Summary:**
+Changed `allow_origins=["http://localhost:5173"]` to `allow_origins=_get_cors_origins()` so the `CORS_ALLOWED_ORIGINS` environment variable actually governs the allowed origins. Removed misleading inline comment. Added two integration tests that reload the app with a custom origin and verify preflight responses.
+
+**Rationale:**
+`_get_cors_origins()` was defined but never called; the hardcoded list meant production CORS config had no effect. PR #27 code review finding C7.
+
+**References:**
+- PR: #27 (C7)
+
+---
+
 ## [2026-05-22 10:05] Commit Summary
 
 **Change Type:** Fix
