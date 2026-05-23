@@ -7,6 +7,361 @@ issues were resolved.
 
 ---
 
+## [2026-05-22 10:14] Commit Summary
+
+**Change Type:** Fix
+**Scope:** auth/infrastructure/models, alembic/versions/0001
+
+**Summary:**
+Changed `Integer` → `BigInteger().with_variant(Integer(), "sqlite")` on PKs and FK columns in ORM models so PostgreSQL gets `BIGINT` and SQLite gets `INTEGER` (required for rowid aliasing/auto-increment). Changed `UUID(as_uuid=True)` on `family_id` to SQLAlchemy-core `Uuid(as_uuid=True, native_uuid=True)`. Fixed migration's `postgresql.UUID(as_uuid=False)` → `sa.UUID(as_uuid=True)`.
+
+**Rationale:**
+Migration used `BigInteger` for PKs and `postgresql.UUID(as_uuid=False)` while the ORM used `Integer` and `UUID(as_uuid=True)`. This caused spurious `alembic revision --autogenerate` diffs and UUID type mismatches on non-CITEXT engines. PR #27 code review finding C15.
+
+**References:**
+- PR: #27 (C15)
+
+---
+
+## [2026-05-22 10:13] Commit Summary
+
+**Change Type:** Fix
+**Scope:** auth/interface/schemas
+
+**Summary:**
+Changed `max_length=128` to `max_length=72` on `RegisterRequest.password` and `LoginRequest.password`. Passwords longer than 72 bytes are silently truncated by bcrypt, making the extra bytes meaningless entropy.
+
+**Rationale:**
+Accepting passwords up to 128 chars gives users false confidence in password strength beyond bcrypt's 72-byte limit. PR #27 code review finding C14.
+
+**References:**
+- PR: #27 (C14)
+
+---
+
+## [2026-05-22 10:12] Commit Summary
+
+**Change Type:** Fix
+**Scope:** auth/infrastructure/jwt_adapter, config
+
+**Summary:**
+`JwtAdapter.issue_access_token` now embeds `iss` and `aud` claims. `verify_access_token` passes `audience=` and `issuer=` to `jwt.decode` and then explicitly checks `typ`, `iss`, and `aud` after decode (python-jose silently skips missing claims). Added `jwt_issuer`/`jwt_audience` settings with sensible defaults.
+
+**Rationale:**
+Without `typ`/`aud`/`iss` validation, a refresh token minted with the same secret and algorithm could be replayed as an access token. PR #27 code review finding C13.
+
+**References:**
+- PR: #27 (C13)
+
+---
+
+## [2026-05-22 10:11] Commit Summary
+
+**Change Type:** Fix
+**Scope:** auth/interface/router
+
+**Summary:**
+`_set_auth_cookies` now sets `path="/api/v1/auth"` on the refresh token cookie and `path="/"` on the access token cookie. `_clear_auth_cookies` updated to use the matching paths. The refresh cookie is no longer sent on every API request to non-auth endpoints.
+
+**Rationale:**
+The refresh cookie was scoped to `/` so browsers sent it on every request (weight entries, goals, etc.) — unnecessary token exposure. PR #27 code review finding C12.
+
+**References:**
+- PR: #27 (C12)
+
+---
+
+## [2026-05-22 10:10] Commit Summary
+
+**Change Type:** Fix
+**Scope:** auth/interface/router
+
+**Summary:**
+`_clear_auth_cookies` now passes `path="/"`, `httponly=True`, `samesite="strict"`, and `secure=s.cookie_secure` to both `delete_cookie` calls — matching the attributes used when the cookies were set. Without these, browsers may ignore the deletion directive for cookies set with `Secure + SameSite=Strict`.
+
+**Rationale:**
+The previous bare `delete_cookie(key=...)` omitted all attributes, so browsers silently ignored the deletion. PR #27 code review finding C11.
+
+**References:**
+- PR: #27 (C11)
+
+---
+
+## [2026-05-22 10:09] Commit Summary
+
+**Change Type:** Fix
+**Scope:** config, auth/interface/router
+
+**Summary:**
+Added `trusted_proxies: bool = False` to `Settings`. Replaced the fixed `get_remote_address` key_func with `_make_rate_limit_key()` which, when `trusted_proxies=True`, uses the rightmost `X-Forwarded-For` IP for per-client rate-limit buckets. Documented the knob in `.env.example`.
+
+**Rationale:**
+Behind a reverse proxy, `REMOTE_ADDR` is always the proxy IP — all users share one rate-limit bucket. The `trusted_proxies` knob defaults to `False` (safe) to avoid letting attackers spoof XFF headers. PR #27 code review finding C10.
+
+**References:**
+- PR: #27 (C10)
+
+---
+
+## [2026-05-22 10:08] Commit Summary
+
+**Change Type:** Fix
+**Scope:** auth/interface/router
+
+**Summary:**
+Added `@limiter.limit("10/minute")` and a `request: Request` parameter to the `/logout` endpoint. A caller with a stolen or guessed refresh token cookie can no longer hit logout unlimited times to DoS sessions.
+
+**Rationale:**
+`/logout` was the only auth endpoint without a rate limit, leaving it open to DoS. PR #27 code review finding C9.
+
+**References:**
+- PR: #27 (C9)
+
+---
+
+## [2026-05-22 10:07] Commit Summary
+
+**Change Type:** Fix
+**Scope:** auth/interface/schemas
+
+**Summary:**
+Added `@field_validator("email", mode="after")` on `RegisterRequest` and `LoginRequest` that returns `v.strip().lower()`. This aligns stored email with the lowercased query in `get_by_email`, fixing case-mismatch 401s on SQLite (which lacks CITEXT).
+
+**Rationale:**
+`RegisterUser` stored `cmd.email` verbatim while `get_by_email` queried with `.lower()`. On SQLite (all integration tests and dev), registering "Foo@Bar.com" and logging in with the same string returned 401 because stored vs queried strings differed. PR #27 code review finding C8.
+
+**References:**
+- PR: #27 (C8)
+
+---
+
+## [2026-05-22 10:06] Commit Summary
+
+**Change Type:** Fix
+**Scope:** main
+
+**Summary:**
+Changed `allow_origins=["http://localhost:5173"]` to `allow_origins=_get_cors_origins()` so the `CORS_ALLOWED_ORIGINS` environment variable actually governs the allowed origins. Removed misleading inline comment. Added two integration tests that reload the app with a custom origin and verify preflight responses.
+
+**Rationale:**
+`_get_cors_origins()` was defined but never called; the hardcoded list meant production CORS config had no effect. PR #27 code review finding C7.
+
+**References:**
+- PR: #27 (C7)
+
+---
+
+## [2026-05-22 10:05] Commit Summary
+
+**Change Type:** Fix
+**Scope:** auth/application/revoke_session, auth/interface/router
+
+**Summary:**
+`RevokeSession` now accepts an `IJwtAdapter` dependency for token hashing (removing the direct `hashlib.sha256` call) and calls `token_repo.revoke_family(token.family_id)` instead of revoking and saving a single token. The router passes `jwt_adapter` to `RevokeSession` on construction. Updated existing tests to assert `revoke_family` is called.
+
+**Rationale:**
+The old code bypassed the port contract (using hashlib directly) and only revoked one token instead of the whole family, leaving sibling tokens in the rotation chain alive after logout. PR #27 code review finding C6.
+
+**References:**
+- PR: #27 (C6)
+
+---
+
+## [2026-05-22 10:04] Commit Summary
+
+**Change Type:** Fix
+**Scope:** auth/infrastructure/password, auth/application/authenticate_user
+
+**Summary:**
+Added `BcryptPasswordAdapter.verify_dummy()` which lazily computes and caches a dummy hash at the adapter's current `_ROUNDS`. `AuthenticateUser` now calls `verify_dummy` instead of holding a hardcoded cost-12 constant. Extended `IPasswordAdapter` protocol with the new method.
+
+**Rationale:**
+The hardcoded `$2b$12$...` dummy becomes faster than real verifies if `_ROUNDS` is ever raised, restoring the timing oracle. The dynamic dummy stays cost-matched regardless of configuration. PR #27 code review finding C5.
+
+**References:**
+- PR: #27 (C5)
+
+---
+
+## [2026-05-22 10:03] Commit Summary
+
+**Change Type:** Fix
+**Scope:** auth/application/authenticate_user
+
+**Summary:**
+Reordered `AuthenticateUser.execute()` to always run `password_adapter.verify` before the lockout check. Locked accounts now take ~250ms (same as a failed login) rather than ~1ms, eliminating the timing oracle. Counter is incremented only for unlocked active users with a bad password.
+
+**Rationale:**
+A locked account that short-circuits before bcrypt responds in ~1ms vs ~250ms for valid bad-password — a reliable enumeration oracle for discovering locked accounts. PR #27 code review finding C4.
+
+**References:**
+- PR: #27 (C4)
+
+---
+
+## [2026-05-22 10:02] Commit Summary
+
+**Change Type:** Fix
+**Scope:** auth/application/refresh_session
+
+**Summary:**
+After saving the new refresh token, `RefreshSession.execute()` now sets `existing.replaced_by = saved_new.token_id` and persists the update. The rotation chain audit trail is now complete.
+
+**Rationale:**
+The `replaced_by` field existed in the domain entity, ORM model, and migration but was never written, making the rotation chain unauditable. PR #27 code review finding C3.
+
+**References:**
+- PR: #27 (C3)
+
+---
+
+## [2026-05-22 10:01] Commit Summary
+
+**Change Type:** Fix
+**Scope:** auth/interface/router
+
+**Summary:**
+In the `/refresh` endpoint, when `user_repo.get_by_id()` returns `None` after token rotation, the handler now calls `token_repo.revoke_family(old_token.family_id)` — identical to the inactive-user branch — before returning 401. This prevents a newly-rotated refresh token from remaining live in the DB with no valid owner.
+
+**Rationale:**
+The original code had `if user is None: pass`, leaving the post-rotation token unrevoked (orphaned). PR #27 code review finding C2.
+
+**References:**
+- PR: #27 (C2)
+
+---
+
+## [2026-05-22 10:00] Commit Summary
+
+**Change Type:** Fix
+**Scope:** shared/db
+
+**Summary:**
+Restructured `get_db_session` so each branch (success, HTTPException, unexpected) owns its commit or rollback explicitly, and `finally` only closes the session. Eliminated the double-commit race where a failed second commit in `finally` could replace the original HTTPException with a 500. Applied the same correction to the integration test override. Added three unit tests covering all three lifecycle paths.
+
+**Rationale:**
+The old pattern called `session.commit()` in `except HTTPException` and again in `finally` (since `_should_rollback` remained False). If the second commit fails, the original application error is swallowed. PR #27 code review finding C1.
+
+**References:**
+- PR: #27 (C1)
+
+---
+
+## [2026-05-23 01:00] Commit Summary
+
+**Change Type:** Fix
+**Scope:** config, auth/interface/router
+
+**Summary:**
+SECRET_KEY now typed as SecretStr with a field validator rejecting blank, whitespace-only, and sub-32-character values. cookie_secure property derived from environment (True in production, False elsewhere). JwtAdapter receives the unwrapped secret string. Auth cookies now carry the Secure flag in production. 8 new config tests cover all rejection paths and the production/development cookie flag.
+
+**Rationale:**
+PR #27 security review (critical): A blank or trivially short SECRET_KEY could start the service with a forgeable signing key. PR #27 review (high): Hard-coded secure=False meant production cookies could be sent over plain HTTP.
+
+**References:**
+- PR: #27
+
+---
+
+## [2026-05-23 01:01] Commit Summary
+
+**Change Type:** Fix
+**Scope:** auth/interface/router, auth/application/refresh_session, auth/domain/ports, auth/infrastructure/repositories
+
+**Summary:**
+Logout no longer requires a valid access token — it operates on the refresh cookie directly and always clears auth cookies. /refresh and /me check is_active and return 401 for deactivated accounts. Refresh rotation now calls get_by_hash_for_update (SELECT FOR UPDATE on PostgreSQL, no-op on SQLite) to prevent TOCTOU race on concurrent rotations. Added get_by_hash_for_update to IRefreshTokenRepository port and SqlAlchemyRefreshTokenRepository. 5 new integration tests cover all three findings.
+
+**Rationale:**
+PR #27 security review (high): Logout requiring a valid access token left live refresh tokens when the access token expired. (high): Inactive accounts could keep refreshing. (high): Concurrent refresh requests could both observe the same token as valid before either write committed.
+
+**References:**
+- PR: #27
+
+---
+
+## [2026-05-23 00:00] Commit Summary
+
+**Change Type:** Feature / Fix
+**Scope:** auth security tests, integration conftest, shared/db session lifecycle
+
+**Summary:**
+Phase 6 security tests and DB session lifecycle fix. Adds 14 security-focused integration
+tests covering PII masking in logs, account lockout progression (5 failures → 423 Locked),
+username enumeration prevention, HTTP-only cookies, and token replay protection. Fixes a
+critical bug: FastAPI throws HTTPException into generator dependencies which was causing
+the DB to rollback valid domain changes (e.g. failed-login counter increments). The fix
+commits on HTTPException and only rolls back on unexpected exceptions. 110 tests pass,
+92% total coverage, domain layer at 100%.
+
+**Rationale:**
+The HTTPException-as-rollback bug is subtle: Python's generator protocol distinguishes
+`gen.close()` (throws `GeneratorExit`) from `gen.throw(exc)` (throws the actual exception).
+FastAPI uses `gen.throw(HTTPException)` to propagate expected route errors, but this was
+silently rolling back failed-login counter increments via `except Exception: rollback`.
+Fixed in both the integration test conftest and the production `shared/db.py`.
+
+**References:**
+- SRS §FR-A-9 (enumeration prevention), §FR-A-10 (PII logging), §NFR-S-6 (lockout)
+- SRS §NFR-Priv-1 (PII masking), §NFR-S-3 (HTTP-only cookies)
+- ADR-0013 (refresh token rotation / replay protection)
+
+---
+
+## [2026-05-22 23:30] Commit Summary
+
+**Change Type:** Feature
+**Scope:** auth/infrastructure (models, repositories), auth/interface (router, schemas), shared/db, main, alembic
+
+**Summary:**
+Phase 6 auth backend — infrastructure adapters, FastAPI interface layer, and Alembic migration.
+Adds SQLAlchemy ORM models (UserModel, RefreshTokenModel), SQLAlchemy repository adapters,
+FastAPI router with all five auth endpoints (/register, /login, /logout, /refresh, /me),
+Pydantic request/response schemas, slowapi rate limiting, security headers middleware,
+shared DB dependency, and Alembic migration 0001 for users + refresh_tokens tables.
+16 integration tests added; all 98 tests pass; mypy strict and ruff pass; 93% coverage.
+
+**Rationale:**
+Integration tests use in-memory SQLite (StaticPool) — avoids needing a PostgreSQL server in
+CI while exercising the full HTTP → use-case → repository stack.  Rate limiting disabled in
+tests via `limiter.enabled = False` pattern.  B008 (Depends() in default args) suppressed for
+interface/router.py — unavoidable FastAPI pattern.  Naive datetime from SQLite treated as UTC
+in entity `is_valid()` and `is_locked()` for test compatibility.
+
+**References:**
+- SRS §9.3 (auth endpoints), §FR-A-1 to FR-A-5, §NFR-S-3, NFR-S-5, NFR-S-8, NFR-S-10
+- SRS §8.2.1, §8.2.2 (users and refresh_tokens schema)
+- ADR-0013 (refresh token rotation)
+
+---
+
+## [2026-05-22 22:00] Commit Summary
+
+**Change Type:** Feature
+**Scope:** auth/domain, auth/application, auth/infrastructure (password + JWT), config
+
+**Summary:**
+Phase 6 auth backend — domain and application layers plus infrastructure adapters.
+Implements User and RefreshToken entities, domain exceptions, repository ports,
+RegisterUser / AuthenticateUser / IssueTokens / RefreshSession / RevokeSession use
+cases, BcryptPasswordAdapter (bcrypt cost 12), JwtAdapter (HS256), and Settings
+additions for auth configuration.  All unit tests (78 total) pass; mypy strict
+mode and ruff pass clean.
+
+**Rationale:**
+TDD Red-Green-Refactor with one failing test per subtask.  Domain and application
+layers are framework-free (enforced by import-linter contracts in pyproject.toml).
+bcrypt library used directly instead of passlib because passlib 1.7 has a
+compatibility bug with bcrypt >= 4 that raises ValueError on hash attempts.
+StrEnum used for TokenType per ruff UP042 guidance.
+
+**References:**
+- SRS §6.1 (FR-A-1 to FR-A-5, FR-A-9, FR-A-10)
+- SRS §7.1 (NFR-S-2, NFR-S-3, NFR-S-6, NFR-S-7)
+- SRS §12.5.1 (env var names for auth config)
+- ADR-0009 (email as identifier), ADR-0010 (generic errors), ADR-0013 (refresh rotation)
+
+---
+
 ## [2026-05-22 21:30] Commit Summary
 
 **Change Type:** Fix
