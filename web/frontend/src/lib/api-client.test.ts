@@ -175,6 +175,25 @@ describe('auth refresh interceptor', () => {
     expect(onLogout).toHaveBeenCalledTimes(1);
   });
 
+  it('calls onLogout and throws when refresh succeeds but the retry itself returns non-2xx', async () => {
+    const onLogout = vi.fn();
+    installAuthRefreshInterceptor({
+      refresh: vi.fn().mockResolvedValue(undefined),
+      onLogout,
+    });
+
+    (globalThis.fetch as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ detail: 'Not authenticated.' }), { status: 401 }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ detail: 'Not authenticated.' }), { status: 401 }),
+      );
+
+    await expect(fetchJson('/api/v1/weight-entries')).rejects.toBeInstanceOf(ApiError);
+    expect(onLogout).toHaveBeenCalledTimes(1);
+  });
+
   it('does not attempt refresh when the failing URL is /api/v1/auth/refresh itself', async () => {
     const refresh = vi.fn();
     const onLogout = vi.fn();

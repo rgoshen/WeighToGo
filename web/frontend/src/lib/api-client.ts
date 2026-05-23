@@ -111,6 +111,7 @@ async function handle401AndRetry<T>(url: string, init: RequestInit): Promise<T> 
       problem.detail ?? mapApiError(422),
     );
   }
+  interceptor.onLogout();
   throw new ApiError(retry.status, mapApiError(retry.status));
 }
 

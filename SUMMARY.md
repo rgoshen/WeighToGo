@@ -1440,3 +1440,20 @@ The absolute path was machine-specific and could never succeed on CI or any othe
 
 **References:**
 - PR: #29 code review comment
+
+## [2026-05-23] Fix 2 — Call onLogout when post-refresh retry fails
+
+**Change Type:** Fix
+**Scope:** web/frontend/src/lib/api-client.ts, web/frontend/src/lib/api-client.test.ts
+
+**Summary:**
+Add `interceptor.onLogout()` call before the `throw new ApiError(...)` in `handle401AndRetry` (the branch reached when the post-refresh retry returns a non-2xx, non-422 status). Added a TDD test covering "refresh succeeds but retry returns 401" before making any code change.
+
+**Rationale:**
+Three of the four error exit paths in `handle401AndRetry` already called `onLogout()` (no interceptor, refresh-endpoint 401, refresh throws). The fourth path — refresh succeeds then the retry itself fails — never triggered logout, leaving the TanStack Query cache believing the session was valid while every subsequent API call returned an error. The fix ensures the auth state machine transitions to logged-out on any unrecoverable 401.
+
+**Bug Fix Context:**
+Root cause: the post-refresh retry path fell through to a bare `throw new ApiError(...)` without first invalidating the auth session. This left the UI stuck until a hard reload cleared the cached auth state.
+
+**References:**
+- PR: #29 code review comment
