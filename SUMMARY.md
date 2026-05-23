@@ -7,6 +7,74 @@ issues were resolved.
 
 ---
 
+## [2026-05-23 Phase 9] docs(summary): Phase 9 closeout — Milestone 2 ready for release-please bootstrap
+
+**Change Type:** Docs (milestone closeout)
+**Scope:** `SUMMARY.md` — Phase 9 wrap-up and DoD verification (replaces the reverted closeout entry from the prior git-cliff flow)
+
+**Summary:**
+Phase 9 (Documentation & Closeout) is complete. The branch `feature/m2-phase-9-docs-closeout` carries the following commits (newest first):
+
+1. `docs(summary): Phase 9 closeout — Milestone 2 ready for release-please bootstrap` *(this entry)*
+2. `ci(release): add release-please for end-to-end release automation`
+3. `revert: remove git-cliff manual-versioning automation` *(reverted three prior commits)*
+4. `docs(narrative): add Milestone Two narrative`
+5. `docs(review): record CS 499 checklist self-review findings`
+6. `docs(architecture): add ARCHITECTURE.md stub deferring to SRS §4`
+7. `docs(contributing): add web stack contribution guidelines`
+8. `docs(readme): final pass — web CI badges, M2 status, docs index link`
+9. `docs(srs): reconcile Appendix A ADR index with on-disk ADRs`
+
+The original Phase 5 task ("regenerate OpenAPI snapshot") was a no-op — the snapshot at `docs/api/openapi.json` is byte-identical to the live-app export (refreshed at `6ee9d8f` during PR #30); regenerating produced zero drift.
+
+**M2 phase issue inventory (verified via `gh issue list`):**
+
+| # | Title | State |
+| --- | --- | --- |
+| #6 | Phase 0 — Repository & Project Setup | CLOSED |
+| #7 | Phase 1 — Tracking Log Scaffold | CLOSED |
+| #8 | Phase 2 — Repository Restructure | CLOSED |
+| #9 | Phase 3 — Web Scaffold | CLOSED |
+| #10 | Phase 4 — Three-Pattern Backend Architecture | CLOSED |
+| #11 | Phase 5 — Frontend Architecture | CLOSED |
+| #12 | Phase 6 — Authentication Backend | CLOSED |
+| #13 | Phase 7 — Authentication Frontend & Vertical Slice | CLOSED |
+| #14 | Phase 8 — Weight Entry CRUD & Dashboard | CLOSED |
+| #17 | Documentation: index the docs/ tree | CLOSED |
+| #20 | Phase 2 follow-up: repository documentation hygiene | CLOSED |
+| #15 | Phase 9 — Documentation & Closeout | OPEN — closes on merge of this PR |
+| #2 | M2 — Software Design and Engineering (epic) | OPEN — closes after `v0.1.0` is released |
+
+**Definition of Done check (per SRS §14.2):**
+
+- [x] Every M2-tagged functional requirement (FR-A-1..5, FR-A-9, FR-A-10, FR-W-1..5, FR-D-1) implemented with passing tests — Phases 6–8
+- [x] Coverage thresholds met per SRS §11 — 277 backend tests, 241 frontend test cases, ≥90% per recent CI
+- [x] CI green on `main` (five workflows; release-please workflow dormant until first push to `main`)
+- [x] ADR-0007 through ADR-0013 written and committed; ADR-0014, ADR-0015 added during M2 work
+- [x] Code self-reviewed against `/docs/standards/cs499_code_review_checklist.md` (Batch 6)
+- [x] OpenAPI snapshot generated to `/docs/api/openapi.json` and verified current (Batch 5)
+- [x] README at the repo root updated with quickstart for both stacks (Batch 2; quickstart already present from prior phases)
+- [x] All existing Android tests still pass after the restructure (verified during Phase 2; CI continues to enforce)
+- [x] M2 narrative document drafted (Batch 7; `.docx` rendered as uncommitted sidecar for submission)
+- [ ] Repository tagged `v0.1.0` — **happens automatically when the release-please Release PR is merged**
+
+**Post-merge sequence (release-please does the work):**
+
+1. PR #32 merges to `main`; #15 auto-closes via "Closes #15"
+2. The release-please workflow fires on the push to `main` and opens a "Release PR" titled `chore(main): release 0.1.0`. The Release PR's diff shows the proposed `CHANGELOG.md` content and the `.release-please-manifest.json` update from `0.0.0` → `0.1.0`.
+3. Review the Release PR. Add a `### Security` section by editing the PR body if any of the M2 commits warrant it (security items aren't auto-grouped by release-please — see known limitations in the prior commit's SUMMARY entry).
+4. Merge the Release PR. release-please then automatically: creates the annotated `v0.1.0` tag, publishes the GitHub Release with the CHANGELOG section as the body, and commits the updated `CHANGELOG.md` and manifest to `main`.
+5. Close epic #2 with a comment linking the published release.
+6. Move #15 and #2 to **Done** on the project board.
+
+The version `v0.1.0` is decided by `release-as: "0.1.0"` in `release-please-config.json` (pinned to the SRS §5.6 milestone plan). For `v0.2.0` onward, that directive is removed and release-please calculates the bump from the `feat:` / `fix:` / `BREAKING CHANGE:` commits that landed since the last release.
+
+**References:**
+- Issue: GH-15 (Phase 9), GH-2 (M2 epic)
+- Release tooling: `release-please-config.json`, `.release-please-manifest.json`, `.github/workflows/release-please.yml`
+
+---
+
 ## [2026-05-23 Phase 9] ci(release): add release-please for end-to-end release automation
 
 **Change Type:** CI / Release automation (replaces reverted git-cliff approach)
