@@ -1,8 +1,10 @@
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
 import { expect, test } from '@playwright/test';
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const OUT = path.resolve(__dirname, '../../../docs/screenshots/phase-7');
 const unique = Date.now();
 const email = `screenshot-${unique}@example.com`;

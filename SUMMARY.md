@@ -1501,3 +1501,17 @@ The E2E suite makes 6+ POST /register requests from the same CI host IP; the 3/h
 **References:**
 - SRS: NFR-S-5
 - PR #29 review finding: P1 blocking issue
+
+## [2026-05-23 13:00] Commit Summary
+
+**Change Type:** Fix
+**Scope:** E2E test — screenshot-phase7 spec
+
+**Summary:**
+Replace `__dirname` with the ESM-compatible `path.dirname(fileURLToPath(import.meta.url))` in `screenshot-phase7.spec.ts`.
+
+**Rationale:**
+`__dirname` is a CommonJS global not available in ES module scope. The project compiles spec files as ESM, so evaluating the module top-level threw `ReferenceError: __dirname is not defined`. Playwright's `--grep-invert "Phase 7 screenshots"` skips test execution but does not prevent module evaluation, so CI was crashing on file load before any test filter could apply.
+
+**References:**
+- PR #29 CI failure: Playwright end-to-end tests job
