@@ -7,6 +7,22 @@ issues were resolved.
 
 ---
 
+## [2026-05-23 Issue #17] docs: add ADR decision-log index
+
+**Change Type:** Docs
+**Scope:** `/docs/adr/` — new `README.md`
+
+**Summary:**
+Adds `docs/adr/README.md` — a decision-log index listing all fifteen Architecture Decision Records (ADR-0001 through ADR-0015) with title, status, date, and stack scope (Android, Cross-stack, or Web). Each row links to the full record. Documents the supersession convention (old entries stay in the log, marked) and points to the existing records as the pattern for new ones.
+
+**Rationale:**
+With fifteen ADRs spanning two stacks and two distinct authoring eras, the folder had become hard to scan. A table with status and scope columns lets a reader filter the relevant subset (web-only, currently-accepted) at a glance. Dates were extracted directly from each record; six older Android ADRs that omitted a date field show "—" rather than fabricated values.
+
+**References:**
+- Issue: GH-17
+
+---
+
 ## [2026-05-23 Issue #17] docs: add top-level docs/README index
 
 **Change Type:** Docs
