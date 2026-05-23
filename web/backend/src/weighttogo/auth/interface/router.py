@@ -146,7 +146,7 @@ def _set_auth_cookies(
     from weighttogo.config import Settings
 
     s = settings if isinstance(settings, Settings) else get_settings()
-    cookie_kwargs = {
+    base_kwargs = {
         "httponly": True,
         "samesite": "strict",
         "secure": s.cookie_secure,
@@ -155,13 +155,17 @@ def _set_auth_cookies(
         key=_ACCESS_COOKIE,
         value=access_token,
         max_age=s.access_token_expire_minutes * 60,
-        **cookie_kwargs,  # type: ignore[arg-type]
+        path="/",
+        **base_kwargs,  # type: ignore[arg-type]
     )
+    # Scope the refresh token to auth endpoints only so it is not sent on
+    # every API request (e.g. weight entries, goals) — principle of least exposure.
     response.set_cookie(
         key=_REFRESH_COOKIE,
         value=raw_refresh,
         max_age=s.refresh_token_expire_days * 24 * 60 * 60,
-        **cookie_kwargs,  # type: ignore[arg-type]
+        path="/api/v1/auth",
+        **base_kwargs,  # type: ignore[arg-type]
     )
 
 
@@ -179,7 +183,7 @@ def _clear_auth_cookies(response: Response) -> None:
         "secure": s.cookie_secure,
     }
     response.delete_cookie(key=_ACCESS_COOKIE, path="/", **delete_kwargs)  # type: ignore[arg-type]
-    response.delete_cookie(key=_REFRESH_COOKIE, path="/", **delete_kwargs)  # type: ignore[arg-type]
+    response.delete_cookie(key=_REFRESH_COOKIE, path="/api/v1/auth", **delete_kwargs)  # type: ignore[arg-type]
 
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────

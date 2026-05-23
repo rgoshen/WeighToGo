@@ -7,6 +7,22 @@ issues were resolved.
 
 ---
 
+## [2026-05-22 10:11] Commit Summary
+
+**Change Type:** Fix
+**Scope:** auth/interface/router
+
+**Summary:**
+`_set_auth_cookies` now sets `path="/api/v1/auth"` on the refresh token cookie and `path="/"` on the access token cookie. `_clear_auth_cookies` updated to use the matching paths. The refresh cookie is no longer sent on every API request to non-auth endpoints.
+
+**Rationale:**
+The refresh cookie was scoped to `/` so browsers sent it on every request (weight entries, goals, etc.) — unnecessary token exposure. PR #27 code review finding C12.
+
+**References:**
+- PR: #27 (C12)
+
+---
+
 ## [2026-05-22 10:10] Commit Summary
 
 **Change Type:** Fix
