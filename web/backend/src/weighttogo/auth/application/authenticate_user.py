@@ -27,6 +27,10 @@ class IPasswordAdapter(Protocol):
         """Return ``True`` if *plaintext* matches *hashed*."""
         ...
 
+    def verify_dummy(self, plaintext: str) -> None:
+        """Run a constant-time verify against a cost-matched dummy hash."""
+        ...
+
 
 @dataclass(frozen=True)
 class AuthenticateUserCommand:
@@ -90,9 +94,10 @@ class AuthenticateUser:
         # --- Gate: account existence/activity check (constant-time path) -----
         # Run a dummy verify for unknown/inactive accounts so the response time
         # is indistinguishable from an active account (SRS §FR-A-9, §NFR-S-7).
+        # verify_dummy derives the hash from the adapter's current cost factor
+        # so a _ROUNDS bump does not restore the timing oracle.
         if user is None or not user.is_active:
-            _dummy = "$2b$12$E.tGVanjTJxSN1desdDo.ui1bZYKlcpEsw7y26MnyKjmQBJaQ7/.C"
-            self._password_adapter.verify(cmd.password, _dummy)
+            self._password_adapter.verify_dummy(cmd.password)
             raise InvalidCredentialsError()
 
         # --- Always verify credentials first to equalise timing ---------------

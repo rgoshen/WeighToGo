@@ -20,6 +20,7 @@ class BcryptPasswordAdapter:
     """
 
     _ROUNDS: int = 12
+    _dummy_hash: str | None = None  # lazily computed at current _ROUNDS
 
     def hash(self, plaintext: str) -> str:
         """Hash *plaintext* with bcrypt and return the hash string.
@@ -48,3 +49,19 @@ class BcryptPasswordAdapter:
             ``True`` when the password is correct; ``False`` otherwise.
         """
         return bool(_bcrypt.checkpw(plaintext.encode(), hashed.encode()))
+
+    def verify_dummy(self, plaintext: str) -> None:
+        """Run a constant-time verify against a dummy hash derived from ``_ROUNDS``.
+
+        Called when no real hash is available (unknown/inactive account) to make
+        the response time indistinguishable from a real verify.  The dummy hash is
+        lazily computed and cached at the class level so that ``_ROUNDS`` changes
+        are reflected without per-call overhead.
+
+        Args:
+            plaintext: The raw password string from the login attempt.
+        """
+        if BcryptPasswordAdapter._dummy_hash is None:
+            salt = _bcrypt.gensalt(rounds=self._ROUNDS)
+            BcryptPasswordAdapter._dummy_hash = _bcrypt.hashpw(b"dummy", salt).decode()
+        self.verify(plaintext, BcryptPasswordAdapter._dummy_hash)

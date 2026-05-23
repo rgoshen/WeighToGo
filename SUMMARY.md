@@ -7,6 +7,22 @@ issues were resolved.
 
 ---
 
+## [2026-05-22 10:04] Commit Summary
+
+**Change Type:** Fix
+**Scope:** auth/infrastructure/password, auth/application/authenticate_user
+
+**Summary:**
+Added `BcryptPasswordAdapter.verify_dummy()` which lazily computes and caches a dummy hash at the adapter's current `_ROUNDS`. `AuthenticateUser` now calls `verify_dummy` instead of holding a hardcoded cost-12 constant. Extended `IPasswordAdapter` protocol with the new method.
+
+**Rationale:**
+The hardcoded `$2b$12$...` dummy becomes faster than real verifies if `_ROUNDS` is ever raised, restoring the timing oracle. The dynamic dummy stays cost-matched regardless of configuration. PR #27 code review finding C5.
+
+**References:**
+- PR: #27 (C5)
+
+---
+
 ## [2026-05-22 10:03] Commit Summary
 
 **Change Type:** Fix
