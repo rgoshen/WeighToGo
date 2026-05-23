@@ -198,6 +198,28 @@ class SqlAlchemyRefreshTokenRepository:
         row = self._session.query(RefreshTokenModel).filter_by(token_hash=token_hash).first()
         return _token_to_domain(row) if row else None
 
+    def get_by_hash_for_update(self, token_hash: str) -> RefreshToken | None:
+        """Look up a token by hash with a row-level write lock (SELECT FOR UPDATE).
+
+        Prevents concurrent refresh requests from both observing the token as
+        valid before either write commits.  On PostgreSQL this acquires a
+        ``FOR UPDATE`` lock; on SQLite the clause is silently ignored (SQLite
+        serialises writes at the connection level, achieving the same effect).
+
+        Args:
+            token_hash: The 64-character hex digest to look up.
+
+        Returns:
+            The matching domain entity with a write lock held, or ``None``.
+        """
+        row = (
+            self._session.query(RefreshTokenModel)
+            .filter_by(token_hash=token_hash)
+            .with_for_update()
+            .first()
+        )
+        return _token_to_domain(row) if row else None
+
     def revoke_family(self, family_id: uuid.UUID) -> None:
         """Mark every token in *family_id* as revoked.
 

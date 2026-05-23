@@ -91,7 +91,7 @@ def test_issue_tokens_saves_refresh_token_record() -> None:
 def test_refresh_session_returns_new_token_pair() -> None:
     existing_token = _make_refresh_token()
     token_repo = MagicMock()
-    token_repo.get_by_hash.return_value = existing_token
+    token_repo.get_by_hash_for_update.return_value = existing_token
     token_repo.save.side_effect = lambda t: t
     jwt_adapter = _make_jwt_adapter()
     use_case = _make_refresh_session(jwt_adapter, token_repo)
@@ -105,7 +105,7 @@ def test_refresh_session_returns_new_token_pair() -> None:
 def test_refresh_session_revokes_old_token() -> None:
     existing_token = _make_refresh_token()
     token_repo = MagicMock()
-    token_repo.get_by_hash.return_value = existing_token
+    token_repo.get_by_hash_for_update.return_value = existing_token
     token_repo.save.side_effect = lambda t: t
     jwt_adapter = _make_jwt_adapter()
     use_case = _make_refresh_session(jwt_adapter, token_repo)
@@ -119,7 +119,7 @@ def test_refresh_session_revokes_old_token() -> None:
 def test_refresh_session_raises_on_revoked_token() -> None:
     revoked_token = _make_refresh_token(revoked=True)
     token_repo = MagicMock()
-    token_repo.get_by_hash.return_value = revoked_token
+    token_repo.get_by_hash_for_update.return_value = revoked_token
     jwt_adapter = _make_jwt_adapter()
     use_case = _make_refresh_session(jwt_adapter, token_repo)
     cmd = RefreshSessionCommand(raw_refresh_token="raw_token")
@@ -133,7 +133,7 @@ def test_refresh_session_revokes_family_on_token_replay() -> None:
     family = uuid.uuid4()
     revoked_token = _make_refresh_token(revoked=True, family_id=family)
     token_repo = MagicMock()
-    token_repo.get_by_hash.return_value = revoked_token
+    token_repo.get_by_hash_for_update.return_value = revoked_token
     jwt_adapter = _make_jwt_adapter()
     use_case = _make_refresh_session(jwt_adapter, token_repo)
     cmd = RefreshSessionCommand(raw_refresh_token="raw_token")
@@ -146,7 +146,7 @@ def test_refresh_session_revokes_family_on_token_replay() -> None:
 
 def test_refresh_session_raises_when_token_not_found() -> None:
     token_repo = MagicMock()
-    token_repo.get_by_hash.return_value = None
+    token_repo.get_by_hash_for_update.return_value = None
     jwt_adapter = _make_jwt_adapter()
     use_case = _make_refresh_session(jwt_adapter, token_repo)
     cmd = RefreshSessionCommand(raw_refresh_token="nonexistent")

@@ -238,3 +238,108 @@ def test_me_after_logout_returns_401(client: TestClient) -> None:
     client.post("/api/v1/auth/logout")
     me_after = client.get("/api/v1/auth/me")
     assert me_after.status_code == 401
+
+
+# ── Logout without a valid access token (PR #27 finding) ──────────────────────
+
+
+def test_logout_succeeds_without_valid_access_token(client: TestClient) -> None:
+    """Logout must succeed even when the access token is missing or expired.
+
+    Clients cannot reliably clear HTTP-only cookies themselves, so logout
+    must always clear auth cookies regardless of access token state.
+    """
+    client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "notoken_logout@example.com",
+            "password": "SecurePass1!",
+            "display_name": "NoToken",
+        },
+    )
+    # Log in to get a refresh cookie
+    client.post(
+        "/api/v1/auth/login",
+        json={"email": "notoken_logout@example.com", "password": "SecurePass1!"},
+    )
+    # Delete the access token cookie to simulate expiry
+    client.cookies.delete("access_token")
+
+    # Logout must still succeed (204) without the access token
+    resp = client.post("/api/v1/auth/logout")
+    assert resp.status_code == 204
+
+
+def test_logout_clears_cookies_even_without_any_token(client: TestClient) -> None:
+    """Logout with no cookies at all must still return 204."""
+    resp = client.post("/api/v1/auth/logout")
+    assert resp.status_code == 204
+
+
+# ── Inactive user cannot refresh or access /me (PR #27 finding) ───────────────
+
+
+def test_inactive_user_cannot_refresh_session(
+    client: TestClient,
+    db_session: object,
+) -> None:
+    """A deactivated user must receive 401 on /refresh."""
+    from sqlalchemy.orm import Session
+
+    from weighttogo.auth.infrastructure.models import UserModel
+
+    client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "inactive_refresh@example.com",
+            "password": "SecurePass1!",
+            "display_name": "Inactive",
+        },
+    )
+    client.post(
+        "/api/v1/auth/login",
+        json={"email": "inactive_refresh@example.com", "password": "SecurePass1!"},
+    )
+
+    # Deactivate the account directly in the DB
+    assert isinstance(db_session, Session)
+    db_session.query(UserModel).filter_by(email="inactive_refresh@example.com").update(
+        {"is_active": False}
+    )
+    db_session.flush()
+
+    resp = client.post("/api/v1/auth/refresh")
+    assert resp.status_code == 401
+
+
+def test_inactive_user_cannot_access_me(
+    client: TestClient,
+    db_session: object,
+) -> None:
+    """A deactivated user must receive 401 on /me."""
+    from sqlalchemy.orm import Session
+
+    from weighttogo.auth.infrastructure.models import UserModel
+
+    client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "inactive_me@example.com",
+            "password": "SecurePass1!",
+            "display_name": "InactiveMe",
+        },
+    )
+    client.post(
+        "/api/v1/auth/login",
+        json={"email": "inactive_me@example.com", "password": "SecurePass1!"},
+    )
+
+    # Deactivate the account
+    assert isinstance(db_session, Session)
+    db_session.query(UserModel).filter_by(email="inactive_me@example.com").update(
+        {"is_active": False}
+    )
+    db_session.flush()
+
+    resp = client.get("/api/v1/auth/me")
+    assert resp.status_code == 401

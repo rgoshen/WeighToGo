@@ -85,7 +85,8 @@ class RefreshSession:
             InvalidCredentialsError: On any invalid or replayed refresh token.
         """
         token_hash = self._jwt.hash_token(cmd.raw_refresh_token)
-        existing = self._token_repo.get_by_hash(token_hash)
+        # Use FOR UPDATE to prevent concurrent rotations racing on the same token
+        existing = self._token_repo.get_by_hash_for_update(token_hash)
 
         if existing is None:
             raise InvalidCredentialsError()

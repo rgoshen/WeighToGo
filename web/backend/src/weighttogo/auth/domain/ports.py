@@ -90,6 +90,23 @@ class IRefreshTokenRepository(Protocol):
         """
         ...
 
+    def get_by_hash_for_update(self, token_hash: str) -> RefreshToken | None:
+        """Look up a token by hash and acquire a row-level write lock.
+
+        Callers use this during refresh rotation to prevent concurrent requests
+        from both observing the token as valid before either write commits
+        (TOCTOU race).  On PostgreSQL the lock is ``SELECT ... FOR UPDATE``;
+        on SQLite it is a no-op (SQLite serialises writes at the connection level).
+
+        Args:
+            token_hash: The SHA-256 hex digest of the raw token.
+
+        Returns:
+            The matching ``RefreshToken`` entity with a write lock held, or
+            ``None`` if not found.
+        """
+        ...
+
     def revoke_family(self, family_id: uuid.UUID) -> None:
         """Mark every token in *family_id* as revoked.
 
