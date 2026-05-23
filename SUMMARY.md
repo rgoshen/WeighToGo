@@ -7,6 +7,33 @@ issues were resolved.
 
 ---
 
+## [2026-05-23 Phase 9] docs(srs): create v2 baseline; restore v1 to pre-M2 state
+
+**Change Type:** Docs (process correction + new version)
+**Scope:** `docs/specs/WeighToGo_Web_SRS_v1.md` (restored), `docs/specs/WeighToGo_Web_SRS_v2.md` (new), six cross-referencing files updated
+
+**Summary:**
+The original Phase 9 Batch 1 commit (`667f36f`) edited `WeighToGo_Web_SRS_v1.md` in place to reconcile Appendix A with on-disk ADRs and fix the FR-W-2 cross-reference. That was wrong on convention: the repository uses versioned spec filenames (`Weight_Tracking_App_Requirements_v1.md` and `_v2.md` exist as the precedent), where `_v1` signals a frozen baseline and revisions go to a new `_v2`. Reviewer caught the missed convention.
+
+Three commits to fix:
+
+1. **`040024a` `revert: restore SRS v1 to its pre-edit baseline`** — restored `WeighToGo_Web_SRS_v1.md` to its pre-`667f36f` state from `ccd6b75` (the prior `main` HEAD). v1 is now a frozen pre-M2 baseline as originally intended.
+2. **`071cbd5` (amended) `docs(srs): add v2 with M2 reconciliation; deprecate v1`** — created `WeighToGo_Web_SRS_v2.md` as a copy of v1 with the two reconciliation edits applied (Appendix A §17.2 + FR-W-2 §6.2). Added a Document Version banner at the top of v2 explaining the changes from v1. Added a Document Status banner at the top of v1 marking it as frozen and pointing readers to v2.
+3. **`bcd1211` `docs: update SRS cross-references from v1 to v2`** — updated 14 cross-references across `README.md` (5), `ARCHITECTURE.md` (2), `CONTRIBUTING.md` (1), `docs/README.md` (2), `docs/narratives/milestone-two-narrative.md` (2), and `docs/plans/milestone-two-plan.md` (2). **Intentionally kept pointing at v1**: ADR-0007 and ADR-0008 (decision records authored against v1; historical accuracy), the three existing SUMMARY.md entries that mention v1 (reverse-chronological log preserves point-in-time references), and v2's own deprecation back-link.
+
+**Rationale:**
+The user's correction was about both substance and process: substance — editing v1 in place loses the pre-M2 baseline that future readers (or M3/M4 planning) need access to; process — I should have noticed the `_v[0-9]` filename convention by reading the neighboring `docs/requirements/` directory which uses it explicitly. The fix preserves both the original spec at v1 and the post-M2 corrected spec at v2; future M3 work will follow the same pattern, producing v3 rather than editing v2.
+
+The original `667f36f` SUMMARY entry stays in the log as the historical record of the mistake; this new entry documents the correction. No content was lost — the reconciliation edits all live in v2.
+
+**Lesson saved as memory:** the broader pattern (recognize versioning conventions from sibling directories before editing) is now captured alongside the existing `feedback-surface-design-decisions-up-front` rule.
+
+**References:**
+- Precedent: `docs/requirements/Weight_Tracking_App_Requirements_v1.md` and `_v2.md`
+- Issue: GH-15
+
+---
+
 ## [2026-05-23 Phase 9] docs(readme): restore "in progress" status; refresh test counts
 
 **Change Type:** Docs (correctness fix)
