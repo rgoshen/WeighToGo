@@ -29,3 +29,27 @@ const FALLBACK_MESSAGE = 'An unexpected error occurred. Please try again later.'
 export function mapApiError(status: number): string {
   return ERROR_MESSAGES[status] ?? FALLBACK_MESSAGE;
 }
+
+export type FieldErrors = Record<string, string>;
+
+interface ValidationProblem {
+  field: string;
+  code: string;
+  message: string;
+}
+
+/**
+ * Converts an array of RFC 7807-style field-level validation errors into a
+ * flat record keyed by field name.  When a field appears more than once, only
+ * the first message is kept so the caller always gets a single, stable string
+ * per field.
+ *
+ * @param errors - Array of validation problem objects from the API response.
+ */
+export function mapValidationErrors(errors: ValidationProblem[]): FieldErrors {
+  const out: FieldErrors = {};
+  for (const e of errors) {
+    if (!(e.field in out)) out[e.field] = e.message;
+  }
+  return out;
+}
