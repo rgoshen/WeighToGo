@@ -300,8 +300,9 @@ def logout(
     response: Response,
     refresh_token: str | None = Cookie(default=None, alias=_REFRESH_COOKIE),
     session: Session = Depends(get_db_session),
+    jwt_adapter: JwtAdapter = Depends(_get_jwt_adapter),
 ) -> None:
-    """Revoke the refresh token and clear session cookies.
+    """Revoke the refresh token family and clear session cookies.
 
     Does not require a valid access token — clients must be able to log out
     even after the 15-minute access token has expired.  Auth cookies are always
@@ -311,10 +312,11 @@ def logout(
         response: The outgoing HTTP response (used to clear cookies).
         refresh_token: The refresh token from the cookie (optional).
         session: The active database session.
+        jwt_adapter: JWT adapter used for token hashing.
     """
     if refresh_token is not None:
         token_repo = SqlAlchemyRefreshTokenRepository(session)
-        revoke_uc = RevokeSession(token_repo=token_repo)
+        revoke_uc = RevokeSession(token_repo=token_repo, jwt_adapter=jwt_adapter)
         with contextlib.suppress(InvalidCredentialsError):
             revoke_uc.execute(RevokeSessionCommand(raw_refresh_token=refresh_token))
 

@@ -7,6 +7,22 @@ issues were resolved.
 
 ---
 
+## [2026-05-22 10:05] Commit Summary
+
+**Change Type:** Fix
+**Scope:** auth/application/revoke_session, auth/interface/router
+
+**Summary:**
+`RevokeSession` now accepts an `IJwtAdapter` dependency for token hashing (removing the direct `hashlib.sha256` call) and calls `token_repo.revoke_family(token.family_id)` instead of revoking and saving a single token. The router passes `jwt_adapter` to `RevokeSession` on construction. Updated existing tests to assert `revoke_family` is called.
+
+**Rationale:**
+The old code bypassed the port contract (using hashlib directly) and only revoked one token instead of the whole family, leaving sibling tokens in the rotation chain alive after logout. PR #27 code review finding C6.
+
+**References:**
+- PR: #27 (C6)
+
+---
+
 ## [2026-05-22 10:04] Commit Summary
 
 **Change Type:** Fix

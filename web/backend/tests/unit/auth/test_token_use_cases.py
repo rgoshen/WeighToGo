@@ -162,22 +162,24 @@ def test_revoke_session_revokes_refresh_token() -> None:
     existing_token = _make_refresh_token()
     token_repo = MagicMock()
     token_repo.get_by_hash.return_value = existing_token
-    token_repo.save.side_effect = lambda t: t
-    use_case = RevokeSession(token_repo=token_repo)
+    jwt_adapter = _make_jwt_adapter()
+    use_case = RevokeSession(token_repo=token_repo, jwt_adapter=jwt_adapter)
     cmd = RevokeSessionCommand(raw_refresh_token="raw_token")
 
     use_case.execute(cmd)
 
-    assert existing_token.revoked_at is not None
-    token_repo.save.assert_called_once()
+    token_repo.revoke_family.assert_called_once_with(existing_token.family_id)
+    token_repo.save.assert_not_called()
 
 
 def test_revoke_session_is_idempotent_when_token_not_found() -> None:
     token_repo = MagicMock()
     token_repo.get_by_hash.return_value = None
-    use_case = RevokeSession(token_repo=token_repo)
+    jwt_adapter = _make_jwt_adapter()
+    use_case = RevokeSession(token_repo=token_repo, jwt_adapter=jwt_adapter)
     cmd = RevokeSessionCommand(raw_refresh_token="nonexistent")
 
     # Should not raise
     use_case.execute(cmd)
+    token_repo.revoke_family.assert_not_called()
     token_repo.save.assert_not_called()
