@@ -7,6 +7,357 @@ issues were resolved.
 
 ---
 
+## [2026-05-23 PR #30 Review] fix(weight): render not-found state when edit-form fetch fails
+
+**Change Type:** Fix
+**Scope:** Frontend — `WeightEntryFormPage` + tests
+
+**Summary:**
+The edit form destructured only `data` and `isLoading` from `useWeightEntry`. When the fetch errored (entry deleted, never existed, owned by a different user), `existingEntry` was `undefined`, `defaultValues` was `undefined`, and the page silently rendered a blank form. Submitting then issued a `PUT` that returned 404, and the form's error handler only surfaced 409/422 — the user got no useful feedback. Now we also destructure `isError` and reuse the existing not-found UI block (already present for the non-numeric `/weight/abc/edit` path). One additional condition; same component output.
+
+Added test: `'renders not-found state when edit-mode entry fetch returns 404'` — mocks `weightClient.get` to reject with `ApiError(404)` and asserts the not-found heading is shown and the form is NOT rendered (so a submit cannot fire an additional 404 PUT).
+
+**Rationale:**
+The cleanest fix reuses the existing not-found block rather than introducing a new one or a per-error toast — the symptoms (blank form, missing entry) and remedy (not-found page) are identical between "non-numeric URL" and "fetch failed", so one branch covers both. Considered a `404 specifically` check on the error status, but the form has no actionable state for any failure mode (network error, 5xx, soft-deleted) — collapsing to a single error branch is simpler and still correct.
+
+**Bug Fix Context:**
+Root cause: query error state (`isError`) was never read by the page; the component proceeded to render the form regardless. The fix consumes that state and short-circuits to the existing not-found UI.
+
+**References:**
+- PR #30 reviewer comment on `WeightEntryFormPage.tsx:83-91`
+
+---
+
+## [2026-05-23 PR #30 Review] feat(weight): paginate weight history with Load more
+
+**Change Type:** Feature
+**Scope:** Frontend — `useWeightEntries` hook, `WeightHistoryPage`, page + hook tests
+
+**Summary:**
+The weight history page rendered only the first response from `useQuery(weightClient.list)` and ignored `next_cursor`. With the backend default of 20 entries per page, any user with more than 20 entries could not reach the older ones. Converted the hook to TanStack Query's `useInfiniteQuery` and added a "Load more" button on the page that fetches and appends the next page using the opaque cursor returned by the previous page (ADR-0015).
+
+Implementation notes:
+- `useWeightEntries` now returns the standard `useInfiniteQuery` shape (`data.pages`, `hasNextPage`, `fetchNextPage`, `isFetchingNextPage`). `initialPageParam: undefined` for the first request; `getNextPageParam: (lastPage) => lastPage.next_cursor ?? undefined` to stop when the backend signals no more pages.
+- `WeightHistoryPage` flattens `data.pages.flatMap((p) => p.items)` and renders the load-more button only when `hasNextPage` is true. The button shows "Loading…" and disables itself while a fetch is in flight.
+- Chose an explicit user-triggered button over scroll-triggered infinite scroll: more accessible (NFR-A-1 / WCAG 2.1 AA — keyboard reachable, focus visible, no surprise content shifts), simpler to test, and lower risk of double-fetches on unstable scroll containers.
+
+Added page tests:
+- `'shows a Load more button when more pages are available'`
+- `'hides the Load more button when no further pages exist'`
+- `'fetches and appends the next page when Load more is clicked'` — also asserts that the second `weightClient.list` call carries the previous page's `next_cursor` opaque token.
+
+Added hook test:
+- `'exposes hasNextPage=false when next_cursor is null'` — keyset stop condition.
+
+Updated `useWeightEntries.test.tsx` existing assertion from `data.items` to `data.pages[0].items` to match the new infinite-query shape.
+
+**Rationale:**
+`useInfiniteQuery` is the idiomatic TanStack Query primitive for cursor pagination and already cooperates with the rest of the app's query cache (no separate mental model). The alternative — `useQuery` plus manual cursor state — would have required custom merging, manual loading state, and ad-hoc cache keys; useInfiniteQuery delivers all of that for free.
+
+**Bug Fix Context:**
+Root cause: `WeightHistoryPage` consumed only the first `useQuery` page and never read `next_cursor`. The fix changes the data primitive so subsequent pages are reachable from the UI.
+
+**References:**
+- PR #30 reviewer comment on `WeightHistoryPage.tsx:63`
+- ADR-0014 (TanStack Query for server state), ADR-0015 (compound cursor)
+
+---
+
+## [2026-05-23 PR #30 Review] docs(api): refresh OpenAPI snapshot for cursor and limit changes
+
+**Change Type:** Docs
+**Scope:** `docs/api/openapi.json`
+
+**Summary:**
+Regenerated the OpenAPI 3.1 snapshot from the live FastAPI app to reflect the two preceding PR #30 review fixes. Diff is exactly:
+- `GET /api/v1/weight-entries` `limit` query parameter now carries `minimum: 1` and `maximum: 100` (was unbounded).
+- `cursor` query parameter and `WeightEntryListResponse.next_cursor` flip from `integer | null` to `string | null` (ADR-0015 opaque compound cursor).
+- Endpoint description updated to document the 422 `cursor` validation behavior and the opaque-token contract.
+- `WeightEntryListResponse` schema description references ADR-0015 and the round-trip-unchanged client contract.
+
+**Rationale:**
+The OpenAPI snapshot is the published API contract; if it lags behind the implementation, clients (and downstream code generators) see the wrong shape. Regenerated by dumping `app.openapi()` so the snapshot is byte-identical to the in-process schema.
+
+**References:**
+- The two preceding SUMMARY.md entries (limit validation, compound cursor)
+- ADR-0015
+
+---
+
+## [2026-05-23 PR #30 Review] fix(weight): opaque compound cursor for list pagination (ADR-0015)
+
+**Change Type:** Fix
+**Scope:** Backend — `weight_tracking` domain port, infrastructure adapter, ListWeightEntries use case, interface schemas, router, new `interface/cursor.py` codec; frontend — `weight-client.ts` types and `useWeightEntries` hook; new ADR-0015
+
+**Summary:**
+Replaced the integer `next_cursor` with an opaque base64-urlsafe string that encodes the full `(observation_date, entry_id)` compound sort key, and derived the cursor from the **last returned** entry instead of the peeked-but-trimmed row. Together these changes close two correctness defects on `GET /api/v1/weight-entries` flagged in the PR #30 review:
+
+1. **Off-by-one skip on the page boundary.** The use case had set `next_cursor = rows[command.limit].entry_id` (the peek row) and the repo applied strict `entry_id < before_id`, so the peek row was excluded on the next page and never returned. The new use case derives `next_cursor` from `items[-1]`, which makes the boundary row the one the client just received — strict `<` on the next page then correctly returns the next batch starting immediately below it (standard keyset pagination).
+2. **Sort-key / cursor-key mismatch.** The query sorted by `(observation_date DESC, entry_id DESC)` but the cursor encoded only `entry_id`. With a backfilled older date, entry_id ordering and date ordering diverge, so an `entry_id`-only cursor produced repeated and omitted rows on successive pages. The compound cursor mirrors the sort key exactly and the repo filter is now lexicographic: `observation_date < before_date OR (observation_date = before_date AND entry_id < before_id)`.
+
+Wire format is `base64url(no padding)` of `"YYYY-MM-DD:N"` (e.g. `MjAyNi0wMS0wMToyMQ`). Decode failures at the router edge surface as RFC 7807 422 via a new `InvalidCursorError`. The codec is a pure value-object in `weight_tracking/interface/cursor.py`; the use case and repository operate on `tuple[date, int]` so the wire format stays a router-edge concern (matches the three-pattern architecture in ADR-0012).
+
+Added tests:
+- `tests/unit/weight/test_cursor_codec.py` — 9 codec tests covering round-trip, opacity, padding strip, and rejection of empty/non-base64/missing-separator/bad-date/non-integer-id/negative-id inputs.
+- `tests/unit/weight/test_list_weight_entries_use_case.py` — rewrote to assert the compound cursor shape and last-returned-row derivation; added `test_next_cursor_is_none_when_exactly_limit_results`.
+- `tests/integration/weight/test_weight_endpoints.py` — `test_list_entries_paginates_without_skipping_boundary_rows`, `test_list_entries_paginates_across_backfilled_older_dates` (the exact PR #30 review reproduction), `test_list_entries_returns_string_cursor_not_integer`, `test_list_entries_rejects_malformed_cursor`.
+
+**Rationale:**
+Documented in full in ADR-0015. Briefly: the reviewer's two defects share a root cause — the cursor encoded a narrower key than the sort. The minimum fix that addresses both is a cursor that carries the compound key. Considered three encodings (plain string, base64 of plain string, two separate query params) and two narrower fixes (keep int cursor with last-row + strict `<`; sort by entry_id only). Rejected the narrower fixes because they either don't fix the backfilled-date case or destroy the UX-correct date ordering. Chose base64 over plain string for opacity and future evolvability of the encoded payload.
+
+**Bug Fix Context:**
+Off-by-one root cause: keyset pagination requires the cursor to point at the last *returned* row with strict `<`, not the next-page peek row with strict `<`. The original code mixed the two conventions. Sort-mismatch root cause: any keyset cursor narrower than the sort key cannot reproduce the order on the next page; the compound cursor closes the gap.
+
+**Breaking Change:**
+`WeightEntryListResponse.next_cursor` flips from `integer | null` to `string | null`. Updated frontend `weight-client.ts` and `useWeightEntries` hook accordingly. No external consumers exist outside this repository; the OpenAPI snapshot regeneration ships in a follow-up commit (see next entry).
+
+**References:**
+- PR #30 reviewer comments on `list_weight_entries.py:65` and the cursor/sort-key mismatch
+- ADR-0015 (`docs/adr/0015-opaque-compound-cursor-pagination.md`)
+- SRS §9.4 (weight-entries list endpoint), ADR-0012 (three-pattern architecture)
+
+---
+
+## [2026-05-23 PR #30 Review] fix(weight): validate list limit range (≥1, ≤100)
+
+**Change Type:** Fix
+**Scope:** Backend — `weight_tracking` interface router; integration tests
+
+**Summary:**
+Constrained the `GET /api/v1/weight-entries` `limit` query parameter with FastAPI's `Query(ge=1, le=_MAX_PAGE_SIZE)`. Previously the parameter accepted any integer: a `limit=-1` request would propagate through `min(limit, 100) = -1` into `ListWeightEntries`, which would attempt `rows[: -1]` on an empty result and trigger an `IndexError` (HTTP 500). Out-of-range limits (≤0 or >100) now return a 422 RFC 7807 validation problem, never reach the use case, and never crash the server. Added five integration tests: `test_list_entries_rejects_zero_limit`, `test_list_entries_rejects_negative_limit`, `test_list_entries_rejects_limit_above_max`, `test_list_entries_accepts_limit_one`, `test_list_entries_accepts_limit_max`. Removed the now-redundant `min(limit, _MAX_PAGE_SIZE)` clamp from the handler body.
+
+**Rationale:**
+Reviewer recommended `Query(ge=1, le=_MAX_PAGE_SIZE)` as the simplest fix. Considered the lighter alternative of validating only the lower bound (`Query(ge=1)`) while keeping the silent upper clamp, but the upper clamp is undocumented behavior that masks client mistakes — a request for 500 items should be told the cap is 100, not silently get 100. Strict validation is the more REST-correct posture and aligns with the existing RFC 7807 error contract.
+
+**Bug Fix Context:**
+Root cause: `limit: int = _DEFAULT_PAGE_SIZE` placed no bounds on the parameter. Any negative value passed `min(limit, 100)` unchanged, reached `ListWeightEntries.execute`, and the use case attempted `rows[command.limit]` on an empty list → `IndexError`. Validating at the FastAPI boundary stops the bad value before it can reach domain logic.
+
+**References:**
+- PR #30 reviewer comment on `router.py:140`
+- SRS §9.4 (weight-entries list endpoint), §7 (RFC 7807 validation error shape)
+
+---
+
+## [2026-05-23 PR #30 Review] fix(weight): get_by_id must exclude soft-deleted; add get_by_id_including_deleted for idempotent delete
+
+**Change Type:** Fix
+**Scope:** Backend — `weight_tracking` domain port, SQLAlchemy adapter, DeleteWeightEntry use case
+
+**Summary:**
+Fixed a port-contract violation in `SqlAlchemyWeightEntryRepository.get_by_id`. The query filtered only on `(entry_id, user_id)` and so returned soft-deleted rows, while the `IWeightEntryRepository.get_by_id` port docstring stipulates "an active entry by primary key". As a result, `GET /api/v1/weight-entries/{id}` and `PUT /api/v1/weight-entries/{id}` against a soft-deleted entry returned `200` (and mutated the deleted row, on PUT) instead of `404`. Added `is_deleted=False` to the `get_by_id` query so it now matches every other read method in the class (`list_for_user`, `count_for_user`, `get_latest_for_user`, `exists_for_user_on_date`). To preserve the idempotent re-delete semantics in `DeleteWeightEntry` (which previously relied on `get_by_id` returning a soft-deleted row to distinguish "already deleted" from "never existed"), added a sibling port method `get_by_id_including_deleted` with a SQLAlchemy implementation and routed `DeleteWeightEntry` to use it. Added two regression integration tests: `test_get_soft_deleted_entry_returns_404` and `test_update_soft_deleted_entry_returns_404`. Updated `test_repository_port.py` stub and `test_delete_weight_entry_use_case.py` mock targets to match the new port surface.
+
+**Rationale:**
+Two viable approaches: (1) collapse delete idempotency by accepting 204 even for entries that never existed (a single-method change, but it broadens "deleted" semantics and would have flipped the existing `test_delete_nonexistent_entry_returns_404` to expect 204); (2) keep the existing 404-vs-204 distinction and add an explicit port method for the soft-delete-aware path. Chose (2) because it preserves spec-aligned REST semantics (404 on truly missing, 204 on idempotent re-delete) and makes the soft-delete-aware lookup an explicit named affordance rather than a subtle property of a generic `get_by_id`.
+
+**Bug Fix Context:**
+Root cause: `SqlAlchemyWeightEntryRepository.get_by_id` omitted `is_deleted=False` while all sibling reads enforced it; the gap was previously masked by `DeleteWeightEntry` compensating with its own `entry.is_deleted` check. The read and update paths did not compensate, so soft-deleted rows leaked through. Fix isolates the soft-delete-aware behavior behind `get_by_id_including_deleted` and restores port-contract conformance for `get_by_id`.
+
+**References:**
+- PR #30 reviewer comment on `repositories.py` L94–L112 vs. `ports.py` L33–L45
+- SRS §FR-W-3 (get/update return 404 when entry not found), §FR-W-4 (delete is idempotent)
+- Phase 8 Implementation Plan subtasks 4 (port surface), 9 (DeleteWeightEntry use case)
+
+---
+
+## [2026-05-23 Phase 8 E2E Fix] test(e2e): wait for post-login redirect and disambiguate delete locator
+
+**Change Type:** Fix
+**Scope:** E2E — weight and dashboard specs
+
+**Summary:**
+Fixed four failing Playwright tests on PR #30 (`dashboard.spec.ts`, `weight-create.spec.ts`, `weight-delete.spec.ts`, `weight-edit.spec.ts`). Added `await expect(page).toHaveURL('/', { timeout: 10_000 })` after every login button click that is followed by an immediate `goto` to a protected route, eliminating a race between the async login mutation and the next navigation. Replaced `getByRole('button', { name: /delete/i })` in the delete spec with `/^delete entry from/i` so the locator targets the row delete button instead of the user-menu avatar (whose aria-label is "Account menu for Delete Tester" and matched the broader pattern). Replaced ambiguous `getByText('1')` on the dashboard with `getByRole('heading', { level: 5, name: '1', exact: true })` to pin the assertion to the TotalEntriesCard. Removed an unnecessary `await` on a synchronous `page.url()` expression in the edit spec.
+
+**Rationale:**
+The race against the login mutation passed locally on fast machines but failed in CI where the redirect to `/` lagged the subsequent `page.goto()`, so `ProtectedRoute` bounced the page back to `/login` before the form rendered. The delete-spec locator picked up the user-menu avatar because the seed user's display name was "Delete Tester", whose accessible name contains "delete". Both bugs are timing- and naming-coincidence issues that surfaced only under CI conditions.
+
+**Bug Fix Context:**
+Locally, all 22 Playwright specs now pass deterministically with `CI=1` and 4 workers.
+
+**References:**
+- PR #30 CI run 26338798443
+- Phase 8 Implementation Plan subtasks 34–38 (original spec authoring)
+
+---
+
+## [2026-05-23 Phase 8 Subtasks 39–44] docs(api): refresh OpenAPI snapshot and update project docs
+
+**Change Type:** Docs
+**Scope:** API snapshot, README, milestone plan
+
+**Summary:**
+Regenerated `docs/api/openapi.json` with weight-entries (5 routes) and dashboard/summary (1 route). Updated README "What's working" to reflect M2 Phase 8 completion. Updated `docs/plans/milestone-two-plan.md` §6 DoD to mark Phase 8 items complete. This SUMMARY.md entry closes the Phase 8 documentation sweep (subtask 41).
+
+**References:**
+- Phase 8 Implementation Plan subtasks 39–44
+
+---
+
+## [2026-05-23 Phase 8 Subtasks 34–38] test(e2e): add weight and dashboard Playwright specs
+
+**Change Type:** Test
+**Scope:** E2E — weight and dashboard flows
+
+**Summary:**
+Added 5 Playwright spec files: weight-create, weight-edit, weight-delete, dashboard, weight-a11y. Uses `test.describe.serial` for ordered state setup and `@axe-core/playwright` for accessibility scanning. Scans cover /weight, /weight/new, and / for critical WCAG 2.1 AA violations.
+
+**References:**
+- SRS §11, Phase 8 Implementation Plan subtasks 34–38
+
+---
+
+## [2026-05-23 Phase 8 Subtasks 31–33] feat(frontend): replace stub pages with real weight and dashboard pages
+
+**Change Type:** Feature
+**Scope:** Frontend — weight history, entry form, and dashboard pages
+
+**Summary:**
+Replaced all three stub pages with full implementations. WeightHistoryPage: loading spinner, empty state CTA, WeightEntryTable with ConfirmDeleteDialog for delete flow. WeightEntryFormPage: create/edit mode detection via useParams, pre-population in edit mode, 409 conflict error display, numeric entryId validation. DashboardPage: 3-card grid for populated users, EmptyState CTA for new users. Deleted old stub test files and wrote new comprehensive tests. 213 frontend tests, 92.81% branch coverage (above 90% threshold).
+
+**Rationale:**
+The 409 conflict error is caught in the mutation `onError` callback and displayed as an Alert above the form (pattern from plan §6.3). Non-numeric entryId in the URL renders a "Not Found" heading rather than crashing.
+
+**References:**
+- SRS §10.1, §10.3, §FR-W-1..5, §FR-D-1
+- Phase 8 Implementation Plan subtasks 31–33
+
+---
+
+## [2026-05-23 Phase 8 Subtasks 27–30] feat(frontend): add weight and dashboard UI components
+
+**Change Type:** Feature
+**Scope:** Frontend — weight and dashboard components
+
+**Summary:**
+Created `ConfirmDeleteDialog` (MUI Dialog with focus trap), `WeightEntryTable` (accessible table with Edit links and Delete buttons), `WeightEntryForm` (React Hook Form + zodResolver, MUI v6 slotProps, notes counter), and three dashboard cards (`LatestEntryCard`, `TotalEntriesCard`, `GoalProgressPlaceholderCard`). 203 frontend tests passing.
+
+**Rationale:**
+Using `slotProps.htmlInput` instead of deprecated `inputProps` for MUI v6 compatibility. The zodResolver type mismatch from `z.coerce.number()` is suppressed with `as any` — this is a known TypeScript/zod/RHF interaction limitation and does not affect runtime behavior.
+
+**References:**
+- SRS §10.3, §NFR-A-1..5
+- Phase 8 Implementation Plan subtasks 27–30
+
+---
+
+## [2026-05-23 Phase 8 Subtasks 23–26] feat(frontend): add weight schemas, API clients, format helpers, and hooks
+
+**Change Type:** Feature
+**Scope:** Frontend — weight and dashboard features
+
+**Summary:**
+Created `weightEntrySchema` (Zod, 14 tests), `weight-client.ts` (5 API methods), `dashboard-client.ts`, `formatObservationDate` helper, 5 TanStack Query weight hooks (`useWeightEntries`, `useWeightEntry`, `useCreateWeightEntry`, `useUpdateWeightEntry`, `useDeleteWeightEntry`), and `useDashboardSummary`. All mutations invalidate `['weight-entries']` and `['dashboard-summary']` cache keys on success. 181 frontend tests passing at 96.4% coverage (branches 92.15%).
+
+**Rationale:**
+Mutation hooks invalidate both weight-entries and dashboard-summary queries so the dashboard stays consistent after any write without manual refetches (TanStack Query pattern from ADR-0014).
+
+**References:**
+- SRS §10.3, ADR-0014
+- Phase 8 Implementation Plan subtasks 23–26
+
+---
+
+## [2026-05-23 Phase 8 Subtasks 20–22] feat(dashboard): add dashboard summary slice (FR-D-1)
+
+**Change Type:** Feature
+**Scope:** dashboard bounded context
+
+**Summary:**
+Created `BuildDashboardSummary` use case (read model from weight_tracking), `DashboardSummaryResponse` Pydantic schema, and GET `/api/v1/dashboard/summary` router. Added import-linter contracts for dashboard (layers + framework forbidden). All 9 import-linter contracts pass. Mounted dashboard router in main.py. 255 backend tests passing.
+
+**Rationale:**
+Dashboard has no domain layer of its own — it's a read model that composes data from weight_tracking's IWeightEntryRepository. The import-linter `layers` contract enforces this by only allowing `interface` and `application` layers in the dashboard slice. `active_goal: None` is hardcoded per SRS §13.1.4 (deferred to M3).
+
+**References:**
+- SRS §6.7, §9.5, §13.1.4
+- Phase 8 Implementation Plan subtasks 20–22
+
+---
+
+## [2026-05-23 Phase 8 Subtasks 16–19] feat(interface): add weight-entries router and Pydantic schemas
+
+**Change Type:** Feature
+**Scope:** weight_tracking interface layer
+
+**Summary:**
+Created `WeightEntryRequest` (Decimal validation, unit enum, future-date rejection, notes max 500), `WeightEntryResponse` (float for numeric JSON literals per SRS §3.2), and `WeightEntryListResponse`. Implemented the 5-endpoint router with `get_current_user_id` auth guard, rate limiting (30/min) on write endpoints, RFC 7807 error shape via the shared handler, and structlog events on state-changing paths. Mounted the router in `main.py`. 89 weight tests passing.
+
+**Rationale:**
+`WeightEntryResponse.weight_value` uses `float` (not `Decimal`) because Pydantic v2 serializes `Decimal` as a JSON string by default; the SRS requires numeric literals in the response JSON.
+
+**References:**
+- SRS §9.4, §NFR-S-3, §NFR-S-5, §NFR-S-7
+- Phase 8 Implementation Plan subtasks 16–19
+
+---
+
+## [2026-05-23 Phase 8 Subtasks 13–15] feat(infra): add WeightEntryModel ORM and SqlAlchemy repository
+
+**Change Type:** Feature
+**Scope:** weight_tracking infrastructure layer
+
+**Summary:**
+Created `WeightEntryModel` (BigInteger PK, Numeric(6,2) weight_value, Date observation_date, timezone-aware timestamps) reusing the shared `Base`. Implemented `SqlAlchemyWeightEntryRepository` with save (INSERT/UPDATE), get_by_id (user-scoped), list_for_user (cursor pagination), count_for_user, get_latest_for_user, and exists_for_user_on_date (EXISTS subquery). Updated integration conftest to import `WeightEntryModel` so `Base.metadata.create_all` includes the weight_entries table. Written TDD: 18 model tests + all integration tests stay green (101 total).
+
+**Rationale:**
+`_entry_to_domain` uses `Decimal(str(row.weight_value))` to preserve precision when reading back from SQLite (which stores Numeric as TEXT). The `exists` check uses `.scalar() or False` to correctly coerce None from empty queries to False.
+
+**References:**
+- SRS §8.2.3
+- Phase 8 Implementation Plan subtasks 13–15
+
+---
+
+## [2026-05-23 Phase 8 Subtasks 6–12] feat(application): add five weight use cases
+
+**Change Type:** Feature
+**Scope:** weight_tracking application layer
+
+**Summary:**
+Implemented `CreateWeightEntry`, `ListWeightEntries`, `GetWeightEntry`, `UpdateWeightEntry`, and `DeleteWeightEntry` use cases. Each receives the port via constructor injection and returns domain entities. DeleteWeightEntry is idempotent for already-deleted entries. ListWeightEntries uses limit+1 to compute next_cursor without a second query. Written TDD: 22 failing tests → 5 use cases → 39 green.
+
+**Rationale:**
+One file per use case keeps the application layer legible as a directory listing of business capabilities. Constructor injection makes unit testing with mocks trivial.
+
+**References:**
+- SRS §6.2 (FR-W-1 through FR-W-5)
+- Phase 8 Implementation Plan subtasks 6–12
+
+---
+
+## [2026-05-23 Phase 8 Subtasks 2–5] feat(domain): add WeightEntry entity, port, and exceptions
+
+**Change Type:** Feature
+**Scope:** weight_tracking domain layer
+
+**Summary:**
+Created `WeightEntry` dataclass (with `soft_delete()` idempotent method), `IWeightEntryRepository` `@runtime_checkable` Protocol port with 6 methods, and 3 domain exceptions (`WeightEntryNotFoundError`, `DuplicateObservationDateError`, `ObservationDateInFutureError`). Written TDD: 17 failing tests → implementation → 17 green.
+
+**Rationale:**
+Domain entities and ports are framework-free per ADR-0012. `soft_delete()` is idempotent so re-deleting via the use case never clobbers the original `deleted_at` timestamp.
+
+**References:**
+- SRS §6.2, §8.2.3
+- Phase 8 Implementation Plan subtasks 2–5
+
+---
+
+## [2026-05-23 Phase 8 Subtask 1] feat(db): add weight_entries migration (FR-W-1..5)
+
+**Change Type:** Feature
+**Scope:** Database / Alembic
+
+**Summary:**
+Created migration `0002_weight_entries.py` implementing SRS §8.2.3. The migration creates the `weight_entries` table with 10 columns, 5 named CHECK constraints (`weight_entries_value_positive`, `weight_entries_value_max`, `weight_entries_unit_valid`, `weight_entries_observation_not_future`, `weight_entries_deletion_consistency`), and 2 partial indexes (`idx_weight_entries_user_date_active` UNIQUE partial, `idx_weight_entries_user_observation_desc`). Partial index WHERE clauses use `postgresql_where` for SQLite test compatibility. Written TDD: 5 failing tests → migration → 5 green.
+
+**Rationale:**
+Database-level constraints are the last line of defence for value-domain rules, closing the Android code review finding (SRS §1.2). Using `postgresql_where` follows the 0001 migration pattern.
+
+**References:**
+- SRS §8.2.3, §8.3
+- Phase 8 Implementation Plan subtask 1
+
+---
+
 ## [2026-05-23] Task 20 — Documentation sweep and Phase 7 closeout
 
 **Change Type:** Docs
