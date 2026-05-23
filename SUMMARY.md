@@ -7,6 +7,23 @@ issues were resolved.
 
 ---
 
+## [2026-05-23 Phase 8 Subtasks 13–15] feat(infra): add WeightEntryModel ORM and SqlAlchemy repository
+
+**Change Type:** Feature
+**Scope:** weight_tracking infrastructure layer
+
+**Summary:**
+Created `WeightEntryModel` (BigInteger PK, Numeric(6,2) weight_value, Date observation_date, timezone-aware timestamps) reusing the shared `Base`. Implemented `SqlAlchemyWeightEntryRepository` with save (INSERT/UPDATE), get_by_id (user-scoped), list_for_user (cursor pagination), count_for_user, get_latest_for_user, and exists_for_user_on_date (EXISTS subquery). Updated integration conftest to import `WeightEntryModel` so `Base.metadata.create_all` includes the weight_entries table. Written TDD: 18 model tests + all integration tests stay green (101 total).
+
+**Rationale:**
+`_entry_to_domain` uses `Decimal(str(row.weight_value))` to preserve precision when reading back from SQLite (which stores Numeric as TEXT). The `exists` check uses `.scalar() or False` to correctly coerce None from empty queries to False.
+
+**References:**
+- SRS §8.2.3
+- Phase 8 Implementation Plan subtasks 13–15
+
+---
+
 ## [2026-05-23 Phase 8 Subtasks 6–12] feat(application): add five weight use cases
 
 **Change Type:** Feature
