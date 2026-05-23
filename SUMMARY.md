@@ -7,6 +7,22 @@ issues were resolved.
 
 ---
 
+## [2026-05-22 10:08] Commit Summary
+
+**Change Type:** Fix
+**Scope:** auth/interface/router
+
+**Summary:**
+Added `@limiter.limit("10/minute")` and a `request: Request` parameter to the `/logout` endpoint. A caller with a stolen or guessed refresh token cookie can no longer hit logout unlimited times to DoS sessions.
+
+**Rationale:**
+`/logout` was the only auth endpoint without a rate limit, leaving it open to DoS. PR #27 code review finding C9.
+
+**References:**
+- PR: #27 (C9)
+
+---
+
 ## [2026-05-22 10:07] Commit Summary
 
 **Change Type:** Fix

@@ -296,7 +296,9 @@ def login(
     status_code=status.HTTP_204_NO_CONTENT,
     summary="End the current session (FR-A-3)",
 )
+@limiter.limit("10/minute")
 def logout(
+    request: Request,
     response: Response,
     refresh_token: str | None = Cookie(default=None, alias=_REFRESH_COOKIE),
     session: Session = Depends(get_db_session),
@@ -309,6 +311,7 @@ def logout(
     cleared regardless of token state.
 
     Args:
+        request: The incoming HTTP request (required by slowapi rate limiting).
         response: The outgoing HTTP response (used to clear cookies).
         refresh_token: The refresh token from the cookie (optional).
         session: The active database session.
