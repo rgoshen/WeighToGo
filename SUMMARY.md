@@ -7,6 +7,32 @@ issues were resolved.
 
 ---
 
+## [2026-05-23 Phase 9] docs(narrative): name M3 algorithms specifically in Outcome 3 discussion
+
+**Change Type:** Docs (correctness fix)
+**Scope:** `docs/narratives/milestone-two-narrative.md` — Section 3 (Outcome 3 paragraph)
+
+**Summary:**
+The Outcome 3 paragraph in the M2 narrative previously listed M3's algorithm work generically as "trend smoothing, milestone detection, composite index strategy" — losing the specific algorithm names, which are exactly the content that matters for an Outcome 3 (algorithms and data structures) discussion. Reviewer caught the omission of "sliding-window moving average" by name.
+
+The paragraph now names every M3 algorithm and data-structure item that appears in the M2 implementation brief §7 (Out of Scope) and the SRS §6.4:
+
+- **Sliding-window moving average** for trend smoothing (FR-D-2)
+- **Milestone-detection algorithm** (FR-Ach-2)
+- **Streak-detection algorithm** at 7 and 30 consecutive days (FR-Ach-3) — also previously omitted
+- **Composite-index strategy** for trend queries
+- **TTL-based server-side caching** for the dashboard read model
+- The M2 contribution itself — the **opaque compound cursor** (ADR-0015) — is identified by its specific data-structure name rather than generic "cursor-based pagination"
+
+**Rationale:**
+The narrative is a submission document evaluated against the CS 499 holistic rubric, which scores Outcome 3 on demonstrated awareness of algorithms and data structures. Generic terms ("trend smoothing", "cursor-based pagination") signal less competency than specific algorithm names ("sliding-window moving average", "opaque compound cursor"). The reviewer's catch was valid; the fix is a one-paragraph rewrite with no scope change.
+
+**References:**
+- M3 algorithm scope source: `docs/plans/milestone-two-plan.md` §7 Out of Scope; `docs/specs/WeighToGo_Web_SRS_v1.md` §6.4 (FR-Ach-3)
+- Issue: GH-15
+
+---
+
 ## [2026-05-23 Phase 9] docs(summary): Phase 9 closeout — Milestone 2 ready for release-please bootstrap
 
 **Change Type:** Docs (milestone closeout)
