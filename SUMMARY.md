@@ -7,6 +7,38 @@ issues were resolved.
 
 ---
 
+## [2026-05-23 Phase 9] ci(release): add release-please for end-to-end release automation
+
+**Change Type:** CI / Release automation (replaces reverted git-cliff approach)
+**Scope:** New `.release-please-manifest.json`, `release-please-config.json`, `.github/workflows/release-please.yml`; `README.md` badge
+
+**Summary:**
+Switched the release pipeline from the manual-tag git-cliff workflow (reverted in the preceding commit) to [release-please](https://github.com/googleapis/release-please). release-please owns the entire release: it scans Conventional Commits since the last released tag, opens a "Release PR" that proposes the next version and renders the CHANGELOG diff, and — when that Release PR is merged — creates the annotated git tag, publishes the GitHub Release with the CHANGELOG section as the body, and updates the manifest so the next cycle starts counting from the new release. The human action is reviewing and merging a PR with the proposed version and notes visible, not typing a version string into `git tag`.
+
+Three new files:
+
+- **`.release-please-manifest.json`** — tracks the currently-released version. Seeded at `"0.0.0"` because no web-rebuild version has been released yet (the `v1.0.0-android` tag is intentionally a separate version line, not a predecessor of `v0.1.0`).
+- **`release-please-config.json`** — single-package "simple" release-type (polyglot monorepo has no single language manifest to update). `bootstrap-sha` pinned to the `v1.0.0-android` commit (`88b8ff680a36c814d8c7b3ed4c650ad946c15a3e`) so release-please only scans web-rebuild commits, never the original Android history. `release-as: "0.1.0"` pins the first release to the milestone-specified version per SRS §5.6; for v0.2.0 onward this directive is removed and release-please calculates the bump from commit types (`feat:` → minor, `fix:` → patch, `BREAKING CHANGE:` → major). Conventional-commit type → Keep-a-Changelog section map: `feat` → Added, `fix` → Fixed, `perf` → Performance, `refactor` → Changed, `docs` → Documentation; `chore`/`test`/`ci`/`build`/`style`/`revert` hidden from user-facing notes.
+- **`.github/workflows/release-please.yml`** — fires on every push to `main`. Permissions narrowed to `contents: write` (tag/release) + `pull-requests: write` (Release PR). Action pinned to commit SHA per repo convention (`googleapis/release-please-action@5c625bfb5d1ff62eadeeb3772007f7f66fdcf071 # v4.4.1`). Single concurrency group prevents overlapping release runs.
+
+Added the Release Please workflow badge to `README.md` alongside the other CI badges.
+
+**Rationale:**
+The reverted git-cliff approach required typing the version string into `git tag` — that's the exact human-error vector release automation exists to eliminate. release-please moves the version decision into a reviewable Release PR where the proposed version and CHANGELOG content are both visible before publishing, so any mistake is caught before it ships.
+
+Initial design choice — git-cliff with manual tagging — was made silently without surfacing the alternative. That assumption was wrong on the merits and wrong on process; the lesson is recorded in personal memory.
+
+**Known limitations:**
+- The previous git-cliff config matched commits with `security` in the body and grouped them under "Security". release-please does not do body-pattern matching out of the box. If a release contains security-relevant items, they can be added to the Security section by editing the Release PR before merging.
+- The first Release PR will scan from `bootstrap-sha` and include every conventional commit since the v1.0.0-android boundary — likely a large initial diff. This is expected for the bootstrap release; subsequent releases will be incremental.
+
+**References:**
+- Tool: <https://github.com/googleapis/release-please>
+- Action: <https://github.com/googleapis/release-please-action>
+- Issue: GH-15
+
+---
+
 ## [2026-05-23 Phase 9] docs(narrative): add Milestone Two narrative
 
 **Change Type:** Docs
