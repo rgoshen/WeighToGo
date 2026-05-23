@@ -146,6 +146,20 @@ source_modules = [
 ]
 forbidden_modules = ["fastapi", "sqlalchemy", "pydantic", "alembic", "starlette"]
 
+# ── Dashboard layer ordering (read model: interface + application only) ────
+
+[[tool.importlinter.contracts]]
+name = "dashboard: Clean Architecture layer ordering"
+type = "layers"
+containers = ["weighttogo.dashboard"]
+layers = ["interface", "application"]
+
+[[tool.importlinter.contracts]]
+name = "dashboard: application must not import frameworks"
+type = "forbidden"
+source_modules = ["weighttogo.dashboard.application"]
+forbidden_modules = ["fastapi", "sqlalchemy", "pydantic", "alembic", "starlette"]
+
 # ── Shared cross-cutting isolation ─────────────────────────────────────────
 
 [[tool.importlinter.contracts]]

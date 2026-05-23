@@ -7,6 +7,23 @@ issues were resolved.
 
 ---
 
+## [2026-05-23 Phase 8 Subtasks 20–22] feat(dashboard): add dashboard summary slice (FR-D-1)
+
+**Change Type:** Feature
+**Scope:** dashboard bounded context
+
+**Summary:**
+Created `BuildDashboardSummary` use case (read model from weight_tracking), `DashboardSummaryResponse` Pydantic schema, and GET `/api/v1/dashboard/summary` router. Added import-linter contracts for dashboard (layers + framework forbidden). All 9 import-linter contracts pass. Mounted dashboard router in main.py. 255 backend tests passing.
+
+**Rationale:**
+Dashboard has no domain layer of its own — it's a read model that composes data from weight_tracking's IWeightEntryRepository. The import-linter `layers` contract enforces this by only allowing `interface` and `application` layers in the dashboard slice. `active_goal: None` is hardcoded per SRS §13.1.4 (deferred to M3).
+
+**References:**
+- SRS §6.7, §9.5, §13.1.4
+- Phase 8 Implementation Plan subtasks 20–22
+
+---
+
 ## [2026-05-23 Phase 8 Subtasks 16–19] feat(interface): add weight-entries router and Pydantic schemas
 
 **Change Type:** Feature
