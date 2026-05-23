@@ -7,6 +7,29 @@ issues were resolved.
 
 ---
 
+## [2026-05-23 Phase 9] docs: documentation hardening pass across active project docs
+
+**Change Type:** Docs (consistency + completeness)
+**Scope:** `README.md`, `CONTRIBUTING.md`, `SUMMARY.md`, `docs/narratives/milestone-two-narrative.md`, `docs/history/android_summary.md`, 8 ADR files
+
+**Summary:**
+A multi-file pass to bring the active project documentation to the standard required for milestone closeout. Six commits land in this pass:
+
+1. **SUMMARY and narrative wording tightened.** Removed external tool references and meta-pattern phrasings from prior SUMMARY entries (lines 94, 367, 489, 840, 1438, 2219, 2294) and from the narrative section 4 challenges paragraph. Phrasing now describes activities (code reviews, review passes, structured reviews) rather than naming any specific tooling.
+2. **ADR Author bylines corrected.** Eight ADRs (0006–0013) previously footed with `**Author**: Development Team` are now correctly attributed to `**Author**: Rick Goshen` — factual fix; this is a solo project.
+3. **README expanded for the web stack and rewritten in neutral voice.** Added Quality Gates blocks for backend and frontend (mirroring Android's existing test commands), tech-stack table with versions, a "Running the full web app" section explaining the dual-terminal setup, a Web Database Schema pointer to SRS §8, and web stack acknowledgments. Replaced second-person phrasings in the Support and Android Studio sections with neutral imperative/declarative voice. Tagline replaced with a neutral one-liner.
+4. **CONTRIBUTING rewritten in neutral voice.** Heavy rewrite — all `we/our/us` plural pronouns and `you/your` second-person phrasings removed from the body. Added a Web Testing Strategy subsection (pytest patterns, MSW for frontend mocking, Playwright for E2E) parallel to the existing Android Testing Strategy. Made the Bug Report info-collection list stack-aware (Android vs Web fields). Dropped the All Contributors emoji table (solo project; emoji legend was aspirational filler). Added ARCHITECTURE.md to the Resources list.
+5. **Android-era development journal preserved.** Added a Document Status banner at the top of `docs/history/android_summary.md` marking it as frozen historical reference and pointing forward to the active `SUMMARY.md`. Tightened one in-body phrasing on line 1088 that used loose terminology; left genuine technical references (JVM agents in Robolectric/Mockito context) intact.
+6. (this entry)
+
+**Rationale:**
+The doc set carried inconsistencies that a reader could spot quickly: the README had Android setup instructions but only a partial web stack quickstart; CONTRIBUTING was originally written for the Android-only era and never fully updated for the polyglot monorepo; ADRs claimed a team author when there is one author; voice in narrative-adjacent prose drifted between first, second, and third person. The pass closes those gaps as a single coherent edit rather than leaving the inconsistencies as known issues for a future maintenance pass.
+
+**References:**
+- Issue: GH-15
+
+---
+
 ## [2026-05-23 Phase 9] docs(narrative): fix first-person voice; remove implied second-person references
 
 **Change Type:** Docs (voice correction)
