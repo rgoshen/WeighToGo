@@ -1089,7 +1089,7 @@ values.put("updated_at", now);
 ### Planning Phase: Exploration and Architecture Design
 
 **Exploration Approach:**
-Three parallel exploration passes investigated:
+Three exploration passes investigated:
 1. Current unit selection implementation in WeightEntryActivity
 2. Existing user preferences system (table schema, models)
 3. Settings screen architecture (activity_sms_settings.xml layout exists)
