@@ -1170,3 +1170,19 @@ README listed React 19 specifically but MUI without version. Corrected for consi
 
 **References:**
 - Issue: SRS consistency
+
+---
+
+## [2026-05-23] Task 1 — Phase 7 setup: decision records and dependencies
+
+**Change Type:** Docs
+**Scope:** docs/adr, docs/ddr, web/frontend/package.json
+
+**Summary:**
+Added ADR-0014 (TanStack Query for server state) and DDR-0003 (user menu in AppBar) ahead of any Phase 7 implementation commit, per the M2 plan ADR-timing rule. Installed @hookform/resolvers (form validation resolver) and @axe-core/playwright (E2E a11y) in the frontend.
+
+**Rationale:**
+Decision records must precede the implementation commits they affect. TanStack Query is already in the lock file; this ADR formalizes the adoption and sets the pattern for all server-state work in subsequent phases.
+
+**References:**
+- Issue: #13
