@@ -65,17 +65,28 @@ class IWeightEntryRepository(Protocol):
         """
         ...
 
-    def list_for_user(self, user_id: int, limit: int, before_id: int | None) -> list[WeightEntry]:
+    def list_for_user(
+        self,
+        user_id: int,
+        limit: int,
+        before: tuple[date, int] | None,
+    ) -> list[WeightEntry]:
         """Return a page of active weight entries for *user_id*.
 
-        Results are ordered ``(observation_date DESC, entry_id DESC)``.  The
-        page contains at most *limit* items starting after *before_id* (when
-        provided).
+        Results are ordered ``(observation_date DESC, entry_id DESC)``. The
+        page contains at most *limit* items strictly less than *before*
+        under the same lexicographic ordering — i.e. when ``before`` is
+        ``(d, i)``, the filter is
+        ``(observation_date, entry_id) < (d, i)``. Encoding the full sort
+        key in the cursor avoids the skip-and-repeat defects that arise
+        when the cursor key is narrower than the sort key (ADR-0015).
 
         Args:
             user_id: The owning user's ID.
             limit: Maximum number of entries to return.
-            before_id: Exclusive upper bound on entry_id for pagination.
+            before: Exclusive upper bound on the ``(observation_date,
+                entry_id)`` compound sort key, or ``None`` for the first
+                page.
 
         Returns:
             A list of active ``WeightEntry`` entities, newest first.

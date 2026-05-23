@@ -10,6 +10,7 @@ from __future__ import annotations
 from datetime import date
 from decimal import Decimal
 
+from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session
 
 from weighttogo.weight_tracking.domain.entities import WeightEntry
@@ -132,13 +133,24 @@ class SqlAlchemyWeightEntryRepository:
         )
         return _entry_to_domain(row) if row else None
 
-    def list_for_user(self, user_id: int, limit: int, before_id: int | None) -> list[WeightEntry]:
-        """Return a page of active entries for *user_id*.
+    def list_for_user(
+        self,
+        user_id: int,
+        limit: int,
+        before: tuple[date, int] | None,
+    ) -> list[WeightEntry]:
+        """Return a page of active entries for *user_id* (ADR-0015).
+
+        The filter is lexicographic on ``(observation_date, entry_id)`` to
+        match the sort key — an entry_id-only filter would skip or repeat
+        rows whenever date ordering disagrees with insertion ordering
+        (e.g. user backfills an older date).
 
         Args:
             user_id: The owning user's ID.
             limit: Maximum number of entries to return.
-            before_id: Exclusive upper bound on entry_id for cursor pagination.
+            before: Exclusive upper bound on ``(observation_date, entry_id)``
+                for cursor pagination, or ``None`` for the first page.
 
         Returns:
             A list of active ``WeightEntry`` entities ordered by
@@ -152,8 +164,20 @@ class SqlAlchemyWeightEntryRepository:
                 WeightEntryModel.entry_id.desc(),
             )
         )
-        if before_id is not None:
-            q = q.filter(WeightEntryModel.entry_id < before_id)
+        if before is not None:
+            before_date, before_id = before
+            # Use the explicit OR form rather than ``tuple_(...) < tuple_(...)``
+            # because SQLite (used by the integration test harness) does not
+            # implement row-value comparisons.
+            q = q.filter(
+                or_(
+                    WeightEntryModel.observation_date < before_date,
+                    and_(
+                        WeightEntryModel.observation_date == before_date,
+                        WeightEntryModel.entry_id < before_id,
+                    ),
+                )
+            )
         rows = q.limit(limit).all()
         return [_entry_to_domain(r) for r in rows]
 

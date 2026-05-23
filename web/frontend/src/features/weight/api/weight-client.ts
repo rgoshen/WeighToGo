@@ -20,10 +20,15 @@ export interface WeightEntryRecord {
   updated_at: string;
 }
 
-/** Paginated list response envelope for weight entries. */
+/** Paginated list response envelope for weight entries.
+ *
+ * `next_cursor` is an opaque base64 token returned by the backend (ADR-0015).
+ * Clients must round-trip the value unchanged to fetch the next page; the
+ * format is intentionally not part of the API contract.
+ */
 export interface WeightEntryListResponse {
   items: WeightEntryRecord[];
-  next_cursor: number | null;
+  next_cursor: string | null;
 }
 
 /** Request body for POST and PUT weight-entry endpoints. */
@@ -36,11 +41,15 @@ export interface WeightEntryPayload {
 
 /** Typed API wrappers for all weight-entries endpoints. */
 export const weightClient = {
-  /** Return a paginated list of weight entries for the current user. */
-  list: (params?: { limit?: number; cursor?: number }) => {
+  /** Return a paginated list of weight entries for the current user.
+   *
+   * `cursor` is the opaque token returned as `next_cursor` on a previous
+   * page; pass it back unchanged to fetch the next page.
+   */
+  list: (params?: { limit?: number; cursor?: string }) => {
     const search = new URLSearchParams();
     if (params?.limit !== undefined) search.set('limit', String(params.limit));
-    if (params?.cursor !== undefined) search.set('cursor', String(params.cursor));
+    if (params?.cursor !== undefined) search.set('cursor', params.cursor);
     const qs = search.toString();
     return fetchJson<WeightEntryListResponse>(qs ? `${BASE}?${qs}` : BASE, { method: 'GET' });
   },

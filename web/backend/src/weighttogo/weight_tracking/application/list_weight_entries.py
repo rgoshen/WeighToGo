@@ -1,8 +1,14 @@
-"""ListWeightEntries use case (FR-W-2)."""
+"""ListWeightEntries use case (FR-W-2).
+
+The cursor encodes the full sort key ``(observation_date, entry_id)`` per
+ADR-0015. The use case stays in domain terms; the router is responsible
+for encoding/decoding the opaque wire format.
+"""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import date
 
 from weighttogo.weight_tracking.domain.entities import WeightEntry
 from weighttogo.weight_tracking.domain.ports import IWeightEntryRepository
@@ -14,20 +20,20 @@ class ListWeightEntriesCommand:
 
     user_id: int
     limit: int
-    cursor: int | None
+    cursor: tuple[date, int] | None
 
 
 @dataclass(frozen=True)
 class WeightEntryPage:
     """Output envelope for a paginated list of weight entries.
 
-    ``next_cursor`` is the ``entry_id`` of the first entry on the next page,
-    or ``None`` when no further pages exist.  The M3 cursor encoding will
-    replace the raw ID with an opaque string without breaking this shape.
+    ``next_cursor`` is the compound sort key ``(observation_date, entry_id)``
+    of the **last returned entry**, or ``None`` when no further pages exist.
+    The router base64-encodes this tuple before returning it on the wire.
     """
 
     items: list[WeightEntry]
-    next_cursor: int | None
+    next_cursor: tuple[date, int] | None
 
 
 class ListWeightEntries:
@@ -44,8 +50,11 @@ class ListWeightEntries:
     def execute(self, command: ListWeightEntriesCommand) -> WeightEntryPage:
         """Execute the use case.
 
-        Fetches ``limit + 1`` rows from the repository to determine whether a
-        next page exists, then trims the result to *limit* entries.
+        Fetches ``limit + 1`` rows from the repository to detect whether a
+        next page exists, trims to *limit*, and derives ``next_cursor`` from
+        the **last returned** entry (keyset pagination — ADR-0015). Using
+        the last returned row instead of the peeked-but-trimmed row is what
+        prevents the page-boundary skip the original implementation had.
 
         Args:
             command: The list command with pagination parameters.
@@ -56,13 +65,15 @@ class ListWeightEntries:
         rows = self._repo.list_for_user(
             user_id=command.user_id,
             limit=command.limit + 1,
-            before_id=command.cursor,
+            before=command.cursor,
         )
 
         if len(rows) > command.limit:
             items = rows[: command.limit]
-            # next_cursor is the entry_id of the first entry on the next page
-            next_cursor = rows[command.limit].entry_id
+            last = items[-1]
+            # Repo returns persisted rows; entry_id is never None on this path.
+            assert last.entry_id is not None
+            next_cursor: tuple[date, int] | None = (last.observation_date, last.entry_id)
         else:
             items = rows
             next_cursor = None

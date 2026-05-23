@@ -14,6 +14,8 @@ the same try/except pattern as the auth router.
 
 from __future__ import annotations
 
+from datetime import date
+
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 from sqlalchemy.orm import Session
@@ -47,6 +49,11 @@ from weighttogo.weight_tracking.domain.exceptions import (
 )
 from weighttogo.weight_tracking.infrastructure.repositories import (
     SqlAlchemyWeightEntryRepository,
+)
+from weighttogo.weight_tracking.interface.cursor import (
+    InvalidCursorError,
+    decode_cursor,
+    encode_cursor,
 )
 from weighttogo.weight_tracking.interface.schemas import (
     WeightEntryListResponse,
@@ -138,7 +145,7 @@ def create_weight_entry(
 def list_weight_entries(
     request: Request,
     limit: int = Query(default=_DEFAULT_PAGE_SIZE, ge=1, le=_MAX_PAGE_SIZE),
-    cursor: int | None = None,
+    cursor: str | None = None,
     session: Session = Depends(get_db_session),
     current_user_id: int = Depends(get_current_user_id),
 ) -> WeightEntryListResponse:
@@ -149,13 +156,29 @@ def list_weight_entries(
         limit: Maximum number of entries per page (1..100, default 20).
             Out-of-range values return 422 rather than being silently clamped,
             so clients learn they exceeded the contract.
-        cursor: Pagination cursor (entry_id of the last item on the previous page).
+        cursor: Opaque base64 pagination token previously returned as
+            ``next_cursor`` (ADR-0015). Clients round-trip the value
+            unchanged; the router decodes the compound ``(observation_date,
+            entry_id)`` sort key here.
         session: The active database session.
         current_user_id: The authenticated user's ID.
 
     Returns:
         A paginated envelope with ``items`` and ``next_cursor``.
+
+    Raises:
+        HTTPException: 422 when ``cursor`` is malformed.
     """
+    decoded_cursor: tuple[date, int] | None = None
+    if cursor is not None:
+        try:
+            decoded_cursor = decode_cursor(cursor)
+        except InvalidCursorError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Invalid cursor.",
+            ) from exc
+
     repo = _weight_repo(session)
     uc = ListWeightEntries(weight_repo=repo)
 
@@ -163,13 +186,13 @@ def list_weight_entries(
         ListWeightEntriesCommand(
             user_id=current_user_id,
             limit=limit,
-            cursor=cursor,
+            cursor=decoded_cursor,
         )
     )
 
     return WeightEntryListResponse(
         items=[WeightEntryResponse.model_validate(e) for e in page.items],
-        next_cursor=page.next_cursor,
+        next_cursor=encode_cursor(*page.next_cursor) if page.next_cursor is not None else None,
     )
 
 

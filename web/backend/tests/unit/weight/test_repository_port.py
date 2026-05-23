@@ -29,7 +29,7 @@ def test_concrete_class_satisfying_port_passes_isinstance_check() -> None:
             return None
 
         def list_for_user(
-            self, user_id: int, limit: int, before_id: int | None
+            self, user_id: int, limit: int, before: tuple[date, int] | None
         ) -> list[WeightEntry]:
             return []
 

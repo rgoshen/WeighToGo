@@ -136,6 +136,86 @@ def test_list_entries_accepts_limit_max(client: TestClient) -> None:
     assert resp.status_code == 200
 
 
+def test_list_entries_paginates_without_skipping_boundary_rows(client: TestClient) -> None:
+    """The compound-cursor pagination must include the page-boundary row on the
+    next page. The original entry_id-only cursor used the peek row as the
+    boundary and the strict `<` filter then excluded it (PR #30 review, ADR-0015).
+    """
+    _register_and_login(client)
+    today = date.today()
+    # Three entries on three distinct, descending dates so the natural sort
+    # order is (today, yesterday, two_days_ago).
+    for i in range(3):
+        client.post(
+            "/api/v1/weight-entries",
+            json=_valid_payload(observation_date=(today - timedelta(days=i)).isoformat()),
+        )
+
+    page1 = client.get("/api/v1/weight-entries?limit=2").json()
+    assert len(page1["items"]) == 2
+    cursor = page1["next_cursor"]
+    assert isinstance(cursor, str)
+
+    page2 = client.get(f"/api/v1/weight-entries?limit=2&cursor={cursor}").json()
+    page1_ids = {item["entry_id"] for item in page1["items"]}
+    page2_ids = {item["entry_id"] for item in page2["items"]}
+
+    # Every entry appears exactly once across the two pages.
+    assert page1_ids.isdisjoint(page2_ids), (
+        f"boundary row appears on both pages: {page1_ids & page2_ids}"
+    )
+    assert len(page1_ids | page2_ids) == 3, "an entry was skipped between pages"
+
+
+def test_list_entries_paginates_across_backfilled_older_dates(client: TestClient) -> None:
+    """An entry_id-only cursor breaks when newer entries have older observation
+    dates: page 1 may return entry id=1 (today) and set next_cursor=2; page 2
+    filter ``entry_id < 2`` then returns entry id=1 *again* and omits id=2
+    entirely. The compound cursor (date+id) prevents this (ADR-0015).
+    """
+    _register_and_login(client)
+    today = date.today()
+    # Insert today first (entry_id=1), then backfill an older date
+    # (entry_id=2). entry_id ordering and date ordering now disagree.
+    client.post("/api/v1/weight-entries", json=_valid_payload(observation_date=today.isoformat()))
+    client.post(
+        "/api/v1/weight-entries",
+        json=_valid_payload(observation_date=(today - timedelta(days=30)).isoformat()),
+    )
+
+    page1 = client.get("/api/v1/weight-entries?limit=1").json()
+    assert len(page1["items"]) == 1
+    assert page1["items"][0]["entry_id"] == 1, "today's entry sorts first"
+    cursor = page1["next_cursor"]
+    assert cursor is not None
+
+    page2 = client.get(f"/api/v1/weight-entries?limit=1&cursor={cursor}").json()
+    assert len(page2["items"]) == 1
+    assert page2["items"][0]["entry_id"] == 2, (
+        "backfilled older-date entry must appear on page 2, not be skipped"
+    )
+
+
+def test_list_entries_returns_string_cursor_not_integer(client: TestClient) -> None:
+    """ADR-0015: cursor is an opaque base64 string on the wire."""
+    _register_and_login(client)
+    today = date.today()
+    for i in range(2):
+        client.post(
+            "/api/v1/weight-entries",
+            json=_valid_payload(observation_date=(today - timedelta(days=i)).isoformat()),
+        )
+    page = client.get("/api/v1/weight-entries?limit=1").json()
+    assert isinstance(page["next_cursor"], str)
+
+
+def test_list_entries_rejects_malformed_cursor(client: TestClient) -> None:
+    """Malformed cursors must 422, not 500 (ADR-0015 router edge contract)."""
+    _register_and_login(client)
+    resp = client.get("/api/v1/weight-entries?cursor=!!!not-base64!!!")
+    assert resp.status_code == 422
+
+
 # ── Get single ────────────────────────────────────────────────────────────────
 
 

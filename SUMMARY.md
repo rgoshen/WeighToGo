@@ -7,6 +7,40 @@ issues were resolved.
 
 ---
 
+## [2026-05-23 PR #30 Review] fix(weight): opaque compound cursor for list pagination (ADR-0015)
+
+**Change Type:** Fix
+**Scope:** Backend — `weight_tracking` domain port, infrastructure adapter, ListWeightEntries use case, interface schemas, router, new `interface/cursor.py` codec; frontend — `weight-client.ts` types and `useWeightEntries` hook; new ADR-0015
+
+**Summary:**
+Replaced the integer `next_cursor` with an opaque base64-urlsafe string that encodes the full `(observation_date, entry_id)` compound sort key, and derived the cursor from the **last returned** entry instead of the peeked-but-trimmed row. Together these changes close two correctness defects on `GET /api/v1/weight-entries` flagged in the PR #30 review:
+
+1. **Off-by-one skip on the page boundary.** The use case had set `next_cursor = rows[command.limit].entry_id` (the peek row) and the repo applied strict `entry_id < before_id`, so the peek row was excluded on the next page and never returned. The new use case derives `next_cursor` from `items[-1]`, which makes the boundary row the one the client just received — strict `<` on the next page then correctly returns the next batch starting immediately below it (standard keyset pagination).
+2. **Sort-key / cursor-key mismatch.** The query sorted by `(observation_date DESC, entry_id DESC)` but the cursor encoded only `entry_id`. With a backfilled older date, entry_id ordering and date ordering diverge, so an `entry_id`-only cursor produced repeated and omitted rows on successive pages. The compound cursor mirrors the sort key exactly and the repo filter is now lexicographic: `observation_date < before_date OR (observation_date = before_date AND entry_id < before_id)`.
+
+Wire format is `base64url(no padding)` of `"YYYY-MM-DD:N"` (e.g. `MjAyNi0wMS0wMToyMQ`). Decode failures at the router edge surface as RFC 7807 422 via a new `InvalidCursorError`. The codec is a pure value-object in `weight_tracking/interface/cursor.py`; the use case and repository operate on `tuple[date, int]` so the wire format stays a router-edge concern (matches the three-pattern architecture in ADR-0012).
+
+Added tests:
+- `tests/unit/weight/test_cursor_codec.py` — 9 codec tests covering round-trip, opacity, padding strip, and rejection of empty/non-base64/missing-separator/bad-date/non-integer-id/negative-id inputs.
+- `tests/unit/weight/test_list_weight_entries_use_case.py` — rewrote to assert the compound cursor shape and last-returned-row derivation; added `test_next_cursor_is_none_when_exactly_limit_results`.
+- `tests/integration/weight/test_weight_endpoints.py` — `test_list_entries_paginates_without_skipping_boundary_rows`, `test_list_entries_paginates_across_backfilled_older_dates` (the exact PR #30 review reproduction), `test_list_entries_returns_string_cursor_not_integer`, `test_list_entries_rejects_malformed_cursor`.
+
+**Rationale:**
+Documented in full in ADR-0015. Briefly: the reviewer's two defects share a root cause — the cursor encoded a narrower key than the sort. The minimum fix that addresses both is a cursor that carries the compound key. Considered three encodings (plain string, base64 of plain string, two separate query params) and two narrower fixes (keep int cursor with last-row + strict `<`; sort by entry_id only). Rejected the narrower fixes because they either don't fix the backfilled-date case or destroy the UX-correct date ordering. Chose base64 over plain string for opacity and future evolvability of the encoded payload.
+
+**Bug Fix Context:**
+Off-by-one root cause: keyset pagination requires the cursor to point at the last *returned* row with strict `<`, not the next-page peek row with strict `<`. The original code mixed the two conventions. Sort-mismatch root cause: any keyset cursor narrower than the sort key cannot reproduce the order on the next page; the compound cursor closes the gap.
+
+**Breaking Change:**
+`WeightEntryListResponse.next_cursor` flips from `integer | null` to `string | null`. Updated frontend `weight-client.ts` and `useWeightEntries` hook accordingly. No external consumers exist outside this repository; the OpenAPI snapshot regeneration ships in a follow-up commit (see next entry).
+
+**References:**
+- PR #30 reviewer comments on `list_weight_entries.py:65` and the cursor/sort-key mismatch
+- ADR-0015 (`docs/adr/0015-opaque-compound-cursor-pagination.md`)
+- SRS §9.4 (weight-entries list endpoint), ADR-0012 (three-pattern architecture)
+
+---
+
 ## [2026-05-23 PR #30 Review] fix(weight): validate list limit range (≥1, ≤100)
 
 **Change Type:** Fix

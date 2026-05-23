@@ -67,8 +67,10 @@ class WeightEntryListResponse(BaseModel):
 
     Attributes:
         items: The weight entries in the current page.
-        next_cursor: Opaque pagination token, or ``None`` when no further pages exist.
+        next_cursor: Opaque base64 pagination token (ADR-0015), or ``None``
+            when no further pages exist. Clients should treat this value as
+            opaque and round-trip it unchanged to the next request.
     """
 
     items: list[WeightEntryResponse]
-    next_cursor: int | None
+    next_cursor: str | None
