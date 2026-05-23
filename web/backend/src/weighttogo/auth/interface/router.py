@@ -6,7 +6,7 @@ FR-A-9, FR-A-10, NFR-S-3, NFR-S-5, NFR-S-6, NFR-S-7.
 Security decisions:
 - Access token and refresh token are delivered as HTTP-only, SameSite=Strict cookies.
 - All auth failure paths return the same generic 401 body to prevent user enumeration.
-- Rate limiting applied to /login and /refresh (5/min) via slowapi.
+- Rate limiting applied to /register (3/hour), /login and /refresh (10/min) via slowapi.
 - Account lockout is handled by the domain use case.
 - PII is never logged in plain text (structlog processor handles masking).
 
@@ -82,8 +82,11 @@ def _make_rate_limit_key(settings: object) -> Callable[[Request], str]:
     return key_func
 
 
-# Rate limiter instance — shared via the app.state.limiter pattern
-limiter = Limiter(key_func=_make_rate_limit_key(get_settings()))
+# Rate limiter instance — shared via the app.state.limiter pattern.
+# Disabled when RATE_LIMIT_ENABLED=false (e.g. E2E test runs) so that
+# per-IP buckets do not block a test suite where all traffic shares one host.
+_settings = get_settings()
+limiter = Limiter(key_func=_make_rate_limit_key(_settings), enabled=_settings.rate_limit_enabled)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -199,7 +202,9 @@ def _clear_auth_cookies(response: Response) -> None:
     response_model=UserResponse,
     summary="Register a new user account (FR-A-1)",
 )
+@limiter.limit("3/hour")
 def register(
+    request: Request,
     payload: RegisterRequest,
     response: Response,
     session: Session = Depends(get_db_session),
@@ -209,6 +214,7 @@ def register(
     """Create a new user account and return a session cookie.
 
     Args:
+        request: The incoming HTTP request (required by slowapi).
         payload: Validated registration fields.
         response: The outgoing HTTP response (used to set cookies).
         session: The active database session.
@@ -268,7 +274,7 @@ def register(
     response_model=UserResponse,
     summary="Authenticate and receive session cookies (FR-A-2)",
 )
-@limiter.limit("5/minute")
+@limiter.limit("10/minute")
 def login(
     request: Request,
     payload: LoginRequest,

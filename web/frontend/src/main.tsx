@@ -22,6 +22,8 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 
 import { App } from './App';
+import { authClient } from './features/auth/api/auth-client';
+import { installAuthRefreshInterceptor } from './lib/api-client';
 import { AuthProvider } from './contexts/AuthContext';
 import { PreferencesProvider } from './contexts/PreferencesContext';
 import { theme } from './theme/theme';
@@ -29,10 +31,29 @@ import { theme } from './theme/theme';
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // Disable automatic retries in the scaffold — Phase 6 will tune these.
       retry: false,
       staleTime: 60_000,
     },
+  },
+});
+
+installAuthRefreshInterceptor({
+  refresh: async () => {
+    await authClient.refresh();
+  },
+  onLogout: () => {
+    // Only hard-redirect when the user had an active session that just expired.
+    // If the query cache has no user yet (null | undefined) we are still in the
+    // initial /me probe — React Router's ProtectedRoute will redirect to
+    // /login?from=<path> on its own, and firing window.location.assign here
+    // would override that redirect and strip the ?from= query parameter.
+    const hadSession =
+      queryClient.getQueryData<{ user_id: number } | null>(['auth', 'me']) !== null &&
+      queryClient.getQueryData<{ user_id: number } | null>(['auth', 'me']) !== undefined;
+    queryClient.setQueryData(['auth', 'me'], null);
+    if (hadSession) {
+      window.location.assign('/login');
+    }
   },
 });
 

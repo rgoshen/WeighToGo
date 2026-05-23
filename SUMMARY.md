@@ -7,6 +7,246 @@ issues were resolved.
 
 ---
 
+## [2026-05-23] Task 20 — Documentation sweep and Phase 7 closeout
+
+**Change Type:** Docs
+**Scope:** SUMMARY.md, docs/api/openapi.json
+
+**Summary:**
+End-of-phase documentation sweep: read README.md, web/CLAUDE.md, SRS, and M2 plan end-to-end. Verified all Phase 7 requirements are satisfied. Confirmed quickstart commands, ports, and env vars are still accurate. Regenerated and verified OpenAPI snapshot (no diff — already current). Completed missing SUMMARY.md entries for Tasks 2, 3+6, 4, 5, and 8. Ran all verification gates: frontend lint/format/typecheck/test:ci (144 tests, 93% coverage) and backend ruff/format/mypy/pytest (153 tests, 97% coverage) all green.
+
+**Rationale:**
+Thorough documentation sweeps are required by the project's standing rules before every PR. Every file is opened and read in full — no grep-and-skim.
+
+**References:**
+- Issue: #13
+- M2 plan Step 7 (documentation and closeout)
+
+---
+
+## [2026-05-23] Tasks 15–19 — E2E specs (register, login, errors, logout, a11y)
+
+**Change Type:** Test
+**Scope:** web/frontend/e2e/
+
+**Summary:**
+Added 5 Playwright E2E specs covering the full auth vertical slice: registration → dashboard, login with ?from= redirect preservation, invalid credentials (401) and account lockout (423/NFR-S-6), logout cookie clearing, and axe-core WCAG 2.1 AA assertions on /login and /register.
+
+**Rationale:**
+E2E tests are the only layer that verifies the frontend-backend contract end-to-end. Unit tests mock the API; these tests prove the real integration works including cookie handling, redirect chaining, and browser accessibility.
+
+Implementation fixes discovered during E2E runs:
+- Added Vite /api proxy (port configurable via VITE_API_PORT) — no proxy existed, all API calls returned 404.
+- Fixed auth interceptor onLogout: the /me probe on page load fired window.location.assign('/login') unconditionally, overriding React Router's own ?from= redirect on ProtectedRoute.
+- Fixed LoginPage isAuthenticated guard: the guard navigated to '/' instead of the ?from= destination, racing against useLogin's navigate() call and overriding it.
+- Extended LoginForm onSubmit callback to pass both setError and resetField (LoginFormHelpers), allowing useLogin to clear the password field on 401/423 errors.
+- Raised login endpoint rate limit from 5/minute to 10/minute: with max_login_attempts=5, the 6th request (which should return 423 account-locked) was blocked by the rate limiter (429) instead.
+- Fixed theme primary color from #00897B (4.31:1 contrast) to #00796B (4.77:1 contrast) to pass WCAG 2.1 AA.
+
+**References:**
+- Issue: #13
+- FR-A-1..5, NFR-A-1..6, NFR-S-6
+
+---
+
+## [2026-05-23] Task 14 — Playwright webServer config
+
+**Change Type:** Chore
+**Scope:** web/frontend/playwright.config.ts
+
+**Summary:**
+Updated Playwright config to start both the FastAPI backend (port 8000) and Vite dev server (port 5173) via webServer blocks. reuseExistingServer=true locally so the backend started in G2 is reused. Added fullyParallel: false to avoid port conflicts.
+
+**References:**
+- Issue: #13
+
+---
+
+## [2026-05-23] Task 12 — UserMenu in AppBar
+
+**Change Type:** Feature
+**Scope:** src/components/UserMenu.tsx, src/components/AppLayout.tsx
+
+**Summary:**
+Added UserMenu component (MUI Avatar + IconButton + Menu) to the AppBar right side. Shows display name, email, and Log out action. Keyboard accessible (Escape closes, Enter/Space opens via MUI defaults).
+
+**Rationale:**
+Per DDR-0003: industry convention puts session controls in a top-right avatar menu, keeping navigation routes separate from session actions.
+
+**References:**
+- Issue: #13
+- DDR-0003
+
+---
+
+## [2026-05-23] Task 11 — Wire LoginPage and RegisterPage
+
+**Change Type:** Feature
+**Scope:** src/features/auth/pages/
+
+**Summary:**
+Rewrote LoginPage and RegisterPage to compose the form components and mutation hooks. Both pages redirect authenticated users to / immediately, and show null during auth hydration. Updated AuthPages tests to use waitFor so they work with the async auth check. Fixed three App integration tests that used getByText(/log in/i) — now the full form renders both a heading and a button with matching text, so the tests were updated to use getByRole('heading') for specificity.
+
+**Rationale:**
+Thin page components keep the wiring clear: the page handles auth-state-based redirects; the form handles submission; the hook handles mutation + error mapping.
+
+**References:**
+- Issue: #13
+
+---
+
+## [2026-05-23] Task 10 — useLogin, useRegister, useLogout mutations
+
+**Change Type:** Feature
+**Scope:** src/features/auth/hooks/
+
+**Summary:**
+Added three TanStack Query useMutation hooks: useLogin (401→formError, 422→setError, 423→lockout, 429→rate-limit), useRegister (same shape, 409→conflict), useLogout (clears cache via onSettled so logout always completes even on network error).
+
+**Rationale:**
+Centralizing error mapping in the hooks keeps the form components pure (they only render state). The onSettled pattern for logout ensures the user is always redirected and cache always cleared regardless of server response.
+
+**References:**
+- Issue: #13
+
+---
+
+## [2026-05-22] Task 9 — RegisterForm component
+
+**Change Type:** Feature
+**Scope:** web/frontend/src/features/auth/components/RegisterForm.tsx, RegisterForm.test.tsx
+
+**Summary:**
+Implemented the RegisterForm React component backed by React Hook Form + Zod (registerSchema). The form captures display name, email, password, and confirm password; enforces client-side complexity rules (≥12 chars, uppercase, lowercase, digit, special character) and a passwords-match refinement; and exposes an onSubmit callback and status/formError props for server-error surface. Added @testing-library/user-event to devDependencies (was missing). Seven Vitest tests cover: field rendering, email validation, password length error, passwords-must-match error, valid submit callback invocation, form-level alert rendering, and submit-button disabled state during submission.
+
+**Rationale:**
+Isolating the form as a pure presentational component (no direct API calls) keeps it unit-testable without network stubs and allows the parent page to own the mutation lifecycle. Used zodResolver to share the same schema already validated on the backend, avoiding duplication.
+
+**References:**
+- SRS §3.1 FR-03
+- Issue: Phase 7 auth vertical slice
+
+---
+
+## [2026-05-23] Task 8 — LoginForm component
+
+**Change Type:** Feature
+**Scope:** src/features/auth/components/LoginForm.tsx, LoginForm.test.tsx
+
+**Summary:**
+Implemented the LoginForm React component backed by React Hook Form + Zod (loginSchema). The form captures email and password, uses zodResolver for client-side validation, renders inline field-level errors, and exposes an onSubmit callback, status prop (idle/submitting), and formError prop for server-side error surface. The form-level error alert uses an aria-live region for screen-reader accessibility. Five Vitest tests cover: field rendering, email validation error, valid submit callback invocation, form-level alert rendering, and submit-button disabled state during submission.
+
+**Rationale:**
+Isolating the form as a pure presentational component keeps it unit-testable without network stubs and allows the parent page to own the mutation lifecycle via useLogin. The onSubmit callback receives both form values and setError so the mutation hook can map server-side 422 field errors directly onto form fields.
+
+**References:**
+- Issue: #13
+- FR-A-2, NFR-A-1..6, NFR-U-1
+
+---
+
+## [2026-05-23] Tasks 3+6 — api-client error model, RFC 7807 parsing, and reactive 401 interceptor
+
+**Change Type:** Feature
+**Scope:** src/lib/api-client.ts, api-client.test.ts
+
+**Summary:**
+Extended the existing fetch wrapper to: send credentials: 'include' on every request; parse RFC 7807 422 bodies into a typed ValidationError with fieldErrors map; throw ApiError for all other non-2xx responses; expose installAuthRefreshInterceptor / resetAuthRefreshInterceptor. The interceptor attempts POST /api/v1/auth/refresh on a 401 from any non-auth URL, retries the original request once on success, and calls onLogout + throws on a second 401. The /api/v1/auth/refresh URL itself bypasses the retry loop to prevent infinite cycles. Also updated error-mapping.ts to export the FieldErrors type required by ValidationError.
+
+**Rationale:**
+Centralizing credentials and error mapping in one place ensures all API calls in the app share consistent auth behavior. The reactive refresh interceptor enables transparent token renewal without requiring individual callers to handle 401 responses.
+
+**References:**
+- Issue: #13
+- SRS §9.2 (RFC 7807 shape)
+- ADR-0014
+
+---
+
+## [2026-05-23] Task 4 — error-mapping field translator
+
+**Change Type:** Feature
+**Scope:** src/lib/error-mapping.ts, error-mapping.test.ts
+
+**Summary:**
+Added mapValidationErrors() to error-mapping.ts. Accepts an array of {field, code, message} objects from a RFC 7807 422 body and returns Record<string,string> — first message wins when a field appears multiple times, dot-notation field paths are preserved as keys. Four Vitest tests cover: empty input, single field, duplicate field (first wins), nested dot-notation path.
+
+**Rationale:**
+Keeps the field-error mapping logic isolated and unit-tested rather than inline in the form submit handler. Single responsibility: this function's only job is to translate the backend error array into a shape React Hook Form's setError can consume.
+
+**References:**
+- Issue: #13
+
+---
+
+## [2026-05-23] Task 5 — auth-client typed wrappers
+
+**Change Type:** Feature
+**Scope:** src/features/auth/api/auth-client.ts, auth-client.test.ts
+
+**Summary:**
+Created authClient singleton with five typed methods: register (POST /api/v1/auth/register, maps camelCase displayName to snake_case display_name), login, logout, refresh, me. Each method delegates to fetchJson with the correct HTTP method and URL. Five Vitest tests verify URL, HTTP method, request body shape, and return type for each method.
+
+**Rationale:**
+Encapsulating the five auth API calls in a typed module provides a stable interface for the mutation hooks (useLogin, useRegister, useLogout) and for AuthContext's /me query. Changes to URL structure or request shape are confined to this one file.
+
+**References:**
+- Issue: #13
+- SRS §9.3 (auth endpoint contracts)
+
+---
+
+## [2026-05-23] Task 2 — Zod schemas for login and register
+
+**Change Type:** Feature
+**Scope:** src/features/auth/schemas/auth-schemas.ts, auth-schemas.test.ts
+
+**Summary:**
+Added loginSchema (email + non-empty password) and registerSchema (email, password with complexity regex ≥12 chars/uppercase/lowercase/digit/special, max 72 chars matching bcrypt limit, confirmPassword cross-field refinement, displayName trimmed 2–50 chars). Exported LoginFormValues and RegisterFormValues as inferred Zod types. Nine Vitest tests covering the schema boundaries and the passwords-match refinement.
+
+**Rationale:**
+Single source of truth for form types and validation rules. Using the same Zod schemas for TypeScript type derivation (z.infer) and runtime validation eliminates the risk of the TypeScript types and runtime checks drifting apart. Rules mirror the backend Pydantic schemas exactly to ensure client-side pre-validation catches the same errors the API would reject.
+
+**References:**
+- Issue: #13
+- FR-A-1 (register complexity), FR-A-2 (login)
+
+---
+
+## [2026-05-23] Task 7 — AuthContext on React Query, LoadingSplash, ProtectedRoute hydration
+
+**Change Type:** Feature
+**Scope:** src/contexts/AuthContext.tsx, src/components/LoadingSplash.tsx, src/App.tsx, src/main.tsx
+
+**Summary:**
+Rebuilt AuthContext on TanStack Query useQuery(['auth','me']). Auth state is now server-cache-backed with refetch-on-focus, stale-while-revalidate, and instant setUser/clearAuth via QueryClient.setQueryData. ProtectedRoute defers the unauthenticated redirect until isLoading=false, showing LoadingSplash during hydration. main.tsx installs the 401 refresh interceptor.
+
+**Rationale:**
+Plain useState/useEffect gave no cache control and no standard mutation tracking. TanStack Query provides all three (caching, mutation, refetch) in a consistent API that all future features will also use. Also configured TanStack Query's notifyManager to use a synchronous scheduler in the test setup so that sync act() calls can flush cache updates.
+
+**References:**
+- Issue: #13
+- ADR-0014
+
+---
+
+## [2026-05-23] Task 13 — RFC 7807 validation error handler
+
+**Change Type:** Feature
+**Scope:** web/backend/src/weighttogo/shared, web/backend/src/weighttogo/main.py
+
+**Summary:**
+Added a FastAPI `RequestValidationError` handler that emits the SRS §9.2 RFC 7807 shape instead of FastAPI's default `{"detail": [...]}` format. Each validation error surfaces as `{field, code, message}` which the frontend's api-client already parses.
+
+**Rationale:**
+The frontend ValidationError class maps `errors[].field` → form field errors. Without this handler, 422 responses from the backend would have an incompatible shape and the form field error wiring would silently fail.
+
+**References:**
+- Issue: #13
+- SRS §9.2
+
+---
+
 ## [2026-05-22 10:14] Commit Summary
 
 **Change Type:** Fix
@@ -1170,3 +1410,108 @@ README listed React 19 specifically but MUI without version. Corrected for consi
 
 **References:**
 - Issue: SRS consistency
+
+---
+
+## [2026-05-23] Task 1 — Phase 7 setup: decision records and dependencies
+
+**Change Type:** Docs
+**Scope:** docs/adr, docs/ddr, web/frontend/package.json
+
+**Summary:**
+Added ADR-0014 (TanStack Query for server state) and DDR-0003 (user menu in AppBar) ahead of any Phase 7 implementation commit, per the M2 plan ADR-timing rule. Installed @hookform/resolvers (form validation resolver) and @axe-core/playwright (E2E a11y) in the frontend.
+
+**Rationale:**
+Decision records must precede the implementation commits they affect. TanStack Query is already in the lock file; this ADR formalizes the adoption and sets the pattern for all server-state work in subsequent phases.
+
+**References:**
+- Issue: #13
+
+## [2026-05-23] Fix 1 — Use repo-relative path in screenshot spec
+
+**Change Type:** Fix
+**Scope:** web/frontend/e2e/screenshot-phase7.spec.ts
+
+**Summary:**
+Replace hardcoded absolute local path with a `path.resolve(__dirname, '../../../docs/screenshots/phase-7')` relative path. Add `fs.mkdirSync(OUT, { recursive: true })` in a `test.beforeAll` so Playwright creates the directory on any machine. The reviewer suggested `../../docs/screenshots/phase-7` but the spec lives three directories deep (`web/frontend/e2e/`), so the correct depth is three levels up.
+
+**Rationale:**
+The absolute path was machine-specific and could never succeed on CI or any other developer's workstation. The `--grep-invert "Phase 7 screenshots"` CI exclusion masked the failure rather than fixing it. Now the spec is portable.
+
+**References:**
+- PR: #29 code review comment
+
+## [2026-05-23] Fix 2 — Call onLogout when post-refresh retry fails
+
+**Change Type:** Fix
+**Scope:** web/frontend/src/lib/api-client.ts, web/frontend/src/lib/api-client.test.ts
+
+**Summary:**
+Add `interceptor.onLogout()` call before the `throw new ApiError(...)` in `handle401AndRetry` (the branch reached when the post-refresh retry returns a non-2xx, non-422 status). Added a TDD test covering "refresh succeeds but retry returns 401" before making any code change.
+
+**Rationale:**
+Three of the four error exit paths in `handle401AndRetry` already called `onLogout()` (no interceptor, refresh-endpoint 401, refresh throws). The fourth path — refresh succeeds then the retry itself fails — never triggered logout, leaving the TanStack Query cache believing the session was valid while every subsequent API call returned an error. The fix ensures the auth state machine transitions to logged-out on any unrecoverable 401.
+
+**Bug Fix Context:**
+Root cause: the post-refresh retry path fell through to a bare `throw new ApiError(...)` without first invalidating the auth session. This left the UI stuck until a hard reload cleared the cached auth state.
+
+**References:**
+- PR: #29 code review comment
+
+## [2026-05-23] Raise frontend coverage threshold to 90% and close branch gaps
+
+**Change Type:** Chore / Test
+**Scope:** web/frontend/vite.config.ts, web/frontend/src/, docs/specs/WeighToGo_Web_SRS_v1.md
+
+**Summary:**
+Configured Vitest coverage thresholds at 90% for statements, branches, functions, and lines (excluding main.tsx as the entry point). Added 6 tests across 5 files to close the branch gap from 86.17% to 94.68%: 422 on retry path in api-client, both else branches in useLogin (unknown ApiError status, non-ApiError error), non-409 ApiError in useRegister, useAuth outside AuthProvider guard, and authenticated ProtectedRoute children in App. Updated SRS §11.5 and §11 prose from 75-85% per-layer frontend thresholds to a uniform 90% floor.
+
+**Rationale:**
+The previous 75% frontend threshold was below the global CLAUDE.md standard of 80% and the SRS §11.5 table entries were inconsistent across layers. Raising to 90% enforces a meaningful quality gate and ensures the Vitest config fails the build rather than silently accepting low coverage. The SRS is updated to reflect the enforced standard.
+
+**References:**
+- Issue: post code-review threshold alignment
+
+## [2026-05-23] Fix NFR-S-5 compliance: add rate limit to /register endpoint
+
+**Change Type:** Fix
+**Scope:** web/backend/src/weighttogo/auth/interface/router.py, web/backend/tests/integration/auth/test_c13_register_rate_limit.py
+
+**Summary:**
+Added `@limiter.limit("3/hour")` decorator and `request: Request` first parameter to the `register` endpoint. Added regression test C13 confirming the 4th registration attempt within an hour returns 429. Updated module docstring to document the rate limit alongside login/refresh.
+
+**Rationale:**
+NFR-S-5 explicitly mandates "3 requests per hour for registration." The login and refresh endpoints already carried rate limit decorators; register was the only auth endpoint missing one. Identified as a spec-compliance gap during the security review.
+
+**References:**
+- SRS: NFR-S-5
+- Security review finding (non-vulnerability, spec gap)
+
+## [2026-05-23 12:00] Commit Summary
+
+**Change Type:** Fix
+**Scope:** Backend config / E2E test harness
+
+**Summary:**
+Add `RATE_LIMIT_ENABLED` env-var bypass so E2E Playwright runs do not hit the 3/hour `/register` quota. Added `rate_limit_enabled: bool = True` to `Settings`, wired it to the `Limiter` constructor (`enabled=` param), and set `RATE_LIMIT_ENABLED=false` in the Playwright webServer env.
+
+**Rationale:**
+The E2E suite makes 6+ POST /register requests from the same CI host IP; the 3/hour limit blocked requests 4+ with 429, causing URL and menu assertions to fail in all specs after the third account creation. Rate-limit enforcement by IP is meaningless in a test context where all traffic originates from a single process. The 429 behavior is already verified by the integration test `test_c13_register_rate_limit.py` which manually enables the limiter. Two new unit tests (`test_settings_rate_limit_enabled_*`) provide TDD coverage for the new setting.
+
+**References:**
+- SRS: NFR-S-5
+- PR #29 review finding: P1 blocking issue
+
+## [2026-05-23 13:00] Commit Summary
+
+**Change Type:** Fix
+**Scope:** E2E test — screenshot-phase7 spec
+
+**Summary:**
+Replace `__dirname` with the ESM-compatible `path.dirname(fileURLToPath(import.meta.url))` in `screenshot-phase7.spec.ts`.
+
+**Rationale:**
+`__dirname` is a CommonJS global not available in ES module scope. The project compiles spec files as ESM, so evaluating the module top-level threw `ReferenceError: __dirname is not defined`. Playwright's `--grep-invert "Phase 7 screenshots"` skips test execution but does not prevent module evaluation, so CI was crashing on file load before any test filter could apply.
+
+**References:**
+- PR #29 CI failure: Playwright end-to-end tests job

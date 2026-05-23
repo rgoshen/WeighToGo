@@ -1,68 +1,84 @@
 /**
  * Authentication context for the Weigh to Go! web application.
  *
- * Provides a React context that tracks the current authenticated user and
- * exposes login / logout functions. Phase 6 will connect these to the API;
- * for now the state is in-memory only.
+ * Provides a React context backed by TanStack Query that tracks the current
+ * authenticated user via the /api/v1/auth/me endpoint. Auth state is
+ * server-cache-backed with stale-while-revalidate semantics.
  *
  * SRS §10.4 governs the auth-state management strategy.
  */
 
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { createContext, useCallback, useContext, useMemo, type ReactNode } from 'react';
+import { authClient, type AuthUser } from '../features/auth/api/auth-client';
 
-/**
- * Minimal representation of an authenticated user.
- *
- * The full user object (profile fields, preferences) is deferred to Phase 6
- * when the API contracts are finalised.
- */
-export interface User {
-  id: string;
-  email: string;
-  displayName: string;
-}
+/** Query key for the authenticated-user cache entry. */
+export const AUTH_QUERY_KEY = ['auth', 'me'] as const;
 
 export interface AuthContextValue {
   /** The currently authenticated user, or null when no session exists. */
-  user: User | null;
+  user: AuthUser | null;
   /** Derived convenience flag — true when user is non-null. */
   isAuthenticated: boolean;
+  /** True while the initial /me request is in-flight. */
+  isLoading: boolean;
   /**
-   * Record a successful login. Accepts the user object returned by the API.
-   * Phase 6 will call this after a successful credentials exchange.
+   * Write a user directly into the cache. Used by login / register flows to
+   * update auth state without a round-trip to /me.
    */
-  login: (user: User) => void;
+  setUser: (user: AuthUser) => void;
   /**
-   * Clear the session. Phase 6 will also call the backend /auth/logout
-   * endpoint before clearing local state.
+   * Remove the cached user. Called after logout or session expiry so that all
+   * consumers see an unauthenticated state immediately.
    */
-  logout: () => void;
+  clearAuth: () => void;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 /**
  * Wrap the component tree that needs access to auth state.
+ *
+ * Must be rendered inside a QueryClientProvider.
  */
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const queryClient = useQueryClient();
 
-  const login = useCallback((newUser: User) => {
-    setUser(newUser);
-  }, []);
+  const query = useQuery<AuthUser | null>({
+    queryKey: AUTH_QUERY_KEY,
+    queryFn: async () => {
+      try {
+        return await authClient.me();
+      } catch {
+        // Treat any error (including 401) as unauthenticated rather than an
+        // error state — the user simply has no active session.
+        return null;
+      }
+    },
+    staleTime: 30_000,
+    retry: false,
+  });
 
-  const logout = useCallback(() => {
-    setUser(null);
-  }, []);
+  const setUser = useCallback(
+    (u: AuthUser) => {
+      queryClient.setQueryData<AuthUser | null>(AUTH_QUERY_KEY, u);
+    },
+    [queryClient],
+  );
+
+  const clearAuth = useCallback(() => {
+    queryClient.setQueryData<AuthUser | null>(AUTH_QUERY_KEY, null);
+  }, [queryClient]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
-      user,
-      isAuthenticated: user !== null,
-      login,
-      logout,
+      user: query.data ?? null,
+      isAuthenticated: !!query.data,
+      isLoading: query.isLoading,
+      setUser,
+      clearAuth,
     }),
-    [user, login, logout],
+    [query.data, query.isLoading, setUser, clearAuth],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
