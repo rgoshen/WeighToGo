@@ -23,7 +23,7 @@ class RegisterRequest(BaseModel):
     """Request body for POST /api/v1/auth/register (SRS §9.3.1, FR-A-1).
 
     Attributes:
-        email: RFC 5322 email address.
+        email: RFC 5322 email address; normalised to lowercase at the boundary.
         password: Plain-text password meeting complexity requirements.
         display_name: Human-readable name (2–50 chars, trimmed).
     """
@@ -31,6 +31,12 @@ class RegisterRequest(BaseModel):
     email: EmailStr
     password: str = Field(min_length=12, max_length=128)
     display_name: str = Field(min_length=2, max_length=50)
+
+    @field_validator("email", mode="after")
+    @classmethod
+    def normalise_email(cls, v: str) -> str:
+        """Lowercase and strip the email so storage always matches queries."""
+        return v.strip().lower()
 
     @field_validator("password")
     @classmethod
@@ -57,12 +63,18 @@ class LoginRequest(BaseModel):
     """Request body for POST /api/v1/auth/login (SRS §9.3.2, FR-A-2).
 
     Attributes:
-        email: The user's email address.
+        email: The user's email address; normalised to lowercase at the boundary.
         password: The plain-text password.
     """
 
     email: EmailStr
     password: str = Field(min_length=1, max_length=128)
+
+    @field_validator("email", mode="after")
+    @classmethod
+    def normalise_email(cls, v: str) -> str:
+        """Lowercase and strip the email so it matches the stored normalised form."""
+        return v.strip().lower()
 
 
 class UserResponse(BaseModel):

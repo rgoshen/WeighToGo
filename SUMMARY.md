@@ -7,6 +7,22 @@ issues were resolved.
 
 ---
 
+## [2026-05-22 10:07] Commit Summary
+
+**Change Type:** Fix
+**Scope:** auth/interface/schemas
+
+**Summary:**
+Added `@field_validator("email", mode="after")` on `RegisterRequest` and `LoginRequest` that returns `v.strip().lower()`. This aligns stored email with the lowercased query in `get_by_email`, fixing case-mismatch 401s on SQLite (which lacks CITEXT).
+
+**Rationale:**
+`RegisterUser` stored `cmd.email` verbatim while `get_by_email` queried with `.lower()`. On SQLite (all integration tests and dev), registering "Foo@Bar.com" and logging in with the same string returned 401 because stored vs queried strings differed. PR #27 code review finding C8.
+
+**References:**
+- PR: #27 (C8)
+
+---
+
 ## [2026-05-22 10:06] Commit Summary
 
 **Change Type:** Fix
