@@ -7,6 +7,23 @@ issues were resolved.
 
 ---
 
+## [2026-05-23] Task 7 — AuthContext on React Query, LoadingSplash, ProtectedRoute hydration
+
+**Change Type:** Feature
+**Scope:** src/contexts/AuthContext.tsx, src/components/LoadingSplash.tsx, src/App.tsx, src/main.tsx
+
+**Summary:**
+Rebuilt AuthContext on TanStack Query useQuery(['auth','me']). Auth state is now server-cache-backed with refetch-on-focus, stale-while-revalidate, and instant setUser/clearAuth via QueryClient.setQueryData. ProtectedRoute defers the unauthenticated redirect until isLoading=false, showing LoadingSplash during hydration. main.tsx installs the 401 refresh interceptor.
+
+**Rationale:**
+Plain useState/useEffect gave no cache control and no standard mutation tracking. TanStack Query provides all three (caching, mutation, refetch) in a consistent API that all future features will also use. Also configured TanStack Query's notifyManager to use a synchronous scheduler in the test setup so that sync act() calls can flush cache updates.
+
+**References:**
+- Issue: #13
+- ADR-0014
+
+---
+
 ## [2026-05-23] Task 13 — RFC 7807 validation error handler
 
 **Change Type:** Feature

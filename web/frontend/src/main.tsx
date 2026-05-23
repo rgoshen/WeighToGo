@@ -22,6 +22,8 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 
 import { App } from './App';
+import { authClient } from './features/auth/api/auth-client';
+import { installAuthRefreshInterceptor } from './lib/api-client';
 import { AuthProvider } from './contexts/AuthContext';
 import { PreferencesProvider } from './contexts/PreferencesContext';
 import { theme } from './theme/theme';
@@ -29,10 +31,19 @@ import { theme } from './theme/theme';
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // Disable automatic retries in the scaffold — Phase 6 will tune these.
       retry: false,
       staleTime: 60_000,
     },
+  },
+});
+
+installAuthRefreshInterceptor({
+  refresh: async () => {
+    await authClient.refresh();
+  },
+  onLogout: () => {
+    queryClient.setQueryData(['auth', 'me'], null);
+    window.location.assign('/login');
   },
 });
 

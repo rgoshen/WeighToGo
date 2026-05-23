@@ -13,6 +13,7 @@ import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import type { ReactNode } from 'react';
 
 import { AppLayout } from './components/AppLayout';
+import { LoadingSplash } from './components/LoadingSplash';
 import { useAuth } from './contexts/AuthContext';
 import { DashboardPage } from './features/dashboard/pages/DashboardPage';
 import { LoginPage } from './features/auth/pages/LoginPage';
@@ -28,8 +29,10 @@ import { WeightEntryFormPage } from './features/weight/pages/WeightEntryFormPage
  * /login?from=<original-path> before the protected page renders.
  */
 function ProtectedRoute({ children }: { children: ReactNode }) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
   const location = useLocation();
+
+  if (isLoading) return <LoadingSplash />;
 
   if (!isAuthenticated) {
     const params = new URLSearchParams({ from: location.pathname });

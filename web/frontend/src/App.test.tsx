@@ -1,6 +1,6 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from '@mui/material';
@@ -9,6 +9,7 @@ import { App } from './App';
 import { AuthProvider } from './contexts/AuthContext';
 import { PreferencesProvider } from './contexts/PreferencesContext';
 import { theme } from './theme/theme';
+import { authClient } from './features/auth/api/auth-client';
 
 /** Full provider wrapper matching the structure in main.tsx. */
 function FullProviders({ children }: { children: React.ReactNode }) {
@@ -27,7 +28,17 @@ function FullProviders({ children }: { children: React.ReactNode }) {
 }
 
 describe('App (integration)', () => {
-  it('renders without crashing with full provider setup', () => {
+  // Stub authClient.me so tests do not make real HTTP calls. Default: reject
+  // with a 401-like error so the user is treated as unauthenticated.
+  beforeEach(() => {
+    vi.spyOn(authClient, 'me').mockRejectedValue(new Error('401'));
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('renders without crashing with full provider setup', async () => {
     render(
       <FullProviders>
         <MemoryRouter initialEntries={['/login']}>
@@ -35,9 +46,11 @@ describe('App (integration)', () => {
         </MemoryRouter>
       </FullProviders>,
     );
+    // Wait for auth hydration to settle
+    await waitFor(() => expect(screen.queryByRole('status')).not.toBeInTheDocument());
   });
 
-  it('navigating to /login renders the Log In heading from LoginPage', () => {
+  it('navigating to /login renders the Log In heading from LoginPage', async () => {
     render(
       <FullProviders>
         <MemoryRouter initialEntries={['/login']}>
@@ -46,10 +59,10 @@ describe('App (integration)', () => {
       </FullProviders>,
     );
     // LoginPage renders an h5 heading "Log In" inside AuthLayout.
-    expect(screen.getByText(/log in/i)).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText(/log in/i)).toBeInTheDocument());
   });
 
-  it('navigating to /register renders the Create Account heading', () => {
+  it('navigating to /register renders the Create Account heading', async () => {
     render(
       <FullProviders>
         <MemoryRouter initialEntries={['/register']}>
@@ -57,10 +70,10 @@ describe('App (integration)', () => {
         </MemoryRouter>
       </FullProviders>,
     );
-    expect(screen.getByText(/create account/i)).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText(/create account/i)).toBeInTheDocument());
   });
 
-  it('navigating to /goals when unauthenticated redirects to /login', () => {
+  it('navigating to /goals when unauthenticated redirects to /login', async () => {
     render(
       <FullProviders>
         <MemoryRouter initialEntries={['/goals']}>
@@ -69,9 +82,35 @@ describe('App (integration)', () => {
       </FullProviders>,
     );
     // Unauthenticated — App should redirect to login. The login page or its
-    // AuthLayout branding must be visible.
-    expect(screen.getByText(/weigh to go/i)).toBeInTheDocument();
+    // AuthLayout branding must be visible after hydration completes.
+    await waitFor(() => expect(screen.getByText(/weigh to go/i)).toBeInTheDocument());
     // The goals page content should NOT be visible.
     expect(screen.queryByText(/coming in milestone 3/i)).not.toBeInTheDocument();
+  });
+
+  it('shows LoadingSplash while auth is hydrating on a protected route', () => {
+    // me() never resolves — keeps isLoading=true indefinitely
+    vi.spyOn(authClient, 'me').mockReturnValue(new Promise(() => undefined));
+    render(
+      <FullProviders>
+        <MemoryRouter initialEntries={['/goals']}>
+          <App />
+        </MemoryRouter>
+      </FullProviders>,
+    );
+    expect(screen.getByRole('status')).toBeInTheDocument();
+    expect(screen.getByText(/loading/i)).toBeInTheDocument();
+  });
+
+  it('redirects to /login after auth hydration when unauthenticated', async () => {
+    render(
+      <FullProviders>
+        <MemoryRouter initialEntries={['/goals']}>
+          <App />
+        </MemoryRouter>
+      </FullProviders>,
+    );
+    // After hydration completes (me() rejects → unauthenticated), redirect occurs
+    await waitFor(() => expect(screen.getByText(/log in/i)).toBeInTheDocument());
   });
 });
