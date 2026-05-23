@@ -29,7 +29,7 @@ class RegisterRequest(BaseModel):
     """
 
     email: EmailStr
-    password: str = Field(min_length=12, max_length=128)
+    password: str = Field(min_length=12, max_length=72)
     display_name: str = Field(min_length=2, max_length=50)
 
     @field_validator("email", mode="after")
@@ -68,7 +68,7 @@ class LoginRequest(BaseModel):
     """
 
     email: EmailStr
-    password: str = Field(min_length=1, max_length=128)
+    password: str = Field(min_length=1, max_length=72)
 
     @field_validator("email", mode="after")
     @classmethod

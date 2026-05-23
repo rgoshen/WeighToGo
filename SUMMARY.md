@@ -7,6 +7,22 @@ issues were resolved.
 
 ---
 
+## [2026-05-22 10:13] Commit Summary
+
+**Change Type:** Fix
+**Scope:** auth/interface/schemas
+
+**Summary:**
+Changed `max_length=128` to `max_length=72` on `RegisterRequest.password` and `LoginRequest.password`. Passwords longer than 72 bytes are silently truncated by bcrypt, making the extra bytes meaningless entropy.
+
+**Rationale:**
+Accepting passwords up to 128 chars gives users false confidence in password strength beyond bcrypt's 72-byte limit. PR #27 code review finding C14.
+
+**References:**
+- PR: #27 (C14)
+
+---
+
 ## [2026-05-22 10:12] Commit Summary
 
 **Change Type:** Fix
