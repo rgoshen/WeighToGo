@@ -102,6 +102,40 @@ def test_list_entries_returns_paginated_envelope(client: TestClient) -> None:
     assert len(data["items"]) == 1
 
 
+def test_list_entries_rejects_zero_limit(client: TestClient) -> None:
+    """limit=0 must be rejected as a validation error, not 500 (PR #30 review)."""
+    _register_and_login(client)
+    resp = client.get("/api/v1/weight-entries?limit=0")
+    assert resp.status_code == 422
+
+
+def test_list_entries_rejects_negative_limit(client: TestClient) -> None:
+    """limit=-1 must be rejected as a validation error, not 500 (PR #30 review)."""
+    _register_and_login(client)
+    resp = client.get("/api/v1/weight-entries?limit=-1")
+    assert resp.status_code == 422
+
+
+def test_list_entries_rejects_limit_above_max(client: TestClient) -> None:
+    """limit greater than _MAX_PAGE_SIZE must 422 instead of silently clamping
+    (PR #30 review: reviewer recommended Query(ge=1, le=_MAX_PAGE_SIZE))."""
+    _register_and_login(client)
+    resp = client.get("/api/v1/weight-entries?limit=101")
+    assert resp.status_code == 422
+
+
+def test_list_entries_accepts_limit_one(client: TestClient) -> None:
+    _register_and_login(client)
+    resp = client.get("/api/v1/weight-entries?limit=1")
+    assert resp.status_code == 200
+
+
+def test_list_entries_accepts_limit_max(client: TestClient) -> None:
+    _register_and_login(client)
+    resp = client.get("/api/v1/weight-entries?limit=100")
+    assert resp.status_code == 200
+
+
 # ── Get single ────────────────────────────────────────────────────────────────
 
 

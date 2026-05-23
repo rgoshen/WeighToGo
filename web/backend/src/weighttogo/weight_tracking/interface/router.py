@@ -15,7 +15,7 @@ the same try/except pattern as the auth router.
 from __future__ import annotations
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 from sqlalchemy.orm import Session
 
 from weighttogo.auth.interface.router import get_current_user_id, limiter
@@ -137,7 +137,7 @@ def create_weight_entry(
 )
 def list_weight_entries(
     request: Request,
-    limit: int = _DEFAULT_PAGE_SIZE,
+    limit: int = Query(default=_DEFAULT_PAGE_SIZE, ge=1, le=_MAX_PAGE_SIZE),
     cursor: int | None = None,
     session: Session = Depends(get_db_session),
     current_user_id: int = Depends(get_current_user_id),
@@ -146,7 +146,9 @@ def list_weight_entries(
 
     Args:
         request: The incoming HTTP request.
-        limit: Maximum number of entries per page (default 20, max 100).
+        limit: Maximum number of entries per page (1..100, default 20).
+            Out-of-range values return 422 rather than being silently clamped,
+            so clients learn they exceeded the contract.
         cursor: Pagination cursor (entry_id of the last item on the previous page).
         session: The active database session.
         current_user_id: The authenticated user's ID.
@@ -154,14 +156,13 @@ def list_weight_entries(
     Returns:
         A paginated envelope with ``items`` and ``next_cursor``.
     """
-    effective_limit = min(limit, _MAX_PAGE_SIZE)
     repo = _weight_repo(session)
     uc = ListWeightEntries(weight_repo=repo)
 
     page = uc.execute(
         ListWeightEntriesCommand(
             user_id=current_user_id,
-            limit=effective_limit,
+            limit=limit,
             cursor=cursor,
         )
     )

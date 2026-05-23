@@ -7,6 +7,26 @@ issues were resolved.
 
 ---
 
+## [2026-05-23 PR #30 Review] fix(weight): validate list limit range (≥1, ≤100)
+
+**Change Type:** Fix
+**Scope:** Backend — `weight_tracking` interface router; integration tests
+
+**Summary:**
+Constrained the `GET /api/v1/weight-entries` `limit` query parameter with FastAPI's `Query(ge=1, le=_MAX_PAGE_SIZE)`. Previously the parameter accepted any integer: a `limit=-1` request would propagate through `min(limit, 100) = -1` into `ListWeightEntries`, which would attempt `rows[: -1]` on an empty result and trigger an `IndexError` (HTTP 500). Out-of-range limits (≤0 or >100) now return a 422 RFC 7807 validation problem, never reach the use case, and never crash the server. Added five integration tests: `test_list_entries_rejects_zero_limit`, `test_list_entries_rejects_negative_limit`, `test_list_entries_rejects_limit_above_max`, `test_list_entries_accepts_limit_one`, `test_list_entries_accepts_limit_max`. Removed the now-redundant `min(limit, _MAX_PAGE_SIZE)` clamp from the handler body.
+
+**Rationale:**
+Reviewer recommended `Query(ge=1, le=_MAX_PAGE_SIZE)` as the simplest fix. Considered the lighter alternative of validating only the lower bound (`Query(ge=1)`) while keeping the silent upper clamp, but the upper clamp is undocumented behavior that masks client mistakes — a request for 500 items should be told the cap is 100, not silently get 100. Strict validation is the more REST-correct posture and aligns with the existing RFC 7807 error contract.
+
+**Bug Fix Context:**
+Root cause: `limit: int = _DEFAULT_PAGE_SIZE` placed no bounds on the parameter. Any negative value passed `min(limit, 100)` unchanged, reached `ListWeightEntries.execute`, and the use case attempted `rows[command.limit]` on an empty list → `IndexError`. Validating at the FastAPI boundary stops the bad value before it can reach domain logic.
+
+**References:**
+- PR #30 reviewer comment on `router.py:140`
+- SRS §9.4 (weight-entries list endpoint), §7 (RFC 7807 validation error shape)
+
+---
+
 ## [2026-05-23 PR #30 Review] fix(weight): get_by_id must exclude soft-deleted; add get_by_id_including_deleted for idempotent delete
 
 **Change Type:** Fix
