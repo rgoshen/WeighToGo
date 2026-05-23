@@ -7,6 +7,22 @@ issues were resolved.
 
 ---
 
+## [2026-05-22 10:03] Commit Summary
+
+**Change Type:** Fix
+**Scope:** auth/application/authenticate_user
+
+**Summary:**
+Reordered `AuthenticateUser.execute()` to always run `password_adapter.verify` before the lockout check. Locked accounts now take ~250ms (same as a failed login) rather than ~1ms, eliminating the timing oracle. Counter is incremented only for unlocked active users with a bad password.
+
+**Rationale:**
+A locked account that short-circuits before bcrypt responds in ~1ms vs ~250ms for valid bad-password — a reliable enumeration oracle for discovering locked accounts. PR #27 code review finding C4.
+
+**References:**
+- PR: #27 (C4)
+
+---
+
 ## [2026-05-22 10:02] Commit Summary
 
 **Change Type:** Fix

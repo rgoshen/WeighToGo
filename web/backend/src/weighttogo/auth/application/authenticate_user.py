@@ -87,23 +87,25 @@ class AuthenticateUser:
         """
         user = self._user_repo.get_by_email(cmd.email)
 
-        # --- Gate: account existence check using constant-time path ----------
-        # We still call the hash verify against a dummy if no user is found so
-        # the response time is indistinguishable (timing-safe enumeration guard).
+        # --- Gate: account existence/activity check (constant-time path) -----
+        # Run a dummy verify for unknown/inactive accounts so the response time
+        # is indistinguishable from an active account (SRS §FR-A-9, §NFR-S-7).
         if user is None or not user.is_active:
-            # Perform a dummy verify to keep response time indistinguishable
-            # (timing-safe enumeration guard — SRS §FR-A-9, §NFR-S-7).
-            # This is a pre-computed bcrypt hash of the string "dummy".
             _dummy = "$2b$12$E.tGVanjTJxSN1desdDo.ui1bZYKlcpEsw7y26MnyKjmQBJaQ7/.C"
             self._password_adapter.verify(cmd.password, _dummy)
             raise InvalidCredentialsError()
 
-        # --- Gate: lockout check ---------------------------------------------
+        # --- Always verify credentials first to equalise timing ---------------
+        # Checking lockout before verify would let attackers distinguish locked
+        # accounts from valid ones via sub-millisecond response time difference.
+        password_ok = self._password_adapter.verify(cmd.password, user.hashed_password)
+
+        # --- Gate: lockout check (after verify to avoid timing oracle) --------
         if user.is_locked():
             raise AccountLockedError(locked_until=user.locked_until)  # type: ignore[arg-type]
 
-        # --- Verify credentials ----------------------------------------------
-        if not self._password_adapter.verify(cmd.password, user.hashed_password):
+        # --- Branch on verify result ------------------------------------------
+        if not password_ok:
             user.record_failed_login()
             if user.failed_login_count >= self._max_attempts:
                 lockout_duration = self._compute_lockout_duration(user.failed_login_count)
