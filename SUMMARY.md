@@ -2408,3 +2408,18 @@ The inline script content is parameterised at runtime (openapi_url, swagger_ui_p
 **References:**
 - Issue: GH-34
 - PR #35 review comment (P2 — inline bootstrap script blocked by docs CSP)
+
+## [2026-05-27 01:00] Commit Summary
+
+**Change Type:** Docs
+**Scope:** ADR-0017 (F2 / GH-34)
+
+**Summary:**
+Add ADR-0017 documenting the CSRF Origin/Referer validation decision before any F2 implementation code is written.
+
+**Rationale:**
+Correcting the F1 process error where the ADR was written after the implementation. ADRs must precede implementation to guide decisions, not retrospectively describe them.
+
+**References:**
+- Issue: GH-34
+- SRS: NFR-S-9
