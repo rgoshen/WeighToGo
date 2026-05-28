@@ -35,8 +35,7 @@ export function useRegister() {
         return;
       }
       if (error instanceof ApiError) {
-        if (error.status === 409) setFormError('An account with this email already exists.');
-        else setFormError('Something went wrong. Please try again.');
+        setFormError('The account could not be created with those details.');
       } else {
         setFormError('Something went wrong. Please try again.');
       }
