@@ -7,6 +7,36 @@ issues were resolved.
 
 ---
 
+## [2026-05-28 18:00 UTC] fix(F5): address PR #40 review — move 44px floor to theme; minWidth + comment fixes (GH-34)
+
+**Change Type:** Refactor (architecture — fix altitude) + test hardening
+**Scope:** `web/frontend/src/theme/theme.ts`, `web/frontend/src/features/weight/components/WeightEntryTable.tsx`, `web/frontend/src/features/weight/components/WeightEntryTable.test.tsx`, `docs/ddr/0004-weight-table-action-button-conversion.md`, `SUMMARY.md`
+
+**Summary:**
+Five changes addressing review feedback on PR #40:
+
+1. **Theme override (Finding 1, altitude critique).** Moved the NFR-A-5 44 × 44 px floor from per-button `sx={{ minHeight: 44 }}` in `WeightEntryTable.tsx` to targeted `components.MuiButton.styleOverrides.root` and `components.MuiIconButton.styleOverrides.root` in `theme.ts`. Targeting `MuiButton` + `MuiIconButton` rather than the shared base class `MuiButtonBase` is deliberate: a blanket override on `MuiButtonBase` would cascade the 44 px floor into `MenuItem`, `Tab`, `Checkbox`, `Radio`, `ToggleButton`, and `ListItemButton`, regressing the visual density of those controls. The two targeted overrides cover every interactive control in the current app that risks falling below the floor, and any future button instance inherits the floor by default. Side effect: the avatar `IconButton` in `UserMenu.tsx` and the mobile-nav hamburger `IconButton` in `AppLayout.tsx` — both flagged in the review as silent NFR-A-5 violations — now meet the floor without explicit edits, because each extends one of the targeted classes.
+2. **WeightEntryTable cleanup (Finding 5).** Dropped the redundant `size="medium"` prop on both Edit and Delete buttons (it is the MUI `Button` default) and the now-redundant `sx={{ minHeight: 44 }}` since the theme handles it. Kept `sx={{ mr: 1 }}` on the leading Edit button for inter-action spacing.
+3. **Test rewrite (Findings 3 + 4).** Wrapped the render helper in `ThemeProvider` so the theme override actually applies (the assertion previously rode on per-button `sx` and would have silently regressed once the prop was dropped). Updated both assertions from `toHaveStyle({ minHeight: '44px' })` to `toHaveStyle({ minHeight: '44px', minWidth: '44px' })` so the unit gate verifies *both* dimensions NFR-A-5 names — previously width was only checked in the Playwright spec, leaving the fast gate under-verifying the requirement. Rewrote the comment block to accurately describe the mechanism: `styleOverrides` compile to an emotion-generated CSS class injected into the document `<head>`, not an inline `style` attribute; `toHaveStyle` resolves through `window.getComputedStyle` which reads the injected stylesheet.
+4. **DDR-0004 revision.** Documented the two-part decision (structural rewrite of row controls + theme-level floor), the deliberate rejection of the `MuiButtonBase` blanket override and the per-button `sx` approach (with rationale for each), and the cascading benefit to `UserMenu` and `AppLayout`. Added the targeted-vs-base-class trade-off under Alternatives Considered.
+5. **SUMMARY.md** — this entry.
+
+**Rationale:**
+The reviewer's altitude critique is technically correct: NFR-A-5 is an app-wide invariant, and a per-component `sx` fix leaves sibling controls silently violating the same NFR (the F5 PR's own DDR noted default `IconButton` ≈ 40 px). The theme override closes the requirement at the right layer — every current and future button inherits the floor by default rather than requiring per-call-site discipline. Targeting `MuiButton` + `MuiIconButton` instead of `MuiButtonBase` is the necessary precision to avoid breaking unrelated controls.
+
+The width-coverage gap (Finding 4) was a real under-verification: the JSDOM unit gate is fast and runs on every PR; Playwright is slow and only runs on E2E builds, so a regression that shrank a button's width would have been caught only by the slow gate. Asserting both dimensions at the unit layer pulls the verification forward.
+
+**Pushback on Finding 2 (handled at the right layer, not deferred).**
+Reviewer also flagged that `docs/standards/M2_WEB_APP_QUALITY.md` is referenced 4× across this PR (DDR-0004 :17 + :79, SUMMARY.md :19 + :26) but the file does not exist on `main`. The same dead reference affects F1, F2, F3, and F6 too — all merged with the same dead link. Per the remediation plan §3.1 the file was supposed to land in PR 0 (`feature/m2-quality-review-doc`) *before* the F-series PRs; PR 0 was skipped. Fix is at the architectural layer the plan already designed for, not inside F5: opening PR 0 as a separate 1-file docs PR that lands the staged doc (commit `5041269` on the abandoned `feature/issue-34-m2-web-quality-remediation` branch is the source). Once PR 0 merges, every existing reference resolves on `main` simultaneously. F5's own references stay as-is.
+
+**References:**
+- Issue: GH-34
+- PR: #40 review findings (1, 3, 4, 5 addressed in this commit; 2 addressed via separate PR 0 for the missing M2 quality doc)
+- SRS NFR-A-5
+- DDR-0004 (revised)
+
+---
+
 ## [2026-05-28 09:00] F5: weight table action controls meet 44 px target size
 
 **Change Type:** Fix (accessibility)

@@ -67,21 +67,18 @@ export function WeightEntryTable({ entries, onDelete }: WeightEntryTableProps) {
                   component={Link}
                   to={`/weight/${entry.entry_id}/edit`}
                   aria-label={`Edit entry from ${entry.observation_date}`}
-                  size="medium"
                   variant="outlined"
                   startIcon={<EditIcon />}
-                  sx={{ minHeight: 44, mr: 1 }}
+                  sx={{ mr: 1 }}
                 >
                   Edit
                 </Button>
                 <Button
                   onClick={() => onDelete(entry.entry_id)}
                   aria-label={`Delete entry from ${entry.observation_date}`}
-                  size="medium"
                   variant="outlined"
                   color="error"
                   startIcon={<DeleteIcon />}
-                  sx={{ minHeight: 44 }}
                 >
                   Delete
                 </Button>
