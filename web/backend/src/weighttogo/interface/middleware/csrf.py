@@ -7,7 +7,7 @@ OPTIONS) are always permitted.
 
 from urllib.parse import urlparse
 
-from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 
@@ -23,36 +23,53 @@ _FORBIDDEN_BODY = {
 }
 
 
+def _normalize_origin(value: str) -> str:
+    """Return a lowercase scheme://host[:port] string, or '' for invalid input.
+
+    Normalises trailing slashes and mixed-case scheme/host so set lookups are
+    reliable regardless of how the operator or a proxy serialised the value.
+    Per RFC 6454 §6.1 the scheme and host components are case-insensitive.
+    """
+    parsed = urlparse(value.strip().rstrip("/"))
+    if not parsed.scheme or not parsed.netloc:
+        return ""
+    return f"{parsed.scheme.lower()}://{parsed.netloc.lower()}"
+
+
 def _allowed_origins() -> frozenset[str]:
+    """Return the set of normalised origins from cors_allowed_origins."""
     raw = get_settings().cors_allowed_origins
-    return frozenset(o.strip() for o in raw.split(",") if o.strip())
+    return frozenset(n for o in raw.split(",") if (n := _normalize_origin(o)) != "")
 
 
 def _origin_from_referer(referer: str) -> str:
+    """Extract and normalise the origin portion of a Referer URL."""
     parsed = urlparse(referer)
-    return f"{parsed.scheme}://{parsed.netloc}"
+    return f"{parsed.scheme.lower()}://{parsed.netloc.lower()}"
 
 
 def _request_own_origin(request: Request) -> str:
-    """Return the origin of the API server itself (scheme + host + port).
+    """Return the normalised origin of the API server itself.
 
     Same-origin requests (e.g. Swagger UI at /api/docs posting back to the
     same host) are never CSRF attacks and must always be permitted.
+
+    Note: behind a TLS-terminating reverse proxy, ``request.url.scheme`` may
+    be ``http`` even when the public URL uses ``https``.  To make this work in
+    production, launch uvicorn with ``--proxy-headers
+    --forwarded-allow-ips=<proxy-ip>`` so Starlette honours
+    ``X-Forwarded-Proto``.  See ADR-0017 for details.
     """
-    return f"{request.url.scheme}://{request.url.netloc}"
+    return f"{request.url.scheme.lower()}://{request.url.netloc.lower()}"
 
 
 class CsrfOriginRefererMiddleware(BaseHTTPMiddleware):
     """Validate Origin/Referer on state-changing requests (ADR-0017)."""
 
-    async def dispatch(self, request: Request, call_next: object) -> Response:
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         """Enforce Origin/Referer validation on unsafe HTTP methods."""
-        from collections.abc import Awaitable, Callable
-
-        next_fn: Callable[[Request], Awaitable[Response]] = call_next  # type: ignore[assignment]
-
         if request.method in _SAFE_METHODS:
-            return await next_fn(request)
+            return await call_next(request)
 
         # Allow the API's own origin so same-origin flows (e.g. Swagger UI)
         # are never blocked, in addition to configured CORS origins.
@@ -61,7 +78,7 @@ class CsrfOriginRefererMiddleware(BaseHTTPMiddleware):
         referer = request.headers.get("referer")
 
         if origin:
-            candidate = origin
+            candidate = _normalize_origin(origin)
         elif referer:
             candidate = _origin_from_referer(referer)
         else:
@@ -79,4 +96,4 @@ class CsrfOriginRefererMiddleware(BaseHTTPMiddleware):
                 media_type="application/problem+json",
             )
 
-        return await next_fn(request)
+        return await call_next(request)

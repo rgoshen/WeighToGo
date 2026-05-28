@@ -2466,3 +2466,15 @@ Changed CSRF check from "block when no Origin and no Referer" to "block only whe
 **References:**
 - Issue: GH-34
 - PR #37 CI failure: Playwright E2E weight-delete test (Vite proxy stripped headers)
+
+## [2026-05-27 02:03] Commit Summary
+
+**Change Type:** Fix / Refactor
+**Scope:** CSRF middleware — PR review comments (F2 / GH-34)
+
+**Summary:**
+Addressed 7 of 9 PR review comments (pushed back on lru_cache and TLS-proxy implementation). Changes: added _normalize_origin() helper (RFC 6454 case/trailing-slash normalization); used RequestResponseEndpoint type alias eliminating type: ignore and local imports; fixed permissive_client fixture to use context manager; simplified OPTIONS test assertion to != 403; added 5 new tests (DELETE/PUT/null-origin/Origin-precedence/HEAD). Updated ADR-0017 with TLS-proxy production prerequisite and normalization rationale.
+
+**References:**
+- Issue: GH-34
+- PR #37 review comments (1-9)
