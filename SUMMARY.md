@@ -7,6 +7,25 @@ issues were resolved.
 
 ---
 
+## [2026-05-28 18:05 UTC] docs(quality): add M2 Web App Quality Review documentation (GH-34)
+
+**Change Type:** Docs (baseline; closes a known dead-reference gap)
+**Scope:** `docs/standards/M2_WEB_APP_QUALITY.md` (new file), `SUMMARY.md`
+
+**Summary:**
+Lands the 2026-05-23 M2 Web App Quality Review document as `docs/standards/M2_WEB_APP_QUALITY.md`. The file is the authoritative review that catalogues the five blocking findings (and the sixth promoted finding) which the F1–F6 remediation PRs implement against. Source: commit `5041269` ("docs(quality): add M2 Web App Quality Review documentation") on the abandoned `feature/issue-34-m2-web-quality-remediation` branch — the same staged content the remediation plan §3.1 designated as PR 0.
+
+**Rationale:**
+The remediation plan §3.1 explicitly sequenced this doc as PR 0, ahead of the F-series, so subsequent finding PRs could reference it. PR 0 was skipped — F1, F2, F3, F4, F5, and F6 all merged (or were about to merge) with the file referenced by relative path even though the file didn't exist on `main`. PR #40 review (Finding 2) made the gap visible: the citations in F5's DDR-0004 and SUMMARY.md were dead links, untraceable for reviewers and future maintainers. Rather than repointing F5's references inside F5 (which would still leave F1/F2/F3/F6 with the same dead links), this PR closes all five references simultaneously by adding the file the plan said should already be there.
+
+**References:**
+- Issue: GH-34
+- Plan: `docs/plans/2026-05-27-issue-34-m2-web-quality-remediation-plan.md` §3.1 (PR 0 — docs baseline)
+- Source commit: `5041269` on `feature/issue-34-m2-web-quality-remediation` (abandoned branch)
+- Surfaced by: PR #40 Finding 2
+
+---
+
 ## [2026-05-28 18:00 UTC] fix(F5): address PR #40 review — move 44px floor to theme; minWidth + comment fixes (GH-34)
 
 **Change Type:** Refactor (architecture — fix altitude) + test hardening
@@ -34,6 +53,61 @@ Reviewer also flagged that `docs/standards/M2_WEB_APP_QUALITY.md` is referenced 
 - PR: #40 review findings (1, 3, 4, 5 addressed in this commit; 2 addressed via separate PR 0 for the missing M2 quality doc)
 - SRS NFR-A-5
 - DDR-0004 (revised)
+
+---
+
+## [2026-05-28 17:28 UTC] fix(F4): address PR #39 review — neutral copy + parameterized invariant test (GH-34)
+
+**Change Type:** Fix (UX wording + test hardening)
+**Scope:** `web/frontend/src/features/auth/hooks/useRegister.ts`, `web/frontend/src/features/auth/hooks/useRegister.test.tsx`, `SUMMARY.md`
+
+**Summary:**
+Three changes addressing review feedback on PR #39:
+
+1. **`useRegister.ts` copy** — replaced `"The account could not be created with those details."` with `"The account could not be created. Please try again."`. After F4 collapsed the 409-specific branch into the generic `ApiError` branch, the original phrasing was correct for 409 (input is the differentiator) but misleading for the 5xx and 4xx statuses that now share the same code path — "with those details" implies fault in the user's input when the failure is actually server-side, prompting the user to edit valid data. The new wording is non-disclosive (preserves ADR-0010) and invites retry across the collapsed branch.
+2. **`useRegister.test.tsx` parameterization** — collapsed the two redundant tests (409 case + non-409 case) into a single `it.each([409, 401, 423, 429, 500, 503])` that proves the invariant the fix established: every `ApiError` status routes through the non-disclosive message. This catches a regression where someone restores the old status-specific branch (neither prior test would have flagged it) and removes the misleading test name `'sets generic creation-failure formError when ApiError status is not 409'` which implied a status-dependent branch that no longer exists.
+3. **`SUMMARY.md`** — added the missing third commit (`docs(F4)`) to the original F4 entry's numbered list; the heading announced "Three commits" but only enumerated two.
+
+**Rationale:**
+The reviewer's UX critique is technically correct: collapsing the 409 branch broadened the message's audience to include transient server failures where input is not the issue. The original plan §4.4 wording was written before the broader collapse implications were considered; the neutral phrasing satisfies both ADR-0010 (no account-existence disclosure) and basic UX (don't blame the user for the server's problems). The parameterized test is a stronger regression guard than renaming — it asserts the invariant directly across the realistic ApiError surface (401/409/423/429/5xx) the auth flow actually encounters.
+
+**Pushback on Finding 2 (deferred):**
+Reviewer also flagged that ADR-0010 already spans five distinct user-visible strings across `useLogin.ts` (`Invalid credentials.`, `Account is temporarily locked. Please try again later.`, `Too many attempts. Please wait a moment and try again.`, fallback) and now `useRegister.ts` (creation-failure, fallback), and proposed extracting them to a shared `auth-messages.ts` module. The concern is real and the M3 roadmap (FR-A-6 password change, FR-A-7 password reset, FR-A-8 account deactivation) will only make it worse. But F4's stated scope in plan §4.4 is the one-line collapse of the 409 branch — a refactor that touches both auth hooks plus their tests is scope creep that breaks the F-series PR-per-finding discipline. Filing as a follow-up issue rather than amending this PR.
+
+**References:**
+- Issue: GH-34
+- PR: #39 review findings (1, 4, 5 addressed; 2 deferred to follow-up issue)
+- ADR: ADR-0010 (Generic Authentication Error Policy)
+
+---
+
+## [2026-05-28 12:42 UTC] fix(F4): remove email-existence disclosure on registration (GH-34)
+
+**Change Type:** Fix (security — information disclosure)
+**Scope:** `web/frontend/src/features/auth/hooks/useRegister.ts`, `web/frontend/src/features/auth/hooks/useRegister.test.tsx`
+
+**Summary:**
+Collapsed the HTTP 409 branch in the `useRegister` hook's `onError` handler into the generic `ApiError` branch. Previously a 409 response from `POST /api/auth/register` set `formError` to `"An account with this email already exists."`, which confirmed account existence to any client willing to probe the endpoint with arbitrary emails. The hook now sets a uniform message — `"The account could not be created with those details."` — for any `ApiError`, regardless of HTTP status, so the UI no longer distinguishes between "email is already registered" and any other server-side rejection of the registration request. Unexpected non-`ApiError` (e.g. network) failures keep the existing `"Something went wrong. Please try again."` fallback.
+
+Three commits, TDD discipline:
+
+1. **`test(F4)`** — updated the two `useRegister.test.tsx` cases that asserted the old disclosure wording. The 409-conflict test now expects the generic `"The account could not be created with those details."` string, and the previously-named "ApiError status is not 409" test was renamed and tightened to assert the same string (replacing the prior loose `/something went wrong/i` regex match). Verified both updated assertions failed against the old implementation before writing the fix.
+2. **`fix(F4)`** — replaced the `if (error.status === 409) … else …` two-branch block inside `if (error instanceof ApiError)` with a single `setFormError('The account could not be created with those details.')` call. All 6 `useRegister` tests pass; full frontend suite remains green at 222/222.
+3. **`docs(F4)`** — this SUMMARY entry recording the ADR-0010 compliance rationale, scope, and references.
+
+**Rationale:**
+ADR-0010 (Generic Authentication Error Policy) requires that every authentication failure — including `POST /auth/register` returning 409 for duplicate email — surface a generic, non-disclosive response that does not confirm whether a specific email address exists in the system. SRS FR-A-1 (registration) and FR-A-9 (auth security posture) extend that requirement to the rendered UI. The backend already complies (returns 409 with a generic body), but the registration form's client-side handler was inspecting the 409 status and substituting the human-readable disclosure "An account with this email already exists." — re-introducing the enumeration vector at the UI layer that the backend policy had just closed at the protocol layer. The fix collapses the special-case branch so the rendered form gives the same feedback for "email already in use", a transient 5xx, and any other API-level rejection. The non-`ApiError` branch is left alone because the user-visible distinction between "the API rejected the request" and "we never reached the API" is genuinely useful and does not leak account existence.
+
+This is an ADR-0010 compliance fix, not a new architectural decision, so no new ADR was authored.
+
+**Bug Fix Context:**
+Root cause — the client treated a 409 from `POST /api/auth/register` as a specific user-facing condition ("email already in use") and rendered a message that confirmed that condition. The HTTP status is the disclosure vector at the protocol layer; the UI message is the disclosure vector at the user layer. Closing the UI vector restores the property that an attacker cannot enumerate registered emails by submitting candidate addresses to the registration form and watching the error wording change.
+
+**References:**
+- Issue: GH-34 (M2 web quality remediation)
+- Plan: `docs/plans/2026-05-27-issue-34-m2-web-quality-remediation-plan.md` §4.4
+- ADR: ADR-0010 (Generic Authentication Error Policy)
+- SRS: §FR-A-1 (Registration), §FR-A-9 (Auth security posture)
 
 ---
 
