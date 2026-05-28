@@ -2378,3 +2378,18 @@ The M2 quality review identified NFR-S-10 gap: the existing middleware emitted f
 - Issue: GH-34
 - SRS: NFR-S-10
 - ADR-0016 (to be added in docs commit)
+
+## [2026-05-27 00:01] Commit Summary
+
+**Change Type:** Docs
+**Scope:** ADR-0016 (F1 / GH-34)
+
+**Summary:**
+Add ADR-0016 documenting the security header policy decision: path-aware CSP (strict `default-src 'none'` for JSON endpoints, CDN-permissive override for docs) and production-gated HSTS.
+
+**Rationale:**
+Architecture Decision Records are required for every significant decision with viable alternatives. The path-aware vs. uniform CSP choice and the environment-gated vs. always-on HSTS choice are both non-obvious decisions that future maintainers need context for.
+
+**References:**
+- Issue: GH-34
+- SRS: NFR-S-10
