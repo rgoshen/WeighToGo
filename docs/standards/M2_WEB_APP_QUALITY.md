@@ -258,3 +258,49 @@ Gaps:
 The web app is a strong M2 implementation of the intended architecture. The core backend layering, auth use cases, weight-entry domain logic, keyset pagination, and frontend server-state approach are all well supported by tests and documentation.
 
 The remaining issues are concentrated in security hardening and edge-condition UX/accessibility. I would not call the web app M2 quality-complete until the missing SRS security requirements and refresh-token concurrency issue are fixed or explicitly deferred with rationale.
+
+---
+
+## Resolution Review — 2026-05-28
+
+All six blocking findings from the 2026-05-23 review are resolved. Each finding shipped via its own remediation PR per the plan §3 branching model, with TDD-backed evidence (F1–F5) or audit-grep evidence (F6) and ADR/DDR coverage where the decision warranted it. The two missing docs-baseline PRs from plan §3.1 (the review doc itself and the remediation plan) were also landed during the closeout pass after the F-series review surfaced their absence.
+
+| Finding | Status | PR | Merge SHA |
+|---|---|---|---|
+| F1 — Security headers (NFR-S-10, HSTS + path-aware CSP) | Resolved | [#35](https://github.com/rgoshen-snhu/WeighToGo/pull/35) | `364eee67` |
+| F2 — CSRF Origin/Referer validation (NFR-S-9) | Resolved | [#37](https://github.com/rgoshen-snhu/WeighToGo/pull/37) | `1c8fc337` |
+| F3 — Concurrent refresh coalescing (ADR-0013) | Resolved | [#38](https://github.com/rgoshen-snhu/WeighToGo/pull/38) | `ff0450bb` |
+| F4 — Generic registration error (ADR-0010, FR-A-1/FR-A-9) | Resolved | [#39](https://github.com/rgoshen-snhu/WeighToGo/pull/39) | `9e273943` |
+| F5 — Weight table action target size (NFR-A-5, theme-level floor) | Resolved | [#40](https://github.com/rgoshen-snhu/WeighToGo/pull/40) | `0df47516` |
+| F6 — Documentation version drift cleanup | Resolved | [#41](https://github.com/rgoshen-snhu/WeighToGo/pull/41) | `eac6ccc2` |
+
+### Companion docs-baseline PRs
+
+Surfaced during F-series review as dead-reference gaps; the plan had originally sequenced both as PR 0 but only the F-series itself was tracked. Landed as parallel docs PRs so every prior `**Plan:**` / `**Authoritative review:**` citation across F1–F6 SUMMARY entries resolves on `main`.
+
+| PR | Lands | Merge SHA |
+|---|---|---|
+| [#43](https://github.com/rgoshen-snhu/WeighToGo/pull/43) | `docs/standards/M2_WEB_APP_QUALITY.md` (this file) | `32acab16` |
+| [#44](https://github.com/rgoshen-snhu/WeighToGo/pull/44) | `docs/plans/2026-05-27-issue-34-m2-web-quality-remediation-plan.md` | `067e30e1` |
+
+### Review-fix amendments
+
+Three of the six F-series PRs received review-fix amendments based on subsequent code review on each open PR before merge:
+
+- **PR #39 (F4)** — neutral retry-friendly copy (`'The account could not be created. Please try again.'`); collapsed two redundant tests into a parameterized `it.each([409, 401, 423, 429, 500, 503])` that proves the ADR-0010 invariant directly; SUMMARY count fix. Deferred follow-up filed as [issue #42](https://github.com/rgoshen-snhu/WeighToGo/issues/42) (ADR-0010 string consolidation across `useLogin` + `useRegister`).
+- **PR #40 (F5)** — theme-level 44 × 44 px floor on `MuiButton` + `MuiIconButton` (targeted overrides, deliberately not `MuiButtonBase`); per-button `sx` and redundant `size="medium"` dropped; tests wrapped in `ThemeProvider` and extended with `minWidth` assertion; DDR-0004 rewritten to document the two-part decision. Side effect: avatar `IconButton` in `UserMenu.tsx` and mobile-nav hamburger `IconButton` in `AppLayout.tsx` inherit the floor without explicit edits — closes app-wide NFR-A-5 gap.
+- **PR #41 (F6)** — `React 18 → 19` and `Material UI v6 → v9` in SRS v2 architecture diagram (sibling drift inside the edited block, missed by narrow audit grep); `LoginPage.tsx` FR identifier `FR-A-3` → `FR-A-2, FR-A-5` (FR-A-3 is *User Logout*, page implements login + session-state redirect); same correction applied proactively to `RegisterPage.tsx`.
+
+### Verification
+
+Verified locally and in CI for each PR before merge:
+
+- Backend: `uv run ruff check .`, `uv run ruff format --check .`, `uv run mypy`, `uv run pytest`
+- Frontend: `npm run lint`, `npm run format:check`, `npm run typecheck`, `npm run test:ci`
+- E2E: `npm run test:e2e` (Playwright) — green on every F-series PR that touched runtime behavior (F1, F2, F3, F5, F6) and on the F4 and F6 review-fix amendments
+
+Final frontend test count on `main` after F6 merged: 228 passing across 43 files. Coverage on `main`: statements 97.41% / branches 93.67% / functions 96.06% / lines 99.06% — all above the 90% threshold.
+
+### Reviewer's M2 quality-complete recommendation
+
+All six blocking findings (and the two docs-baseline gaps surfaced during review) are resolved. The web app is M2 quality-complete.

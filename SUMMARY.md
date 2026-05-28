@@ -7,6 +7,26 @@ issues were resolved.
 
 ---
 
+## [2026-05-28 19:30 UTC] docs(closeout): record Resolution Review for issue #34 (GH-34)
+
+**Change Type:** Docs (closeout — issue resolution record)
+**Scope:** `docs/standards/M2_WEB_APP_QUALITY.md`, `SUMMARY.md`
+
+**Summary:**
+Appends a dated "Resolution Review — 2026-05-28" section to the M2 Web App Quality Review document recording the resolution of all six blocking findings from the 2026-05-23 review. The section enumerates each finding (F1–F6) with its merge PR number and merge SHA on `main`, separately tracks the two companion docs-baseline PRs surfaced during F-series review (PR #43 for the quality doc itself, PR #44 for the remediation plan), summarises the three F-series PRs that received review-fix amendments (F4 / F5 / F6), records the verification gates (lint, format, typecheck, test, E2E) that ran green on each PR, and gives the final post-merge metrics on `main` (228 frontend tests, 43 files, coverage above all thresholds). Closes the M2 quality review pass with the recommendation that the web app is M2 quality-complete.
+
+No code changes; closes #34 on merge per plan §5.
+
+**Rationale:**
+The plan §5 closeout was the last task tracked against issue #34 — landing the resolution record on `main` and closing the issue is what flips the M2 quality posture from "in remediation" to "review-closed." The dated section makes future reviewers (next milestone reviewer, course grader, portfolio reader) able to trace each finding to its merge SHA without spelunking git history.
+
+**References:**
+- Issue: GH-34 (closed on this PR's merge)
+- Plan: `docs/plans/2026-05-27-issue-34-m2-web-quality-remediation-plan.md` §5 (closeout PR template)
+- Companion PRs in chain: #35 (F1), #37 (F2), #38 (F3), #39 (F4), #40 (F5), #41 (F6), #43 (quality doc baseline), #44 (plan baseline), #42 (deferred ADR-0010 string consolidation)
+
+---
+
 ## [2026-05-28 19:05 UTC] docs(plans): land M2 quality remediation plan (GH-34)
 
 **Change Type:** Docs (baseline; closes existing dead-reference gap across multiple SUMMARY entries)
