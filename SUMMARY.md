@@ -7,6 +7,132 @@ issues were resolved.
 
 ---
 
+## [2026-05-28 18:05 UTC] docs(quality): add M2 Web App Quality Review documentation (GH-34)
+
+**Change Type:** Docs (baseline; closes a known dead-reference gap)
+**Scope:** `docs/standards/M2_WEB_APP_QUALITY.md` (new file), `SUMMARY.md`
+
+**Summary:**
+Lands the 2026-05-23 M2 Web App Quality Review document as `docs/standards/M2_WEB_APP_QUALITY.md`. The file is the authoritative review that catalogues the five blocking findings (and the sixth promoted finding) which the F1–F6 remediation PRs implement against. Source: commit `5041269` ("docs(quality): add M2 Web App Quality Review documentation") on the abandoned `feature/issue-34-m2-web-quality-remediation` branch — the same staged content the remediation plan §3.1 designated as PR 0.
+
+**Rationale:**
+The remediation plan §3.1 explicitly sequenced this doc as PR 0, ahead of the F-series, so subsequent finding PRs could reference it. PR 0 was skipped — F1, F2, F3, F4, F5, and F6 all merged (or were about to merge) with the file referenced by relative path even though the file didn't exist on `main`. PR #40 review (Finding 2) made the gap visible: the citations in F5's DDR-0004 and SUMMARY.md were dead links, untraceable for reviewers and future maintainers. Rather than repointing F5's references inside F5 (which would still leave F1/F2/F3/F6 with the same dead links), this PR closes all five references simultaneously by adding the file the plan said should already be there.
+
+**References:**
+- Issue: GH-34
+- Plan: `docs/plans/2026-05-27-issue-34-m2-web-quality-remediation-plan.md` §3.1 (PR 0 — docs baseline)
+- Source commit: `5041269` on `feature/issue-34-m2-web-quality-remediation` (abandoned branch)
+- Surfaced by: PR #40 Finding 2
+
+---
+
+## [2026-05-28 18:00 UTC] fix(F5): address PR #40 review — move 44px floor to theme; minWidth + comment fixes (GH-34)
+
+**Change Type:** Refactor (architecture — fix altitude) + test hardening
+**Scope:** `web/frontend/src/theme/theme.ts`, `web/frontend/src/features/weight/components/WeightEntryTable.tsx`, `web/frontend/src/features/weight/components/WeightEntryTable.test.tsx`, `docs/ddr/0004-weight-table-action-button-conversion.md`, `SUMMARY.md`
+
+**Summary:**
+Five changes addressing review feedback on PR #40:
+
+1. **Theme override (Finding 1, altitude critique).** Moved the NFR-A-5 44 × 44 px floor from per-button `sx={{ minHeight: 44 }}` in `WeightEntryTable.tsx` to targeted `components.MuiButton.styleOverrides.root` and `components.MuiIconButton.styleOverrides.root` in `theme.ts`. Targeting `MuiButton` + `MuiIconButton` rather than the shared base class `MuiButtonBase` is deliberate: a blanket override on `MuiButtonBase` would cascade the 44 px floor into `MenuItem`, `Tab`, `Checkbox`, `Radio`, `ToggleButton`, and `ListItemButton`, regressing the visual density of those controls. The two targeted overrides cover every interactive control in the current app that risks falling below the floor, and any future button instance inherits the floor by default. Side effect: the avatar `IconButton` in `UserMenu.tsx` and the mobile-nav hamburger `IconButton` in `AppLayout.tsx` — both flagged in the review as silent NFR-A-5 violations — now meet the floor without explicit edits, because each extends one of the targeted classes.
+2. **WeightEntryTable cleanup (Finding 5).** Dropped the redundant `size="medium"` prop on both Edit and Delete buttons (it is the MUI `Button` default) and the now-redundant `sx={{ minHeight: 44 }}` since the theme handles it. Kept `sx={{ mr: 1 }}` on the leading Edit button for inter-action spacing.
+3. **Test rewrite (Findings 3 + 4).** Wrapped the render helper in `ThemeProvider` so the theme override actually applies (the assertion previously rode on per-button `sx` and would have silently regressed once the prop was dropped). Updated both assertions from `toHaveStyle({ minHeight: '44px' })` to `toHaveStyle({ minHeight: '44px', minWidth: '44px' })` so the unit gate verifies *both* dimensions NFR-A-5 names — previously width was only checked in the Playwright spec, leaving the fast gate under-verifying the requirement. Rewrote the comment block to accurately describe the mechanism: `styleOverrides` compile to an emotion-generated CSS class injected into the document `<head>`, not an inline `style` attribute; `toHaveStyle` resolves through `window.getComputedStyle` which reads the injected stylesheet.
+4. **DDR-0004 revision.** Documented the two-part decision (structural rewrite of row controls + theme-level floor), the deliberate rejection of the `MuiButtonBase` blanket override and the per-button `sx` approach (with rationale for each), and the cascading benefit to `UserMenu` and `AppLayout`. Added the targeted-vs-base-class trade-off under Alternatives Considered.
+5. **SUMMARY.md** — this entry.
+
+**Rationale:**
+The reviewer's altitude critique is technically correct: NFR-A-5 is an app-wide invariant, and a per-component `sx` fix leaves sibling controls silently violating the same NFR (the F5 PR's own DDR noted default `IconButton` ≈ 40 px). The theme override closes the requirement at the right layer — every current and future button inherits the floor by default rather than requiring per-call-site discipline. Targeting `MuiButton` + `MuiIconButton` instead of `MuiButtonBase` is the necessary precision to avoid breaking unrelated controls.
+
+The width-coverage gap (Finding 4) was a real under-verification: the JSDOM unit gate is fast and runs on every PR; Playwright is slow and only runs on E2E builds, so a regression that shrank a button's width would have been caught only by the slow gate. Asserting both dimensions at the unit layer pulls the verification forward.
+
+**Pushback on Finding 2 (handled at the right layer, not deferred).**
+Reviewer also flagged that `docs/standards/M2_WEB_APP_QUALITY.md` is referenced 4× across this PR (DDR-0004 :17 + :79, SUMMARY.md :19 + :26) but the file does not exist on `main`. The same dead reference affects F1, F2, F3, and F6 too — all merged with the same dead link. Per the remediation plan §3.1 the file was supposed to land in PR 0 (`feature/m2-quality-review-doc`) *before* the F-series PRs; PR 0 was skipped. Fix is at the architectural layer the plan already designed for, not inside F5: opening PR 0 as a separate 1-file docs PR that lands the staged doc (commit `5041269` on the abandoned `feature/issue-34-m2-web-quality-remediation` branch is the source). Once PR 0 merges, every existing reference resolves on `main` simultaneously. F5's own references stay as-is.
+
+**References:**
+- Issue: GH-34
+- PR: #40 review findings (1, 3, 4, 5 addressed in this commit; 2 addressed via separate PR 0 for the missing M2 quality doc)
+- SRS NFR-A-5
+- DDR-0004 (revised)
+
+---
+
+## [2026-05-28 17:28 UTC] fix(F4): address PR #39 review — neutral copy + parameterized invariant test (GH-34)
+
+**Change Type:** Fix (UX wording + test hardening)
+**Scope:** `web/frontend/src/features/auth/hooks/useRegister.ts`, `web/frontend/src/features/auth/hooks/useRegister.test.tsx`, `SUMMARY.md`
+
+**Summary:**
+Three changes addressing review feedback on PR #39:
+
+1. **`useRegister.ts` copy** — replaced `"The account could not be created with those details."` with `"The account could not be created. Please try again."`. After F4 collapsed the 409-specific branch into the generic `ApiError` branch, the original phrasing was correct for 409 (input is the differentiator) but misleading for the 5xx and 4xx statuses that now share the same code path — "with those details" implies fault in the user's input when the failure is actually server-side, prompting the user to edit valid data. The new wording is non-disclosive (preserves ADR-0010) and invites retry across the collapsed branch.
+2. **`useRegister.test.tsx` parameterization** — collapsed the two redundant tests (409 case + non-409 case) into a single `it.each([409, 401, 423, 429, 500, 503])` that proves the invariant the fix established: every `ApiError` status routes through the non-disclosive message. This catches a regression where someone restores the old status-specific branch (neither prior test would have flagged it) and removes the misleading test name `'sets generic creation-failure formError when ApiError status is not 409'` which implied a status-dependent branch that no longer exists.
+3. **`SUMMARY.md`** — added the missing third commit (`docs(F4)`) to the original F4 entry's numbered list; the heading announced "Three commits" but only enumerated two.
+
+**Rationale:**
+The reviewer's UX critique is technically correct: collapsing the 409 branch broadened the message's audience to include transient server failures where input is not the issue. The original plan §4.4 wording was written before the broader collapse implications were considered; the neutral phrasing satisfies both ADR-0010 (no account-existence disclosure) and basic UX (don't blame the user for the server's problems). The parameterized test is a stronger regression guard than renaming — it asserts the invariant directly across the realistic ApiError surface (401/409/423/429/5xx) the auth flow actually encounters.
+
+**Pushback on Finding 2 (deferred):**
+Reviewer also flagged that ADR-0010 already spans five distinct user-visible strings across `useLogin.ts` (`Invalid credentials.`, `Account is temporarily locked. Please try again later.`, `Too many attempts. Please wait a moment and try again.`, fallback) and now `useRegister.ts` (creation-failure, fallback), and proposed extracting them to a shared `auth-messages.ts` module. The concern is real and the M3 roadmap (FR-A-6 password change, FR-A-7 password reset, FR-A-8 account deactivation) will only make it worse. But F4's stated scope in plan §4.4 is the one-line collapse of the 409 branch — a refactor that touches both auth hooks plus their tests is scope creep that breaks the F-series PR-per-finding discipline. Filing as a follow-up issue rather than amending this PR.
+
+**References:**
+- Issue: GH-34
+- PR: #39 review findings (1, 4, 5 addressed; 2 deferred to follow-up issue)
+- ADR: ADR-0010 (Generic Authentication Error Policy)
+
+---
+
+## [2026-05-28 12:42 UTC] fix(F4): remove email-existence disclosure on registration (GH-34)
+
+**Change Type:** Fix (security — information disclosure)
+**Scope:** `web/frontend/src/features/auth/hooks/useRegister.ts`, `web/frontend/src/features/auth/hooks/useRegister.test.tsx`
+
+**Summary:**
+Collapsed the HTTP 409 branch in the `useRegister` hook's `onError` handler into the generic `ApiError` branch. Previously a 409 response from `POST /api/auth/register` set `formError` to `"An account with this email already exists."`, which confirmed account existence to any client willing to probe the endpoint with arbitrary emails. The hook now sets a uniform message — `"The account could not be created with those details."` — for any `ApiError`, regardless of HTTP status, so the UI no longer distinguishes between "email is already registered" and any other server-side rejection of the registration request. Unexpected non-`ApiError` (e.g. network) failures keep the existing `"Something went wrong. Please try again."` fallback.
+
+Three commits, TDD discipline:
+
+1. **`test(F4)`** — updated the two `useRegister.test.tsx` cases that asserted the old disclosure wording. The 409-conflict test now expects the generic `"The account could not be created with those details."` string, and the previously-named "ApiError status is not 409" test was renamed and tightened to assert the same string (replacing the prior loose `/something went wrong/i` regex match). Verified both updated assertions failed against the old implementation before writing the fix.
+2. **`fix(F4)`** — replaced the `if (error.status === 409) … else …` two-branch block inside `if (error instanceof ApiError)` with a single `setFormError('The account could not be created with those details.')` call. All 6 `useRegister` tests pass; full frontend suite remains green at 222/222.
+3. **`docs(F4)`** — this SUMMARY entry recording the ADR-0010 compliance rationale, scope, and references.
+
+**Rationale:**
+ADR-0010 (Generic Authentication Error Policy) requires that every authentication failure — including `POST /auth/register` returning 409 for duplicate email — surface a generic, non-disclosive response that does not confirm whether a specific email address exists in the system. SRS FR-A-1 (registration) and FR-A-9 (auth security posture) extend that requirement to the rendered UI. The backend already complies (returns 409 with a generic body), but the registration form's client-side handler was inspecting the 409 status and substituting the human-readable disclosure "An account with this email already exists." — re-introducing the enumeration vector at the UI layer that the backend policy had just closed at the protocol layer. The fix collapses the special-case branch so the rendered form gives the same feedback for "email already in use", a transient 5xx, and any other API-level rejection. The non-`ApiError` branch is left alone because the user-visible distinction between "the API rejected the request" and "we never reached the API" is genuinely useful and does not leak account existence.
+
+This is an ADR-0010 compliance fix, not a new architectural decision, so no new ADR was authored.
+
+**Bug Fix Context:**
+Root cause — the client treated a 409 from `POST /api/auth/register` as a specific user-facing condition ("email already in use") and rendered a message that confirmed that condition. The HTTP status is the disclosure vector at the protocol layer; the UI message is the disclosure vector at the user layer. Closing the UI vector restores the property that an attacker cannot enumerate registered emails by submitting candidate addresses to the registration form and watching the error wording change.
+
+**References:**
+- Issue: GH-34 (M2 web quality remediation)
+- Plan: `docs/plans/2026-05-27-issue-34-m2-web-quality-remediation-plan.md` §4.4
+- ADR: ADR-0010 (Generic Authentication Error Policy)
+- SRS: §FR-A-1 (Registration), §FR-A-9 (Auth security posture)
+
+---
+
+## [2026-05-28 09:00] F5: weight table action controls meet 44 px target size
+
+**Change Type:** Fix (accessibility)
+**Scope:** `web/frontend` — `src/features/weight/components/WeightEntryTable.tsx`, its component test, new Playwright spec `e2e/weight-target-size.spec.ts`, DDR-0004
+
+**Summary:**
+Converted the Edit/Delete row controls in `WeightEntryTable` from `IconButton size="small"` (with a span-label hack inside a Tooltip) to MUI `Button` with `startIcon` and `sx={{ minHeight: 44 }}`. Followed the Red→Green cycle: extended `WeightEntryTable.test.tsx` with two `toHaveStyle({ minHeight: '44px' })` assertions (one per control) and added a new Playwright spec asserting `boundingBox().width/height >= 44` after a real render. Both failed before the implementation change (component test: missing `minHeight`; Playwright: actual height ≈ 35.7 px on the IconButton). After replacing the IconButton/Tooltip pairs with outlined Buttons, both gates went green. Dropped the now-redundant Tooltip wrappers and inline `<span style={{ marginLeft: 4 }}>` label hack. Existing E2E selectors (`weight-edit.spec.ts`, `weight-delete.spec.ts`) keep working because the `aria-label` strings are unchanged.
+
+**Rationale:**
+SRS NFR-A-5 requires all interactive targets to be at least 44 by 44 CSS pixels, and the M2 Web App Quality Review (`docs/standards/M2_WEB_APP_QUALITY.md` §5) flagged these specific controls as a likely violation that no automated check was catching (axe scans cover critical WCAG only, not target sizing). Choosing `Button` + `startIcon` over the alternative ("keep IconButton with `sx={{ minWidth: 44, minHeight: 44 }}`") is documented in DDR-0004: the labeled Button removes the discoverability problem that motivated the original span-label hack, collapses three indirections (icon, span, tooltip) into one idiomatic component, and is the pattern published by MUI for labeled icon controls.
+
+**Bug Fix Context:**
+Root cause was MUI's `IconButton size="small"` preset rendering at ~30 px (measured 35.7 px in the affected layout), below the 44 px floor. The fix replaces the component entirely rather than adding `sx` overrides to the small IconButton, because the previous design was already trying to show a visible label and the Tooltip-plus-span workaround indicates the original component choice was wrong.
+
+**References:**
+- SRS NFR-A-5: `docs/specs/WeighToGo_Web_SRS_v2.md`
+- M2 Web App Quality Review §5: `docs/standards/M2_WEB_APP_QUALITY.md`
+- DDR-0004: `docs/ddr/0004-weight-table-action-button-conversion.md`
+- Issue: GH-34
+
+---
+
 ## [2026-05-23 Phase 9] docs: documentation hardening pass across active project docs
 
 **Change Type:** Docs (consistency + completeness)
