@@ -2478,3 +2478,18 @@ Addressed 7 of 9 PR review comments (pushed back on lru_cache and TLS-proxy impl
 **References:**
 - Issue: GH-34
 - PR #37 review comments (1-9)
+
+## [2026-05-27 03:00] Commit Summary
+
+**Change Type:** Docs
+**Scope:** ADR-0018 (F3 / GH-34)
+
+**Summary:**
+Add ADR-0018 documenting the concurrent refresh token coalescing decision before any F3 implementation code is written.
+
+**Rationale:**
+ADR-first workflow established in F2. ADR-0013's family-revocation policy makes concurrent refresh calls a correctness bug, not just a performance issue — the second call triggers logout. The decision to use a module-level promise with .finally() cleanup is non-obvious and warrants an ADR.
+
+**References:**
+- Issue: GH-34
+- ADR-0013
