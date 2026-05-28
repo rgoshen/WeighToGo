@@ -2508,3 +2508,15 @@ ADR-0013's family-revocation policy makes the second concurrent refresh call a l
 **References:**
 - Issue: GH-34
 - ADR-0013, ADR-0018
+
+## [2026-05-27 03:02] Commit Summary
+
+**Change Type:** Fix
+**Scope:** Frontend API client — synchronous refresh throw (F3 / GH-34)
+
+**Summary:**
+Guard against synchronous throws from interceptor.refresh() by separating the call into a local try-catch before attaching the .catch()/.finally() chain. A synchronous throw previously escaped the handler, bypassing onLogout and returning a raw error to the caller instead of ApiError(401). Added a test pinning the fixed behaviour.
+
+**References:**
+- Issue: GH-34
+- PR #38 Codex review (P2 — synchronous refresh failures regress past behavior)

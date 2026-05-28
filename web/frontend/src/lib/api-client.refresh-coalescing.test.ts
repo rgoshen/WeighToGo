@@ -14,6 +14,9 @@ import {
   resetAuthRefreshInterceptor,
 } from './api-client';
 
+// Minimal 401 response factory.
+const make401 = () => new Response(null, { status: 401 });
+
 describe('fetchJson concurrent refresh coalescing', () => {
   afterEach(() => {
     resetAuthRefreshInterceptor();
@@ -72,6 +75,27 @@ describe('fetchJson concurrent refresh coalescing', () => {
     // ASSERT — single refresh call, single onLogout (fired in the promise chain,
     // not per-caller, so there is no double-redirect on concurrent failure)
     expect(refresh).toHaveBeenCalledTimes(1);
+    expect(onLogout).toHaveBeenCalledTimes(1);
+  });
+
+  it('handles a synchronously-throwing refresh as a standardised 401 ApiError', async () => {
+    // refresh() is typed () => Promise<void> but a non-async implementation
+    // could throw synchronously before returning a promise.
+    const onLogout = vi.fn();
+    installAuthRefreshInterceptor({
+      refresh: () => {
+        throw new Error('synchronous failure');
+      },
+      onLogout,
+    });
+
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => make401()),
+    );
+
+    // ASSERT — caller receives standardised ApiError, not the raw sync error
+    await expect(fetchJson('/api/v1/me')).rejects.toBeInstanceOf(ApiError);
     expect(onLogout).toHaveBeenCalledTimes(1);
   });
 });

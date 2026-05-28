@@ -100,10 +100,18 @@ async function handle401AndRetry<T>(url: string, init: RequestInit): Promise<T> 
     throw new ApiError(401, mapApiError(401));
   }
   if (inflightRefresh === null) {
+    // Guard against synchronous throws from refresh() — typed as () => Promise<void>
+    // but a non-async implementation could throw before returning a promise.
+    let refreshPromise: Promise<void>;
+    try {
+      refreshPromise = interceptor.refresh();
+    } catch {
+      interceptor.onLogout();
+      throw new ApiError(401, mapApiError(401));
+    }
     // Call onLogout inside the promise chain so it fires exactly once even when
     // multiple callers are awaiting the same refresh (ADR-0018).
-    inflightRefresh = interceptor
-      .refresh()
+    inflightRefresh = refreshPromise
       .catch((err: unknown) => {
         interceptor?.onLogout();
         throw err;
