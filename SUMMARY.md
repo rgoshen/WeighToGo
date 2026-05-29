@@ -10,6 +10,20 @@ issues were resolved.
 ## [2026-05-28] Commit Summary
 
 **Change Type:** Feature
+**Scope:** Backend — shared unit converter (supports Option B for FR-G-2)
+
+**Summary:**
+Pure `convert_weight(value, from_unit, to_unit)` in `shared/units.py`. Converts between `'lbs'` and `'kg'` using the exact NIST conversion factor (0.45359237 kg/lb), returns identity when units match, raises `ValueError` on unknown units. 8 unit tests: lbs→kg, kg→lbs, identity ×2, round-trip, invalid from/to. Re-used by `get_active_goal_with_progress` so progress is never null due to a unit mismatch (Option B), and by FR-W-6 display formatting in Step 5 (DRY).
+
+**Rationale:**
+Placing the converter in `shared/` rather than `goals/domain/` ensures FR-W-6 (Step 5) builds display formatting on the same primitive. The `goals.application` layer may import from `shared` per the import-linter contracts.
+
+**References:**
+- Issue: GH-53
+
+## [2026-05-28] Commit Summary
+
+**Change Type:** Feature
 **Scope:** Backend — goals domain layer (FR-G-1..3, FR-G-2)
 
 **Summary:**
