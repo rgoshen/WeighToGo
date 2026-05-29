@@ -23,7 +23,7 @@ GoalProgressBar has explicit support for progress_percent=null ("No entries yet"
 
 ---
 
-## [2026-05-29 24:00] Commit Summary
+## [2026-05-29 13:08] Commit Summary
 
 **Change Type:** Fix
 **Scope:** dashboard / goals application
@@ -39,7 +39,7 @@ GET /dashboard/summary was committing a `mark_achieved` write as a side-effect o
 
 ---
 
-## [2026-05-29 23:00] Commit Summary
+## [2026-05-29 12:33] Commit Summary
 
 **Change Type:** Fix
 **Scope:** test_index_usage_postgres
@@ -55,7 +55,7 @@ Prevents DATABASE_URL leaking into subsequent SQLite tests on downgrade failure.
 
 ---
 
-## [2026-05-29 22:00] Commit Summary
+## [2026-05-29 12:25] Commit Summary
 
 **Change Type:** Feature
 **Scope:** NFR-P-3 / CI
@@ -71,7 +71,7 @@ The partial WHERE is_deleted=FALSE index only materializes on PostgreSQL. An EXP
 
 ---
 
-## [2026-05-29 21:00] Commit Summary
+## [2026-05-29 12:17] Commit Summary
 
 **Change Type:** Refactor
 **Scope:** dashboard frontend
