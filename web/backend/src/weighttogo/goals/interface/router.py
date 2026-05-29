@@ -29,7 +29,12 @@ from weighttogo.goals.application.get_active_goal_with_progress import (
 from weighttogo.goals.application.list_goals import ListGoals, ListGoalsCommand
 from weighttogo.goals.application.set_active_goal import SetActiveGoal, SetActiveGoalCommand
 from weighttogo.goals.application.update_goal import UpdateGoal, UpdateGoalCommand
-from weighttogo.goals.domain.exceptions import ActiveGoalAlreadyExistsError, GoalNotFoundError
+from weighttogo.goals.domain.exceptions import (
+    ActiveGoalAlreadyExistsError,
+    GoalNotActiveError,
+    GoalNotFoundError,
+    InvalidGoalTargetError,
+)
 from weighttogo.goals.infrastructure.repositories import SqlAlchemyGoalRepository
 from weighttogo.goals.interface.schemas import (
     ActiveGoalResponse,
@@ -228,6 +233,16 @@ def update_goal(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Goal not found.",
+        ) from exc
+    except GoalNotActiveError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Goal is no longer active and cannot be modified.",
+        ) from exc
+    except InvalidGoalTargetError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(exc),
         ) from exc
 
     logger.info("goal_updated", goal_id=goal.goal_id, user_id=current_user_id)

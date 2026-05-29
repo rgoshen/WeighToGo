@@ -195,6 +195,27 @@ def test_delete_goal_allows_new_active_goal_after_abandon(client: TestClient) ->
 # ── IDOR — user B cannot access user A's goal ─────────────────────────────────
 
 
+def test_update_goal_returns_409_when_goal_is_abandoned(client: TestClient) -> None:
+    _register_and_login(client)
+    goal = _create_goal(client)
+    client.delete(f"/api/v1/goals/{goal['goal_id']}")
+    resp = client.put(
+        f"/api/v1/goals/{goal['goal_id']}",
+        json={"target_value": 145.0, "target_date": None},
+    )
+    assert resp.status_code == 409
+
+
+def test_update_goal_returns_422_when_lose_goal_target_exceeds_start(client: TestClient) -> None:
+    _register_and_login(client)
+    goal = _create_goal(client, start_value=200.0, target_value=150.0, goal_type="lose")
+    resp = client.put(
+        f"/api/v1/goals/{goal['goal_id']}",
+        json={"target_value": 210.0, "target_date": None},
+    )
+    assert resp.status_code == 422
+
+
 def test_update_goal_idor_returns_404(client: TestClient) -> None:
     # User A creates a goal
     _register_and_login(client, email="user-a@example.com")

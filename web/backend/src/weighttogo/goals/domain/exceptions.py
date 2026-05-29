@@ -19,3 +19,20 @@ class ActiveGoalAlreadyExistsError(Exception):
 
     Maps to HTTP 409.
     """
+
+
+class GoalNotActiveError(Exception):
+    """Raised when attempting to mutate a goal that is no longer active.
+
+    Maps to HTTP 409.
+    """
+
+
+class InvalidGoalTargetError(Exception):
+    """Raised when a target value contradicts the goal's direction invariant.
+
+    For LOSE goals the target must be strictly below start_value; for GAIN
+    goals the target must be strictly above start_value.
+
+    Maps to HTTP 422.
+    """

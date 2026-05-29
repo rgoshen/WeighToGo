@@ -2913,3 +2913,18 @@ Value-pinning tests are the correct safety net for a security-policy module: wit
 **References:**
 - Issue: GH-42
 - PR #46 review comments
+
+## [2026-05-30] Commit Summary
+
+**Change Type:** Fix
+**Scope:** Goals — UpdateGoal use case invariant guards (FR-G-3)
+
+**Summary:**
+Added two missing guards to the `UpdateGoal` use case identified by an adversarial Codex review: (1) `GoalNotActiveError` (HTTP 409) is raised when `PUT /goals/{id}` targets an abandoned or achieved goal — FR-G-3 requires updates to apply only to the active goal; (2) `InvalidGoalTargetError` (HTTP 422) is raised when the supplied `target_value` contradicts the goal's direction invariant (LOSE goals require target < start; GAIN goals require target > start). Both exceptions were added to `goals/domain/exceptions.py`; direction validation lives in a private `_validate_target_direction` helper in the application layer. Router catches translate each to the correct HTTP status. 8 new unit tests (TDD RED→GREEN) and 2 new integration tests cover abandoned-goal updates and direction-inverted updates. 397/397 tests pass; ruff and mypy clean; 98% coverage.
+
+**Rationale:**
+Leaving `get_by_id` (which returns any owned goal regardless of state) as the sole guard let stale-tab or direct API calls silently mutate historical records and corrupt the progress formula. The application layer is the correct place for these business-rule checks (not the repository, which is a pure persistence port, and not the router, which only translates domain errors to HTTP).
+
+**References:**
+- Adversarial Codex review findings (Finding 2 and Finding 3)
+- FR-G-3: SRS §6.3
