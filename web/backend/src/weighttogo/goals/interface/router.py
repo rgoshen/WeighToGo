@@ -43,6 +43,7 @@ from weighttogo.goals.interface.schemas import (
     GoalListResponse,
     GoalResponse,
     GoalUpdateRequest,
+    to_active_goal_response,
 )
 from weighttogo.shared.db import get_db_session
 from weighttogo.weight_tracking.infrastructure.repositories import SqlAlchemyWeightEntryRepository
@@ -146,17 +147,10 @@ def get_active_goal(
             user_id=current_user_id,
             latest_weight_value=latest.weight_value if latest else None,
             latest_weight_unit=latest.weight_unit if latest else None,
+            readonly=True,
         )
     )
-
-    if result.goal is None:
-        return ActiveGoalResponse(goal=None, progress_percent=None, current_value=None)
-
-    return ActiveGoalResponse(
-        goal=GoalResponse.model_validate(result.goal),
-        progress_percent=result.progress.percent if result.progress else None,
-        current_value=float(result.current_value) if result.current_value is not None else None,
-    )
+    return to_active_goal_response(result)
 
 
 # ── GET /goals ────────────────────────────────────────────────────────────────

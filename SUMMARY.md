@@ -7,6 +7,249 @@ issues were resolved.
 
 ---
 
+## [2026-05-29 13:55] Commit Summary
+
+**Change Type:** Fix
+**Scope:** goals/dashboard application + tests
+
+**Summary:**
+Goals GET endpoint passes readonly=True (write-on-GET removed); DashboardSummary.active_goal simplified to always-GoalWithProgress (no triple-layer None); GoalProgressCard test adds progress_percent:0 case; integration setup POSTs assert 201 status
+
+**Rationale:**
+Goals GET idempotency restored. Triple-layer None handling collapsed to one mapper call. progress_percent:0 is a distinct render state that was untested. Setup POST status assertions localize failure root cause.
+
+**References:**
+- Issue: GH-56
+
+---
+
+## [2026-05-29 14:30] Commit Summary
+
+**Change Type:** Fix
+**Scope:** test_index_usage_postgres
+
+**Summary:**
+Six PR review fixes: outer try/finally around upgrade so env restore always runs; module-scoped fixture halves migration churn; drop _seed default to enforce constant usage; executemany for batch inserts; SET enable_seqscan=off for deterministic EXPLAIN; add EXPLAIN test for the new created_at index (0007) to close the NFR-P-3 proof gap.
+
+**Rationale:**
+The original EXPLAIN test proved the pre-existing observation_date index (0002), not the new created_at index (0007) this PR adds. The new EXPLAIN test targets the 0007 index directly. The outer try/finally fix ensures DATABASE_URL and get_settings cache are always restored even if alembic upgrade raises. Module scope eliminates redundant migration round-trips. executemany reduces N individual INSERT calls to one batched call per user.
+
+**Bug Fix Context (if applicable):**
+If command.upgrade raised before the inner try block was reached, DATABASE_URL would leak into subsequent tests and get_settings cache would remain polluted. The restructured outer try/finally closes that gap.
+
+**References:**
+- Issue: GH-56
+
+---
+
+## [2026-05-29 13:10] Commit Summary
+
+**Change Type:** Fix
+**Scope:** dashboard frontend
+
+**Summary:**
+Tighten isEmpty condition to also require active_goal === null; users with a goal but no entries now see the goal card instead of the pure empty state.
+
+**Rationale:**
+GoalProgressBar has explicit support for progress_percent=null ("No entries yet"), but this state was unreachable because isEmpty fired on total_entries===0 alone, before active_goal was checked. One new TDD test was added (RED then GREEN) to cover the previously missing branch.
+
+**References:**
+- Issue: GH-56
+
+---
+
+## [2026-05-29 13:08] Commit Summary
+
+**Change Type:** Fix
+**Scope:** dashboard / goals application
+
+**Summary:**
+Add `readonly: bool = False` field to `GetActiveGoalWithProgressCommand`; guard the `mark_achieved` write with `not command.readonly`; pass `readonly=True` from `BuildDashboardSummary.execute()` so the GET `/dashboard/summary` endpoint never mutates goal state.
+
+**Rationale:**
+GET /dashboard/summary was committing a `mark_achieved` write as a side-effect of reading. Read endpoints must not write. The write-on-completion is preserved on the goals router (default `readonly=False`). Two new TDD tests were added: one in the dashboard unit tests (verifying `readonly=True` is passed in the command), one in the goals use case unit tests (verifying `readonly=True` skips the save).
+
+**References:**
+- Issue: GH-56
+
+---
+
+## [2026-05-29 12:33] Commit Summary
+
+**Change Type:** Fix
+**Scope:** test_index_usage_postgres
+
+**Summary:**
+Nest env-restore in inner finally so DATABASE_URL is restored even if downgrade raises; tighten EXPLAIN assertion to "Index Scan using"; extract _NFR_P3_THRESHOLD_ROWS constant.
+
+**Rationale:**
+Prevents DATABASE_URL leaking into subsequent SQLite tests on downgrade failure. Precision: "Index Scan using" does not match Bitmap Index Scan.
+
+**References:**
+- Issue: GH-56
+
+---
+
+## [2026-05-29 12:25] Commit Summary
+
+**Change Type:** Feature
+**Scope:** NFR-P-3 / CI
+
+**Summary:**
+Register postgres pytest marker; add NFR-P-3 EXPLAIN index-usage test (skips without DSN, runs in CI against real PostgreSQL); add perf-postgres CI job; correct web/CLAUDE.md testing-DB claim.
+
+**Rationale:**
+The partial WHERE is_deleted=FALSE index only materializes on PostgreSQL. An EXPLAIN assertion on the production engine is the only honest proof of NFR-P-3 compliance. The SQLite harness cannot demonstrate this. The web/CLAUDE.md line claiming testcontainers was incorrect; updated to accurately describe the two-tier strategy (SQLite default + postgres-marked tests for production-engine verification).
+
+**References:**
+- Issue: GH-56
+
+---
+
+## [2026-05-29 12:17] Commit Summary
+
+**Change Type:** Refactor
+**Scope:** dashboard frontend
+
+**Summary:**
+Make GoalProgressCard props-driven from the dashboard summary; remove its internal useActiveGoal query; update DashboardPage and DashboardPage tests accordingly
+
+**Rationale:**
+All three dashboard cards are now uniformly summary-driven (single source of truth, no redundant /goals/active round-trip on dashboard load). The GoalProgressBar visual is unchanged (DDR-0005).
+
+**References:**
+- Issue: GH-56
+
+---
+
+## [2026-05-29 20:00] Commit Summary
+
+**Change Type:** Test
+**Scope:** dashboard integration test / goals mapper docstring
+
+**Summary:**
+Add integration test for goal-exists/no-entries branch (progress_percent=None); clarify to_active_goal_response input contract in docstring
+
+**Rationale:**
+Exercises the mapper's progress=None arm through the live HTTP stack. Docstring clarifies that the caller must guard against None before calling.
+
+**References:**
+- Issue: GH-56
+
+---
+
+## [2026-05-29 19:10] Commit Summary
+
+**Change Type:** Feature
+**Scope:** dashboard interface / goals interface
+
+**Summary:**
+Add to_active_goal_response mapper to goals schemas; use it in goals router (DRY); extend DashboardSummaryResponse with active_goal; wire dashboard router to map and return active_goal progress
+
+**Rationale:**
+Extracts the GoalWithProgress→ActiveGoalResponse mapping into one place so both the goals and dashboard routers use the same logic. Dashboard summary now returns active_goal, satisfying FR-D-1 (M3) and FR-D-4.
+
+**References:**
+- Issue: GH-56
+
+---
+
+## [2026-05-29 15:00] Commit Summary
+
+**Change Type:** Test
+**Scope:** test_build_dashboard_summary_use_case
+
+**Summary:**
+Add test for goal-exists/no-entries branch (progress=None, active_goal non-None)
+
+**Rationale:**
+Covers the path where GetActiveGoalWithProgress returns a goal but progress is None because no weight entries exist yet.
+
+**References:**
+- Issue: GH-56
+
+---
+
+## [2026-05-29 14:30] Commit Summary
+
+**Change Type:** Feature
+**Scope:** dashboard / application
+
+**Summary:**
+Extend BuildDashboardSummary to inject and invoke GetActiveGoalWithProgress; active_goal now populated in DashboardSummary when a goal exists
+
+**Rationale:**
+Dashboard BC is the read-model aggregator; composing goals use case here (reuse over reimplementation) makes all three dashboard cards uniformly summary-driven. Passes the injected use case to the constructor so it is testable with a mock.
+
+**References:**
+- Issue: GH-56
+
+---
+
+## [2026-05-29 12:00] Commit Summary
+
+**Change Type:** Fix
+**Scope:** test_migration_0007
+
+**Summary:**
+Add column-membership assertion to index test; clarify SQLite fallback intent in migration
+
+**Rationale:**
+Index-name-only assertion would miss a wrong column list in upgrade(). SQLite comment makes the non-unique partial-index trade-off explicit per 0002 precedent.
+
+**References:**
+- Issue: GH-56
+
+---
+
+## [2026-05-29 11:44] Commit Summary
+
+**Change Type:** Feature
+**Scope:** DB / Alembic migration
+
+**Summary:**
+Add migration 0007 with (user_id, created_at) partial index WHERE is_deleted=FALSE; TDD unit tests for migration structure and upgrade/downgrade
+
+**Rationale:**
+NFR-P-3 requires indexed weight-history read paths. (user_id, observation_date) already covered by 0002. (user_id, created_at) provisions the future trend read path (#59) and satisfies NFR-P-3 now. See ADR-0021.
+
+**References:**
+- Issue: GH-56
+
+---
+
+## [2026-05-29 12:00] Commit Summary
+
+**Change Type:** Docs
+**Scope:** ADR-0021
+
+**Summary:**
+Remove off-topic side-effect note from ADR-0021 Rationale section
+
+**Rationale:**
+The note concerned goal-service write behavior, not the composite index strategy.
+
+**References:**
+- Issue: GH-56
+
+---
+
+## [2026-05-29 11:29] Commit Summary
+
+**Change Type:** Docs
+**Scope:** ADR / docs
+
+**Summary:**
+Add ADR-0021 composite index strategy for weight-history reads; correct Phase-4 ADR/migration numbers in milestone brief.
+
+**Rationale:**
+ADR-0021 documents the (user_id, created_at) partial index decision (NFR-P-3). ADR-0020 and migration 0006 were consumed by Phase 3 (preferences); numbers corrected in plan. Cascade-corrected downstream references (streak detection ADR-0022, TTL caching ADR-0023, and all range references in §1.2, §3 Step 6, §4, §7 DoD).
+
+**References:**
+- Issue: GH-56
+
+---
+
 ## [2026-05-29] Commit Summary
 
 **Change Type:** Fix
@@ -3257,3 +3500,10 @@ intermittently breaking the goal-create and achievement-notification E2E specs.
 **References:**
 - Issue: GH-55
 - PR: #67
+
+## [2026-05-29 21:10] Commit Summary
+**Change Type:** Fix
+**Scope:** test_index_usage_postgres
+**Summary:** Introduce module-scoped seeded_uid fixture so _seed is called once per module; fixes UniqueViolation when second EXPLAIN test tried to re-insert perf@example.com after scope="module" kept the DB alive
+**Rationale:** scope="module" was correct (halves migration churn) but the two EXPLAIN tests each called _seed independently, violating the unique email constraint on the second call. One shared seeded_uid fixture seeds once and both tests receive the same uid.
+**References:** Issue: GH-56

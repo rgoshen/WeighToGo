@@ -70,6 +70,9 @@ files = ["src", "tests"]
 testpaths = ["tests"]
 addopts = "--cov=weighttogo --cov-report=term-missing"
 asyncio_mode = "auto"
+markers = [
+    "postgres: integration tests requiring a PostgreSQL service (NFR-P-3 index usage); skipped unless WEIGHTTOGO_TEST_POSTGRES_DSN is set",
+]
 
 [tool.coverage.run]
 branch = true

@@ -18,9 +18,9 @@ import { useDashboardSummary } from '../hooks/useDashboardSummary';
  * Dashboard landing page rendered at /.
  */
 export function DashboardPage() {
-  const { data, isLoading } = useDashboardSummary();
+  const { data, isLoading, isError } = useDashboardSummary();
 
-  const isEmpty = !isLoading && data !== undefined && data.total_entries === 0;
+  const isEmpty = !isLoading && data !== undefined && data.total_entries === 0 && !data.active_goal;
 
   return (
     <Box component="main">
@@ -47,7 +47,11 @@ export function DashboardPage() {
             <TotalEntriesCard total={data?.total_entries ?? 0} isLoading={isLoading} />
           </Grid>
           <Grid size={{ xs: 12, sm: 4 }}>
-            <GoalProgressCard />
+            <GoalProgressCard
+              activeGoal={data?.active_goal ?? null}
+              isLoading={isLoading}
+              isError={isError}
+            />
           </Grid>
         </Grid>
       )}

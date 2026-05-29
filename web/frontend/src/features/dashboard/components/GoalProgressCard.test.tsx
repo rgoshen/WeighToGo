@@ -1,79 +1,81 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
-import * as goalClientModule from '../../goals/api/goal-client';
+import type { ActiveGoalResponse } from '../../goals/api/goal-client';
 import { GoalProgressCard } from './GoalProgressCard';
 
 function Wrapper({ children }: { children: React.ReactNode }) {
-  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return (
-    <MemoryRouter>
-      <QueryClientProvider client={qc}>{children}</QueryClientProvider>
-    </MemoryRouter>
-  );
+  return <MemoryRouter>{children}</MemoryRouter>;
 }
 
-describe('GoalProgressCard', () => {
-  beforeEach(() => {
-    vi.spyOn(goalClientModule.goalClient, 'getActive').mockResolvedValue({
-      goal: null,
-      progress_percent: null,
-      current_value: null,
-    });
-  });
+const goalActive: ActiveGoalResponse = {
+  goal: {
+    goal_id: 1,
+    user_id: 1,
+    target_value: 150,
+    target_unit: 'lbs',
+    start_value: 200,
+    goal_type: 'lose',
+    target_date: null,
+    is_active: true,
+    is_achieved: false,
+    achieved_at: null,
+    created_at: '2026-05-28T00:00:00Z',
+    updated_at: '2026-05-28T00:00:00Z',
+  },
+  progress_percent: 50,
+  current_value: 175,
+};
 
+describe('GoalProgressCard', () => {
   it('renders the Goal Progress title', () => {
-    render(<GoalProgressCard />, { wrapper: Wrapper });
+    render(<GoalProgressCard activeGoal={null} isLoading={false} isError={false} />, {
+      wrapper: Wrapper,
+    });
     expect(screen.getByText(/goal progress/i)).toBeInTheDocument();
   });
 
-  it('shows CTA when no active goal', async () => {
-    render(<GoalProgressCard />, { wrapper: Wrapper });
-    await screen.findByText(/set a goal/i);
+  it('shows CTA when no active goal', () => {
+    render(<GoalProgressCard activeGoal={null} isLoading={false} isError={false} />, {
+      wrapper: Wrapper,
+    });
     expect(screen.getByText(/set a goal/i)).toBeInTheDocument();
   });
 
-  it('shows loading text while query is pending', () => {
-    vi.spyOn(goalClientModule.goalClient, 'getActive').mockReturnValue(
-      new Promise(() => {
-        /* never resolves */
-      }),
-    );
-    render(<GoalProgressCard />, { wrapper: Wrapper });
+  it('shows loading text while loading', () => {
+    render(<GoalProgressCard activeGoal={null} isLoading={true} isError={false} />, {
+      wrapper: Wrapper,
+    });
     expect(screen.getByText(/loading/i)).toBeInTheDocument();
   });
 
-  it('shows error message when query fails', async () => {
-    vi.spyOn(goalClientModule.goalClient, 'getActive').mockRejectedValue(
-      new Error('Network error'),
-    );
-    render(<GoalProgressCard />, { wrapper: Wrapper });
-    await screen.findByText(/failed to load goal progress/i);
+  it('shows error message on error', () => {
+    render(<GoalProgressCard activeGoal={null} isLoading={false} isError={true} />, {
+      wrapper: Wrapper,
+    });
+    expect(screen.getByText(/failed to load goal progress/i)).toBeInTheDocument();
   });
 
-  it('shows progress bar when active goal with progress', async () => {
-    vi.spyOn(goalClientModule.goalClient, 'getActive').mockResolvedValue({
-      goal: {
-        goal_id: 1,
-        user_id: 1,
-        target_value: 150,
-        target_unit: 'lbs',
-        start_value: 200,
-        goal_type: 'lose',
-        target_date: null,
-        is_active: true,
-        is_achieved: false,
-        achieved_at: null,
-        created_at: '2026-05-28T00:00:00Z',
-        updated_at: '2026-05-28T00:00:00Z',
-      },
-      progress_percent: 50,
-      current_value: 175,
+  it('shows progress bar when active goal with progress', () => {
+    render(<GoalProgressCard activeGoal={goalActive} isLoading={false} isError={false} />, {
+      wrapper: Wrapper,
     });
-    render(<GoalProgressCard />, { wrapper: Wrapper });
-    await screen.findByRole('progressbar');
+    expect(screen.getByRole('progressbar')).toBeInTheDocument();
     expect(screen.getByText('50%')).toBeInTheDocument();
+  });
+
+  it('renders 0% when progress_percent is 0 (not "No entries yet")', () => {
+    const goalAtZero: ActiveGoalResponse = {
+      ...goalActive,
+      progress_percent: 0,
+      current_value: 200,
+    };
+    render(<GoalProgressCard activeGoal={goalAtZero} isLoading={false} isError={false} />, {
+      wrapper: Wrapper,
+    });
+    expect(screen.getByRole('progressbar')).toBeInTheDocument();
+    expect(screen.getByText('0%')).toBeInTheDocument();
+    expect(screen.queryByText(/no entries yet/i)).not.toBeInTheDocument();
   });
 });
