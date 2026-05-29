@@ -15,6 +15,7 @@ from weighttogo.dashboard.application.build_dashboard_summary import BuildDashbo
 from weighttogo.dashboard.interface.schemas import DashboardSummaryResponse
 from weighttogo.goals.application.get_active_goal_with_progress import GetActiveGoalWithProgress
 from weighttogo.goals.infrastructure.repositories import SqlAlchemyGoalRepository
+from weighttogo.goals.interface.schemas import to_active_goal_response
 from weighttogo.shared.db import get_db_session
 from weighttogo.weight_tracking.infrastructure.repositories import (
     SqlAlchemyWeightEntryRepository,
@@ -61,7 +62,11 @@ def get_dashboard_summary(
         if summary.latest_entry is not None
         else None
     )
+    active_goal = (
+        to_active_goal_response(summary.active_goal) if summary.active_goal is not None else None
+    )
     return DashboardSummaryResponse(
         latest_entry=latest,
         total_entries=summary.total_entries,
+        active_goal=active_goal,
     )

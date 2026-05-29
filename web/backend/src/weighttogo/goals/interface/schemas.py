@@ -11,6 +11,8 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, model_validator
 
+from weighttogo.goals.application.get_active_goal_with_progress import GoalWithProgress
+
 
 class GoalCreateRequest(BaseModel):
     """Request body for POST /api/v1/goals (SRS §9.6).
@@ -117,3 +119,21 @@ class GoalListResponse(BaseModel):
     """
 
     goals: list[GoalResponse]
+
+
+def to_active_goal_response(result: GoalWithProgress) -> ActiveGoalResponse:
+    """Map a ``GoalWithProgress`` application result to the ``ActiveGoalResponse`` DTO.
+
+    Args:
+        result: The use-case result (``goal`` may be ``None``).
+
+    Returns:
+        An ``ActiveGoalResponse`` envelope; ``goal=None`` when no active goal.
+    """
+    if result.goal is None:
+        return ActiveGoalResponse(goal=None, progress_percent=None, current_value=None)
+    return ActiveGoalResponse(
+        goal=GoalResponse.model_validate(result.goal),
+        progress_percent=result.progress.percent if result.progress else None,
+        current_value=float(result.current_value) if result.current_value is not None else None,
+    )

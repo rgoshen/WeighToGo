@@ -7,6 +7,22 @@ issues were resolved.
 
 ---
 
+## [2026-05-29 19:10] Commit Summary
+
+**Change Type:** Feature
+**Scope:** dashboard interface / goals interface
+
+**Summary:**
+Add to_active_goal_response mapper to goals schemas; use it in goals router (DRY); extend DashboardSummaryResponse with active_goal; wire dashboard router to map and return active_goal progress
+
+**Rationale:**
+Extracts the GoalWithProgress→ActiveGoalResponse mapping into one place so both the goals and dashboard routers use the same logic. Dashboard summary now returns active_goal, satisfying FR-D-1 (M3) and FR-D-4.
+
+**References:**
+- Issue: GH-56
+
+---
+
 ## [2026-05-29 15:00] Commit Summary
 
 **Change Type:** Test
