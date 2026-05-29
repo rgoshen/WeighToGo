@@ -180,5 +180,9 @@ def test_observation_date_range_query_uses_index_not_seqscan(
     with pg_engine.connect() as conn:
         conn.execute(text("SET enable_seqscan = off"))
         plan = "\n".join(row[0] for row in conn.execute(text(sql), params))
-    assert "Index Scan using" in plan, plan
+    # Assert the composite index is used (Index Scan or Bitmap Index Scan — the
+    # ASC order over a DESC index makes the planner choose a bitmap scan) and
+    # that no sequential scan occurs. Match on the index name, not the scan-type
+    # prefix, since the prefix varies with the chosen access path.
+    assert "idx_weight_entries_user_observation_desc" in plan, plan
     assert "Seq Scan on weight_entries" not in plan, plan
