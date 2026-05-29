@@ -58,8 +58,17 @@ describe('DashboardPage', () => {
   it('shows the three cards when entries exist', async () => {
     vi.spyOn(dashboardClient, 'summary').mockResolvedValue(populatedSummary);
     render(<DashboardPage />, { wrapper });
-    await waitFor(() => expect(screen.getByText(/175/)).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByRole('heading', { name: /175\.5 lbs/i })).toBeInTheDocument(),
+    );
     expect(screen.getByText(/goal progress/i)).toBeInTheDocument();
+  });
+
+  it('shows the rate-of-change card and trend chart when entries exist', async () => {
+    vi.spyOn(dashboardClient, 'summary').mockResolvedValue(populatedSummary);
+    render(<DashboardPage />, { wrapper });
+    await waitFor(() => expect(screen.getByText(/rate of change/i)).toBeInTheDocument());
+    expect(screen.getByRole('figure', { name: /weight trend/i })).toBeInTheDocument();
   });
 
   it('has an accessible heading', async () => {
