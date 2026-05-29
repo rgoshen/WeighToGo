@@ -3175,3 +3175,21 @@ at one place (useVisibleAchievements selector, decision #8) satisfies SRP.
 - Issue: GH-55
 - ADR-0020, DDR-0008
 - FR-P-1, FR-P-3
+
+## [2026-05-29] Commit Summary
+
+**Change Type:** Test
+**Scope:** E2E / Playwright
+
+**Summary:**
+Added `e2e/preferences.spec.ts` with 3 tests in serial: seed user + goal, verify
+unit preference changes the weight form default to kg, verify milestone notification
+toggle off suppresses the achievement toast.
+
+**Rationale:**
+E2E tests exercise the full vertical slice from the settings UI through the API and
+back. Serial execution and unique email per run avoid data collisions in CI.
+
+**References:**
+- Issue: GH-55
+- FR-P-1, FR-P-3, DDR-0008
