@@ -18,9 +18,19 @@ from datetime import date
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from weighttogo.achievements.application.detect_achievements import (
+    DetectAchievements,
+    DetectAchievementsCommand,
+)
+from weighttogo.achievements.infrastructure.repositories import SqlAlchemyAchievementRepository
+from weighttogo.achievements.interface.schemas import (
+    AchievementResponse as AchievementResponseSchema,
+)
 from weighttogo.auth.interface.router import get_current_user_id, limiter
+from weighttogo.goals.infrastructure.repositories import SqlAlchemyGoalRepository
 from weighttogo.shared.db import get_db_session
 from weighttogo.weight_tracking.application.create_weight_entry import (
     CreateWeightEntry,
@@ -130,7 +140,38 @@ def create_weight_entry(
         ) from exc
 
     logger.info("weight_entry_created", entry_id=entry.entry_id, user_id=current_user_id)
-    return WeightEntryResponse.model_validate(entry)
+
+    # ── Detect achievements at the composition root (interface layer) ─────────
+    # weight_tracking domain never imports achievements — wiring happens here
+    # at the interface layer, keeping both domains isolated (ADR-0019).
+    newly_earned: list[AchievementResponseSchema] = []
+    goal = SqlAlchemyGoalRepository(session).get_active_for_user(current_user_id)
+    if goal is not None and goal.goal_id is not None:
+        try:
+            ach_list = DetectAchievements(
+                achievement_repo=SqlAlchemyAchievementRepository(session)
+            ).execute(
+                DetectAchievementsCommand(
+                    user_id=current_user_id,
+                    goal_id=goal.goal_id,
+                    goal_type=str(goal.goal_type),
+                    start_value=goal.start_value,
+                    target_value=goal.target_value,
+                    current_weight=entry.weight_value,
+                )
+            )
+            newly_earned = [AchievementResponseSchema.model_validate(a) for a in ach_list]
+        except IntegrityError:
+            session.rollback()
+            logger.warning(
+                "achievement_duplicate_ignored",
+                goal_id=goal.goal_id,
+                user_id=current_user_id,
+            )
+
+    response = WeightEntryResponse.model_validate(entry)
+    response.newly_earned_achievements = newly_earned
+    return response
 
 
 # ── GET /weight-entries ───────────────────────────────────────────────────────
