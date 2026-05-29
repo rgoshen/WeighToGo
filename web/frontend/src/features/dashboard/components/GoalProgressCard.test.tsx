@@ -64,4 +64,18 @@ describe('GoalProgressCard', () => {
     expect(screen.getByRole('progressbar')).toBeInTheDocument();
     expect(screen.getByText('50%')).toBeInTheDocument();
   });
+
+  it('renders 0% when progress_percent is 0 (not "No entries yet")', () => {
+    const goalAtZero: ActiveGoalResponse = {
+      ...goalActive,
+      progress_percent: 0,
+      current_value: 200,
+    };
+    render(<GoalProgressCard activeGoal={goalAtZero} isLoading={false} isError={false} />, {
+      wrapper: Wrapper,
+    });
+    expect(screen.getByRole('progressbar')).toBeInTheDocument();
+    expect(screen.getByText('0%')).toBeInTheDocument();
+    expect(screen.queryByText(/no entries yet/i)).not.toBeInTheDocument();
+  });
 });

@@ -63,7 +63,9 @@ def get_dashboard_summary(
         else None
     )
     active_goal = (
-        to_active_goal_response(summary.active_goal) if summary.active_goal is not None else None
+        to_active_goal_response(summary.active_goal)
+        if summary.active_goal.goal is not None
+        else None
     )
     return DashboardSummaryResponse(
         latest_entry=latest,

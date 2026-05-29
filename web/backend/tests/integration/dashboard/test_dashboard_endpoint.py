@@ -72,7 +72,7 @@ def test_dashboard_soft_deleted_entries_excluded(client: TestClient) -> None:
 
 def test_dashboard_includes_active_goal_progress(client: TestClient) -> None:
     _register_and_login(client)
-    client.post(
+    entry_resp = client.post(
         "/api/v1/weight-entries",
         json={
             "weight_value": 175.0,
@@ -80,7 +80,8 @@ def test_dashboard_includes_active_goal_progress(client: TestClient) -> None:
             "observation_date": date.today().isoformat(),
         },
     )
-    client.post(
+    assert entry_resp.status_code == 201
+    goal_resp = client.post(
         "/api/v1/goals",
         json={
             "goal_type": "lose",
@@ -90,6 +91,7 @@ def test_dashboard_includes_active_goal_progress(client: TestClient) -> None:
             "target_date": None,
         },
     )
+    assert goal_resp.status_code == 201
     resp = client.get("/api/v1/dashboard/summary")
     assert resp.status_code == 200
     data = resp.json()
@@ -101,7 +103,7 @@ def test_dashboard_includes_active_goal_progress(client: TestClient) -> None:
 
 def test_dashboard_active_goal_null_when_no_goal(client: TestClient) -> None:
     _register_and_login(client)
-    client.post(
+    entry_resp = client.post(
         "/api/v1/weight-entries",
         json={
             "weight_value": 175.0,
@@ -109,6 +111,7 @@ def test_dashboard_active_goal_null_when_no_goal(client: TestClient) -> None:
             "observation_date": date.today().isoformat(),
         },
     )
+    assert entry_resp.status_code == 201
     resp = client.get("/api/v1/dashboard/summary")
     assert resp.json()["active_goal"] is None
 
@@ -117,7 +120,7 @@ def test_dashboard_active_goal_progress_null_when_goal_but_no_entries(
     client: TestClient,
 ) -> None:
     _register_and_login(client)
-    client.post(
+    goal_resp = client.post(
         "/api/v1/goals",
         json={
             "goal_type": "lose",
@@ -127,6 +130,7 @@ def test_dashboard_active_goal_progress_null_when_goal_but_no_entries(
             "target_date": None,
         },
     )
+    assert goal_resp.status_code == 201
     resp = client.get("/api/v1/dashboard/summary")
     assert resp.status_code == 200
     data = resp.json()

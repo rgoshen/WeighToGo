@@ -20,13 +20,13 @@ class DashboardSummary:
     Attributes:
         latest_entry: The most recent active weight entry, or ``None``.
         total_entries: Count of non-deleted weight entries.
-        active_goal: The active goal with progress, or ``None`` when the user
-            has no active goal.
+        active_goal: The active goal with progress. ``goal`` within it is
+            ``None`` when the user has no active goal.
     """
 
     latest_entry: WeightEntry | None
     total_entries: int
-    active_goal: GoalWithProgress | None = None
+    active_goal: GoalWithProgress
 
 
 class BuildDashboardSummary:
@@ -58,8 +58,8 @@ class BuildDashboardSummary:
             user_id: The requesting user's surrogate ID.
 
         Returns:
-            A ``DashboardSummary``; ``active_goal`` is ``None`` when the user
-            has no active goal.
+            A ``DashboardSummary``; ``active_goal.goal`` is ``None`` when the
+            user has no active goal.
         """
         latest_entry = self._repo.get_latest_for_user(user_id)
         total_entries = self._repo.count_for_user(user_id)
@@ -71,9 +71,8 @@ class BuildDashboardSummary:
                 readonly=True,
             )
         )
-        active_goal = goal_with_progress if goal_with_progress.goal is not None else None
         return DashboardSummary(
             latest_entry=latest_entry,
             total_entries=total_entries,
-            active_goal=active_goal,
+            active_goal=goal_with_progress,
         )

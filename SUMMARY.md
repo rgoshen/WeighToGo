@@ -7,6 +7,22 @@ issues were resolved.
 
 ---
 
+## [2026-05-29 13:55] Commit Summary
+
+**Change Type:** Fix
+**Scope:** goals/dashboard application + tests
+
+**Summary:**
+Goals GET endpoint passes readonly=True (write-on-GET removed); DashboardSummary.active_goal simplified to always-GoalWithProgress (no triple-layer None); GoalProgressCard test adds progress_percent:0 case; integration setup POSTs assert 201 status
+
+**Rationale:**
+Goals GET idempotency restored. Triple-layer None handling collapsed to one mapper call. progress_percent:0 is a distinct render state that was untested. Setup POST status assertions localize failure root cause.
+
+**References:**
+- Issue: GH-56
+
+---
+
 ## [2026-05-29 14:30] Commit Summary
 
 **Change Type:** Fix
