@@ -7,6 +7,22 @@ issues were resolved.
 
 ---
 
+## [2026-05-29 11:44] Commit Summary
+
+**Change Type:** Feature
+**Scope:** DB / Alembic migration
+
+**Summary:**
+Add migration 0007 with (user_id, created_at) partial index WHERE is_deleted=FALSE; TDD unit tests for migration structure and upgrade/downgrade
+
+**Rationale:**
+NFR-P-3 requires indexed weight-history read paths. (user_id, observation_date) already covered by 0002. (user_id, created_at) provisions the future trend read path (#59) and satisfies NFR-P-3 now. See ADR-0021.
+
+**References:**
+- Issue: GH-56
+
+---
+
 ## [2026-05-29 12:00] Commit Summary
 
 **Change Type:** Docs
