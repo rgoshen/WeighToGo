@@ -22,6 +22,7 @@ import {
 } from '@mui/material';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Controller, useForm } from 'react-hook-form';
+import { usePreferences } from '../../../contexts/PreferencesContext';
 import { type WeightEntryFormValues, weightEntrySchema } from '../schemas/weight-schemas';
 import { toLocalISODate } from '../../../lib/date';
 
@@ -49,6 +50,8 @@ export function WeightEntryForm({
   conflictError,
   isSubmitting = false,
 }: WeightEntryFormProps) {
+  const { preferences } = usePreferences();
+
   const {
     register,
     handleSubmit,
@@ -60,7 +63,7 @@ export function WeightEntryForm({
     resolver: zodResolver(weightEntrySchema) as any,
     defaultValues: defaultValues ?? {
       weight_value: undefined,
-      weight_unit: 'lbs',
+      weight_unit: preferences.weightUnit,
       observation_date: TODAY,
       notes: '',
     },

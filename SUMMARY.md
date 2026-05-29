@@ -3151,3 +3151,27 @@ no mandatory preferences setup at registration.
 - Issue: GH-55
 - ADR-0020: Preferences storage data structure
 - SRS §9.x, FR-P-1, FR-P-3
+
+## [2026-05-29] Commit Summary
+
+**Change Type:** Feature
+**Scope:** Frontend settings feature + context wiring
+
+**Summary:**
+Implemented the full frontend preferences slice: `features/settings/` (Zod schemas,
+api client, usePreferencesQuery, useUpdatePreference, UnitPreferenceControl,
+NotificationTogglesControl, SettingsPage). Reshaped PreferencesContext (removed
+colorScheme, backed by TanStack Query). Wired weightUnit default into WeightEntryForm
++ GoalForm. Wired formatWeight into WeightEntryTable. Added useVisibleAchievements
+for toggle enforcement. Swapped /settings route from placeholder to SettingsPage.
+62 frontend test files pass; lint + typecheck clean.
+
+**Rationale:**
+Context backed by TanStack Query (ADR-0014) so the preferences are server state,
+not local state. Optimistic updates provide instant feedback. Toggle enforcement
+at one place (useVisibleAchievements selector, decision #8) satisfies SRP.
+
+**References:**
+- Issue: GH-55
+- ADR-0020, DDR-0008
+- FR-P-1, FR-P-3

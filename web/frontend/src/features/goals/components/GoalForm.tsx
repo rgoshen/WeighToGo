@@ -19,6 +19,7 @@ import {
 } from '@mui/material';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Controller, useForm } from 'react-hook-form';
+import { usePreferences } from '../../../contexts/PreferencesContext';
 import { type GoalFormValues, goalFormSchema } from '../schemas/goal-schemas';
 
 interface GoalFormProps {
@@ -44,6 +45,8 @@ export function GoalForm({
   conflictError,
   isSubmitting = false,
 }: GoalFormProps) {
+  const { preferences } = usePreferences();
+
   const {
     register,
     handleSubmit,
@@ -55,7 +58,7 @@ export function GoalForm({
     defaultValues: defaultValues ?? {
       goal_type: 'lose',
       target_value: undefined,
-      target_unit: 'lbs',
+      target_unit: preferences.weightUnit,
       start_value: undefined,
       target_date: null,
     },
