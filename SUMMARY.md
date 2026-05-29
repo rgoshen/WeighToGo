@@ -9,6 +9,21 @@ issues were resolved.
 
 ## [2026-05-28] Commit Summary
 
+**Change Type:** Feature
+**Scope:** Backend — goals domain layer (FR-G-1..3, FR-G-2)
+
+**Summary:**
+TDD-first goals domain layer: `Goal` entity (dataclass; `GoalType` StrEnum; idempotent `abandon()` + `mark_achieved()` methods), `GoalProgress` value object, `calculate_progress(start, current, target)` pure function (O(1), clamped [0,100], zero-denominator guard), `GoalNotFoundError` / `ActiveGoalAlreadyExistsError` domain exceptions, and `IGoalRepository` `runtime_checkable` Protocol. 17 unit tests (8 progress boundary cases including lose/gain direction and clamp; 5 entity lifecycle; 2 exceptions; 2 port duck-type checks). Ruff/mypy/pytest all clean.
+
+**Rationale:**
+Domain-first TDD ensures the algorithmic core (`calculate_progress`) is fully covered by fast, framework-free unit tests before any persistence or HTTP code is written. `StrEnum` replaces `str+Enum` (UP042 ruff rule). Import-linter contracts for `goals` were already present in `pyproject.toml` from M2 scaffolding.
+
+**References:**
+- Issue: GH-53
+- SRS v2 §6.3 FR-G-1..3, FR-G-2; §4.2.3 (ADR-0012)
+
+## [2026-05-28] Commit Summary
+
 **Change Type:** Chore
 **Scope:** Docs / version control
 
