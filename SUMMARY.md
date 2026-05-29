@@ -7,6 +7,22 @@ issues were resolved.
 
 ---
 
+## [2026-05-29 22:00] Commit Summary
+
+**Change Type:** Feature
+**Scope:** NFR-P-3 / CI
+
+**Summary:**
+Register postgres pytest marker; add NFR-P-3 EXPLAIN index-usage test (skips without DSN, runs in CI against real PostgreSQL); add perf-postgres CI job; correct web/CLAUDE.md testing-DB claim.
+
+**Rationale:**
+The partial WHERE is_deleted=FALSE index only materializes on PostgreSQL. An EXPLAIN assertion on the production engine is the only honest proof of NFR-P-3 compliance. The SQLite harness cannot demonstrate this. The web/CLAUDE.md line claiming testcontainers was incorrect; updated to accurately describe the two-tier strategy (SQLite default + postgres-marked tests for production-engine verification).
+
+**References:**
+- Issue: GH-56
+
+---
+
 ## [2026-05-29 21:00] Commit Summary
 
 **Change Type:** Refactor
