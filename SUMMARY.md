@@ -7,6 +7,22 @@ issues were resolved.
 
 ---
 
+## [2026-05-29 14:30] Commit Summary
+
+**Change Type:** Feature
+**Scope:** dashboard / application
+
+**Summary:**
+Extend BuildDashboardSummary to inject and invoke GetActiveGoalWithProgress; active_goal now populated in DashboardSummary when a goal exists
+
+**Rationale:**
+Dashboard BC is the read-model aggregator; composing goals use case here (reuse over reimplementation) makes all three dashboard cards uniformly summary-driven. Passes the injected use case to the constructor so it is testable with a mock.
+
+**References:**
+- Issue: GH-56
+
+---
+
 ## [2026-05-29 12:00] Commit Summary
 
 **Change Type:** Fix

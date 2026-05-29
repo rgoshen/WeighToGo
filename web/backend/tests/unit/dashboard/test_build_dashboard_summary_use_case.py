@@ -6,6 +6,7 @@ from datetime import UTC, date, datetime
 from decimal import Decimal
 from unittest.mock import MagicMock
 
+from weighttogo.goals.application.get_active_goal_with_progress import GoalWithProgress
 from weighttogo.weight_tracking.domain.entities import WeightEntry
 
 
@@ -22,12 +23,15 @@ def _make_entry(entry_id: int = 1) -> WeightEntry:
     )
 
 
-def _run(repo: MagicMock, user_id: int = 1) -> object:
+def _run(repo: MagicMock, gag: MagicMock | None = None, user_id: int = 1) -> object:
     from weighttogo.dashboard.application.build_dashboard_summary import (
         BuildDashboardSummary,
     )
 
-    uc = BuildDashboardSummary(weight_repo=repo)
+    if gag is None:
+        gag = MagicMock()
+        gag.execute.return_value = GoalWithProgress(goal=None, progress=None, current_value=None)
+    uc = BuildDashboardSummary(weight_repo=repo, get_active_goal_with_progress=gag)
     return uc.execute(user_id=user_id)
 
 
@@ -80,3 +84,41 @@ def test_soft_deleted_entries_excluded_from_count() -> None:
     repo.count_for_user.return_value = 3
     result = _run(repo)
     assert result.total_entries == 3  # type: ignore[attr-defined]
+
+
+def test_active_goal_populated_when_goal_exists() -> None:
+    repo = MagicMock()
+    repo.get_latest_for_user.return_value = _make_entry()
+    repo.count_for_user.return_value = 1
+    gag = MagicMock()
+    gag.execute.return_value = GoalWithProgress(
+        goal=MagicMock(), progress=MagicMock(), current_value=Decimal("170")
+    )
+    result = _run(repo, gag=gag)
+    assert result.active_goal is not None  # type: ignore[attr-defined]
+    assert result.active_goal.goal is not None  # type: ignore[attr-defined]
+
+
+def test_latest_entry_value_and_unit_passed_to_goal_use_case() -> None:
+    repo = MagicMock()
+    entry = _make_entry()
+    repo.get_latest_for_user.return_value = entry
+    repo.count_for_user.return_value = 1
+    gag = MagicMock()
+    gag.execute.return_value = GoalWithProgress(goal=None, progress=None, current_value=None)
+    _run(repo, gag=gag)
+    cmd = gag.execute.call_args.args[0]
+    assert cmd.latest_weight_value == entry.weight_value
+    assert cmd.latest_weight_unit == entry.weight_unit
+
+
+def test_no_entry_passes_none_to_goal_use_case() -> None:
+    repo = MagicMock()
+    repo.get_latest_for_user.return_value = None
+    repo.count_for_user.return_value = 0
+    gag = MagicMock()
+    gag.execute.return_value = GoalWithProgress(goal=None, progress=None, current_value=None)
+    _run(repo, gag=gag)
+    cmd = gag.execute.call_args.args[0]
+    assert cmd.latest_weight_value is None
+    assert cmd.latest_weight_unit is None
