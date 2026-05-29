@@ -3,6 +3,7 @@
  */
 
 import { fetchJson } from '../../../lib/api-client';
+import type { ActiveGoalResponse } from '../../goals/api/goal-client';
 import type { WeightEntryRecord } from '../../weight/api/weight-client';
 
 const BASE = '/api/v1/dashboard';
@@ -11,7 +12,7 @@ const BASE = '/api/v1/dashboard';
 export interface DashboardSummaryResponse {
   latest_entry: WeightEntryRecord | null;
   total_entries: number;
-  active_goal: null;
+  active_goal: ActiveGoalResponse | null;
 }
 
 /** Typed API wrapper for the dashboard summary endpoint. */

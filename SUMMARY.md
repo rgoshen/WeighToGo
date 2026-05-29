@@ -7,6 +7,22 @@ issues were resolved.
 
 ---
 
+## [2026-05-29 21:00] Commit Summary
+
+**Change Type:** Refactor
+**Scope:** dashboard frontend
+
+**Summary:**
+Make GoalProgressCard props-driven from the dashboard summary; remove its internal useActiveGoal query; update DashboardPage and DashboardPage tests accordingly
+
+**Rationale:**
+All three dashboard cards are now uniformly summary-driven (single source of truth, no redundant /goals/active round-trip on dashboard load). The GoalProgressBar visual is unchanged (DDR-0005).
+
+**References:**
+- Issue: GH-56
+
+---
+
 ## [2026-05-29 20:00] Commit Summary
 
 **Change Type:** Test

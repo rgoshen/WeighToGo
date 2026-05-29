@@ -1,11 +1,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { dashboardClient } from '../api/dashboard-client';
 import type { DashboardSummaryResponse } from '../api/dashboard-client';
-import * as goalClientModule from '../../goals/api/goal-client';
 import { DashboardPage } from './DashboardPage';
 
 const emptySummary: DashboardSummaryResponse = {
@@ -38,14 +37,6 @@ function wrapper({ children }: { children: React.ReactNode }) {
 }
 
 describe('DashboardPage', () => {
-  beforeEach(() => {
-    // GoalProgressCard uses useActiveGoal — mock it so tests don't hit network
-    vi.spyOn(goalClientModule.goalClient, 'getActive').mockResolvedValue({
-      goal: null,
-      progress_percent: null,
-      current_value: null,
-    });
-  });
   afterEach(() => {
     vi.restoreAllMocks();
   });

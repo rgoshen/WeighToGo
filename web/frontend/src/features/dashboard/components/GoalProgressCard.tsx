@@ -1,17 +1,25 @@
 import { Card, CardContent, Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import type { ActiveGoalResponse } from '../../goals/api/goal-client';
 import { GoalProgressBar } from '../../goals/components/GoalProgressBar';
-import { useActiveGoal } from '../../goals/hooks/useActiveGoal';
+
+interface GoalProgressCardProps {
+  /** Active goal envelope from the dashboard summary, or null when none. */
+  activeGoal: ActiveGoalResponse | null;
+  /** Whether the dashboard summary query is loading. */
+  isLoading: boolean;
+  /** Whether the dashboard summary query errored. */
+  isError: boolean;
+}
 
 /**
  * Dashboard card showing goal progress (FR-D-4).
  *
- * Replaces GoalProgressPlaceholderCard. Uses useActiveGoal to fetch
- * the active goal and progress without repeating the query (TanStack
- * Query deduplicates concurrent requests for the same key).
+ * Driven by the dashboard summary (single source of truth), matching the
+ * sibling LatestEntryCard / TotalEntriesCard prop pattern. The progress-bar
+ * visual is unchanged (DDR-0005).
  */
-export function GoalProgressCard() {
-  const { data, isLoading, isError } = useActiveGoal();
+export function GoalProgressCard({ activeGoal, isLoading, isError }: GoalProgressCardProps) {
   const navigate = useNavigate();
 
   return (
@@ -30,8 +38,8 @@ export function GoalProgressCard() {
           </Typography>
         ) : (
           <GoalProgressBar
-            hasGoal={data?.goal != null}
-            progressPercent={data?.progress_percent ?? null}
+            hasGoal={activeGoal?.goal != null}
+            progressPercent={activeGoal?.progress_percent ?? null}
             onSetGoal={() => navigate('/goals')}
           />
         )}
