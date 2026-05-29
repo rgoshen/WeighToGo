@@ -9,7 +9,7 @@
 import { Box, Button, Grid, Typography } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import { EmptyState } from '../../../components/EmptyState';
-import { GoalProgressPlaceholderCard } from '../components/GoalProgressPlaceholderCard';
+import { GoalProgressCard } from '../components/GoalProgressCard';
 import { LatestEntryCard } from '../components/LatestEntryCard';
 import { TotalEntriesCard } from '../components/TotalEntriesCard';
 import { useDashboardSummary } from '../hooks/useDashboardSummary';
@@ -47,7 +47,7 @@ export function DashboardPage() {
             <TotalEntriesCard total={data?.total_entries ?? 0} isLoading={isLoading} />
           </Grid>
           <Grid size={{ xs: 12, sm: 4 }}>
-            <GoalProgressPlaceholderCard />
+            <GoalProgressCard />
           </Grid>
         </Grid>
       )}

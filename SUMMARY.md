@@ -10,6 +10,21 @@ issues were resolved.
 ## [2026-05-28] Commit Summary
 
 **Change Type:** Feature
+**Scope:** Frontend — goals feature + DDR-0005 (issue Tasks 2 & 8)
+
+**Summary:**
+DDR-0005 (goal progress bar decision: MUI LinearProgress determinate, no-goal CTA, no-entries zero bar, percent text label, WCAG 1.4.1). Frontend feature: `goal-schemas.ts` (Zod 4 superRefine direction validation), `goal-client.ts` (5 typed API wrappers), 5 hooks (useActiveGoal, useGoals, useSetGoal, useUpdateGoal, useAbandonGoal), `GoalForm.tsx` (RHF + zodResolver + MUI; create/edit mode; edit mode locks goal_type + start_value per FR-G-3), `GoalProgressBar.tsx` (FR-D-4 per DDR-0005), `GoalsPage.tsx` (3-state page: no goal → creation form; active goal → details + bar; edit mode). Dashboard: `GoalProgressCard.tsx` replaces placeholder; `App.tsx:71` swaps route; `GoalProgressPlaceholderCard.tsx` + test deleted (no dead code). 274 frontend tests, 90.98% branch coverage (above 90% threshold). Lint/format/typecheck/build all clean.
+
+**Rationale:**
+`GoalFormWithPrefill` uses `useEffect` (not render-time side-effect) to fetch the latest entry and prefill start_value. `GoalProgressCard` uses `useActiveGoal` to avoid a separate query — TanStack Query deduplicates concurrent requests for the same key.
+
+**References:**
+- Issue: GH-53
+- SRS v2 §6.3 FR-G-1..3, §6.7 FR-D-4; DDR-0005
+
+## [2026-05-28] Commit Summary
+
+**Change Type:** Feature
 **Scope:** Backend — goals interface (schemas, router, main.py registration) + IDOR tests (issue Tasks 7 & 10)
 
 **Summary:**
