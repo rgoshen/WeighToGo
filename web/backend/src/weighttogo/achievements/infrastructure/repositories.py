@@ -82,6 +82,23 @@ class SqlAlchemyAchievementRepository:
         )
         return frozenset(Decimal(str(r.threshold)) for r in rows if r.threshold is not None)
 
+    def get_recorded_streak_thresholds(self, goal_id: int) -> frozenset[Decimal]:
+        """Return the set of streak thresholds already recorded for *goal_id*.
+
+        Args:
+            goal_id: The goal's primary key.
+
+        Returns:
+            A frozenset of ``Decimal`` streak thresholds.  Empty when none recorded.
+        """
+        rows = (
+            self._session.query(AchievementModel)
+            .filter_by(goal_id=goal_id, achievement_type=AchievementType.STREAK)
+            .with_entities(AchievementModel.threshold)
+            .all()
+        )
+        return frozenset(Decimal(str(r.threshold)) for r in rows if r.threshold is not None)
+
     def get_by_id(self, achievement_id: int, user_id: int) -> Achievement | None:
         """Look up by primary key, scoped to *user_id* (IDOR guard).
 

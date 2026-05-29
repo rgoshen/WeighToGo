@@ -43,6 +43,21 @@ class IAchievementRepository(Protocol):
         """
         ...
 
+    def get_recorded_streak_thresholds(self, goal_id: int) -> frozenset[Decimal]:
+        """Return the set of streak thresholds already recorded for *goal_id*.
+
+        Used by ``DetectAchievements`` to build the idempotency guard before
+        running ``detect_streaks``.
+
+        Args:
+            goal_id: The goal's primary key.
+
+        Returns:
+            A frozenset of ``Decimal`` streak thresholds already persisted.
+            Empty frozenset when no streaks have been recorded yet.
+        """
+        ...
+
     def get_by_id(self, achievement_id: int, user_id: int) -> Achievement | None:
         """Look up an achievement by primary key, scoped to *user_id*.
 
