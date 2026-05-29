@@ -7,6 +7,22 @@ issues were resolved.
 
 ---
 
+## [2026-05-29 12:00] Commit Summary
+
+**Change Type:** Docs
+**Scope:** ADR-0021
+
+**Summary:**
+Remove off-topic side-effect note from ADR-0021 Rationale section
+
+**Rationale:**
+The note concerned goal-service write behavior, not the composite index strategy.
+
+**References:**
+- Issue: GH-56
+
+---
+
 ## [2026-05-29 11:29] Commit Summary
 
 **Change Type:** Docs

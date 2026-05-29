@@ -38,8 +38,6 @@ Index name follows the existing convention: `idx_<table>_<columns>`.
 
 Trade-off versus no index: a sequential scan over the full table is O(n) per read (n = all rows including deleted) plus O(n log n) for an in-DB sort if ordered output is needed. At 100+ rows the indexed path is materially faster, satisfying the NFR.
 
-**Side-effect note:** `GetActiveGoalWithProgress` is reused in the dashboard summary, which inherits the goal's mark-achieved write on progress check. This is consistent with the existing `GET /goals/active` behavior and is accepted without a separate ADR.
-
 ## Consequences
 
 - **Positive**: NFR-P-3 is satisfied unconditionally on merge; the `created_at` index is ready for the rate-of-change path (#59) when it lands; write queries remain simple (no index hints needed); index naming is consistent with existing convention.
