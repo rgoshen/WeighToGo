@@ -141,7 +141,8 @@ def test_created_at_index_used_for_created_at_ordered_query(
     with pg_engine.connect() as conn:
         conn.execute(text("SET enable_seqscan = off"))
         plan = "\n".join(row[0] for row in conn.execute(text(sql), {"u": seeded_uid}))
-    assert "Index Scan using idx_weight_entries_user_created_at" in plan, plan
+    # PostgreSQL uses "Index Scan Backward" for DESC ordering on an ASC index.
+    assert "idx_weight_entries_user_created_at" in plan, plan
 
 
 def test_created_at_composite_index_present(pg_engine: Engine) -> None:
