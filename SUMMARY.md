@@ -10,6 +10,21 @@ issues were resolved.
 ## [2026-05-28] Commit Summary
 
 **Change Type:** Feature
+**Scope:** Backend — goals application use cases (FR-G-1..3)
+
+**Summary:**
+TDD-first application layer for the goals bounded context: `SetActiveGoal` (checks active-goal conflict → `ActiveGoalAlreadyExistsError`), `UpdateGoal` (target_value + target_date only per FR-G-3), `GetActiveGoalWithProgress` (converts latest weight unit via `shared.units` before computing progress — Option B guarantee), `AbandonGoal` (idempotent soft-deactivate), `ListGoals`. 22 unit tests using `MagicMock` fake repos. All imports use ports (Protocol); zero framework imports in domain/application layers.
+
+**Rationale:**
+`GetActiveGoalWithProgress` takes `latest_weight_value/unit` from the router (composition root cross-domain pattern), converts via `shared.units`, then delegates to the pure `calculate_progress` — progress is never null due to unit mismatch. `UpdateGoal` is intentionally narrow (target_value + target_date only) per FR-G-3.
+
+**References:**
+- Issue: GH-53
+- SRS v2 §6.3 FR-G-1, FR-G-2, FR-G-3
+
+## [2026-05-28] Commit Summary
+
+**Change Type:** Feature
 **Scope:** Backend — shared unit converter (supports Option B for FR-G-2)
 
 **Summary:**
