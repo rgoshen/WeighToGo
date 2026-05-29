@@ -19,3 +19,4 @@ the next available number.
 | [0002](0002-disabled-navigation-buttons.md) | Disabled Navigation Buttons for Future Features | Accepted | — | Android |
 | [0003](0003-user-menu-in-appbar.md) | User Menu in AppBar | Accepted | — | Web |
 | [0004](0004-weight-table-action-button-conversion.md) | Weight Table Action Button Conversion | Accepted | 2026-05-28 | Web |
+| [0005](0005-goal-progress-visualization.md) | Goal Progress Visualization | Accepted | 2026-05-28 | Web |

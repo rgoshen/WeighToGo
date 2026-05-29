@@ -7,6 +7,214 @@ issues were resolved.
 
 ---
 
+## [2026-05-29] Commit Summary
+
+**Change Type:** Fix
+**Scope:** Security — PR #63 follow-up findings (bounded list + DB direction constraint)
+
+**Summary:**
+Addressed two follow-up security findings on PR #63:
+
+1. `GET /goals` was unbounded — the repository materialised every historical goal with `.all()`, no rate limiter, no cap. Fixed by:
+   - Adding `limit: int` (keyword-only) to `IGoalRepository.list_for_user`, `SqlAlchemyGoalRepository.list_for_user`, and `ListGoalsCommand`
+   - `ListGoals` enforces a hard 100-row ceiling via `_MAX_LIMIT` regardless of caller input
+   - Router accepts `limit: int = Query(default=50, ge=1, le=100)` and gains `@limiter.limit("30/minute")`
+
+2. Missing DB-level direction-invariant CHECK constraint — the application/domain layer already enforces `lose → target < start` (added in commit `19e426c`), but the `goals` table had no cross-column CHECK as a final safety net. Added migration `0004_goals_direction_check.py` with `(goal_type = 'lose' AND target_value < start_value) OR (goal_type = 'gain' AND target_value > start_value)`.
+
+**Pushed back on:** The finding also claimed the application-layer enforcement was missing at `set_active_goal.py:52`. This was stale analysis — `validate_target_direction` has been called at `set_active_goal.py:54` since commit `19e426c`. The reviewer noted their pytest run hit the wrong working directory; their code analysis also reflected the pre-fix state.
+
+**Rationale:**
+The unbounded list is a legitimate authenticated-DoS path — a user who creates/abandons goals 30/min can build unbounded history, and each `GET /goals` then forces a full DB scan and serialisation. A hard cap at 100 with a `limit` query param is proportionate: typical goal histories are O(tens), not O(thousands), so cursor pagination would be disproportionate scope. The DB CHECK is defense-in-depth — it cannot be bypassed via direct SQL inserts or future use-case changes that skip the application validator.
+
+**References:**
+- PR #63 / GH-53 (Phase 1 goals feature branch)
+
+---
+
+## [2026-05-28 20:43] Commit Summary
+
+**Change Type:** Fix
+**Scope:** PR #63 code-review remediation — 15 issues across goals backend and frontend
+
+**Summary:**
+Addressed all 15 review comments on PR #63 (Goals Vertical Slice). Changes span the full stack: domain, application, infrastructure, interface, and frontend.
+
+**Backend changes:**
+- `goals/domain/exceptions.py` — re-parented all four exceptions to the `DomainError` hierarchy (`GoalNotFoundError(NotFoundError)`, `ActiveGoalAlreadyExistsError/GoalNotActiveError(ConflictError)`, `InvalidGoalTargetError(ValidationError)`)
+- `goals/domain/validation.py` (new) — extracted `validate_target_direction` as a shared domain rule, removing it from `update_goal.py` and adding it to `set_active_goal.py` so both use cases enforce the invariant regardless of caller
+- `goals/application/get_active_goal_with_progress.py` — wired `mark_achieved()`: when progress ≥ 100% and the goal is not yet achieved, calls `goal.mark_achieved()` and saves; returns `current_value` (converted to goal's unit) in `GoalWithProgress`
+- `goals/application/update_goal.py` — uses shared `validate_target_direction` from domain
+- `goals/application/set_active_goal.py` — calls `validate_target_direction` before creating the goal entity
+- `goals/infrastructure/repositories.py` — `save()` update branch now only writes mutable fields (`target_value`, `target_date`, `is_active`, `is_achieved`, `achieved_at`, `updated_at`); `start_value`, `goal_type`, `target_unit` (immutable per FR-G-3) are explicitly excluded with a comment
+- `goals/interface/router.py` — `current_value` in the active-goal response now uses `result.current_value` (already converted to goal's unit); `InvalidGoalTargetError` 422 now emits RFC 7807 `JSONResponse` with `errors: [{field: "target_value", ...}]` so the frontend field-highlights the error
+
+**Frontend changes:**
+- `lib/date.ts` (new) — extracted `toLocalISODate()` shared utility, eliminating ~5× duplication of the `getFullYear/getMonth/getDate` local-date pattern
+- `features/weight/schemas/weight-schemas.ts` — uses `toLocalISODate()` from lib
+- `features/weight/components/WeightEntryForm.tsx` — uses `toLocalISODate()` from lib
+- `features/goals/components/GoalProgressBar.tsx` — added `aria-valuetext={helperText}` so screen readers announce "No entries yet" instead of "0%" when `progressPercent === null`; removed redundant `aria-valuenow/min/max` (MUI emits these from `value`)
+- `features/dashboard/components/GoalProgressCard.tsx` — reads `isError` and renders an error state; passes `onSetGoal={() => navigate('/goals')}` to wire the "Set a goal" CTA button
+- `features/goals/pages/GoalsPage.tsx`:
+  - `GoalFormWithPrefill` defers rendering until the weight-entry prefetch resolves, fixing RHF `defaultValues`-at-mount semantics so the starting weight field is actually populated; also carries `weight_unit` to set `target_unit` consistently
+  - `handleCreate` catches all non-409 errors and renders them as an `actionError` alert
+  - `handleUpdate` wrapped in try/catch; `setIsEditing(false)` only called on success; errors shown as `actionError`
+  - `handleAbandon` wrapped in try/catch; errors shown as `actionError`
+  - `isSubmitting={setGoal.isPending}` threaded through to `GoalFormWithPrefill` → `GoalForm` to disable the submit button during the in-flight POST
+
+**New tests:** 5 backend tests (`mark_achieved` wiring, `current_value` contract, `already_achieved` guard, direction-invariant in `SetActiveGoal`), 4 frontend tests (error state in `GoalProgressCard`, `handleCreate/Update/Abandon` error paths), 1 new `GoalProgressCard` error test.
+
+**Rationale:**
+All 15 review findings were valid. The four high-severity frontend issues (prefill, swallowed errors, double-submit) were correctness bugs directly visible to users. The medium-severity items (DomainError hierarchy, RFC 7807 422 shape, direction invariant at use-case layer, `current_value` unit mismatch, `mark_achieved` wiring) were architecture/contract violations that would degrade as the codebase grew. The low-severity items (a11y, code duplication, `save()` field mapping) were quality improvements with low implementation risk.
+
+**References:**
+- PR #63 / GH-53 (Phase 1 goals feature branch)
+
+---
+
+## [2026-05-28] Commit Summary
+
+**Change Type:** Fix
+**Scope:** CI/CD — Playwright E2E pipeline on PR #63 (stayed red after the code fix was already committed)
+
+**Summary:**
+PR #63's E2E job kept failing on two goal tests — `goal-create.spec.ts:24` ("navigate to /goals and fill the goal form") and `goal-a11y.spec.ts:43` ("/goals with active goal") — both timing out on `getByRole('progressbar')`. The root cause was operational, not code: the two fix commits `de90b94` (UpdateGoal invariants) and `be558fe` (the actual progressbar fix: empty-string `target_date` → `|| null`) were committed locally but never pushed to `snhu` (the branch had no upstream). CI was still testing `53ff8e4`, whose `GoalsPage.tsx` used `?? null`, so a blank date input sent `target_date: ""`, the backend returned 422, and `handleCreate` (which only surfaces 409s) silently swallowed it — leaving the form on screen with no progress bar. Verified the already-committed fix locally (backend 397 pytest + mypy clean; frontend 274 vitest + tsc clean; the two previously-failing goal specs now 6/6 green), then pushed `53ff8e4..be558fe` to `snhu`. The re-triggered pipeline is green on `be558fe`: E2E, Frontend CI, Backend CI, and Security Audit all pass.
+
+**Bug Fix Context:**
+Diagnosed from the failed run's Playwright trace (run 26612722219, headSha 53ff8e4): the `POST /api/v1/goals` network entry showed request body `{"target_date":""}` and a 422 response (`date_from_datetime_parsing — input is too short`); the failure snapshot showed the filled form with no error alert, confirming the swallowed 422. `git show 53ff8e4:.../GoalsPage.tsx` confirmed line 65 used `?? null` (passes `""` through) versus `|| null` at local `HEAD`. The underlying code fix is documented in the `be558fe` entry below; this entry records why the pipeline remained red afterward (unpushed commits) and the local-verify-then-push remediation. Lesson: a feature branch with no upstream silently leaves fixes out of CI — confirm the failing run's `headSha` matches local `HEAD` before assuming the code is wrong.
+
+**References:**
+- PR #63 / GH-53 (Phase 1 goals feature branch)
+- Failed E2E run 26612722219 (53ff8e4) → green E2E run 26614711972 (be558fe)
+
+## [2026-05-28] Commit Summary
+
+**Change Type:** Chore
+**Scope:** Closeout — Phase 1 PR opened (GH-63), issue #53 acceptance criteria confirmed
+
+**Summary:**
+All Phase 1 verification complete before PR creation: backend ruff/format/mypy/pytest (387 tests, 98% total coverage; goals domain 100%, application 100%, infra 96%, interface 100%), architecture import-linter 9/9 contracts, frontend lint/format/tsc/vitest (274 tests, 90.98% branch coverage, above 90% threshold), build clean. PR #63 opened to `main` on `snhu` remote (`Closes #53`). All issue checkboxes and acceptance criteria ticked.
+
+**References:**
+- Issue: GH-53
+- PR: GH-63
+
+## [2026-05-28] Commit Summary
+
+**Change Type:** Test
+**Scope:** Frontend — Playwright E2E for goal creation and accessibility (issue Task 9)
+
+**Summary:**
+`e2e/goal-create.spec.ts`: register → /goals → fill GoalForm (target_value=150, start_value=200, defaults lose+lbs) → submit → assert progress bar visible; assert "No entries yet" on second login. `e2e/goal-a11y.spec.ts`: axe-core WCAG 2.1 critical violation scans of /goals with no active goal (assert creation form visible) and with active goal (assert progress bar visible). Mirrors `weight-create.spec.ts` + `weight-a11y.spec.ts` patterns; requires live backend + Vite dev server.
+
+**References:**
+- Issue: GH-53
+- NFR-A-1, NFR-A-3 (ARIA), NFR-A-4 (contrast)
+
+## [2026-05-28] Commit Summary
+
+**Change Type:** Feature
+**Scope:** Frontend — goals feature + DDR-0005 (issue Tasks 2 & 8)
+
+**Summary:**
+DDR-0005 (goal progress bar decision: MUI LinearProgress determinate, no-goal CTA, no-entries zero bar, percent text label, WCAG 1.4.1). Frontend feature: `goal-schemas.ts` (Zod 4 superRefine direction validation), `goal-client.ts` (5 typed API wrappers), 5 hooks (useActiveGoal, useGoals, useSetGoal, useUpdateGoal, useAbandonGoal), `GoalForm.tsx` (RHF + zodResolver + MUI; create/edit mode; edit mode locks goal_type + start_value per FR-G-3), `GoalProgressBar.tsx` (FR-D-4 per DDR-0005), `GoalsPage.tsx` (3-state page: no goal → creation form; active goal → details + bar; edit mode). Dashboard: `GoalProgressCard.tsx` replaces placeholder; `App.tsx:71` swaps route; `GoalProgressPlaceholderCard.tsx` + test deleted (no dead code). 274 frontend tests, 90.98% branch coverage (above 90% threshold). Lint/format/typecheck/build all clean.
+
+**Rationale:**
+`GoalFormWithPrefill` uses `useEffect` (not render-time side-effect) to fetch the latest entry and prefill start_value. `GoalProgressCard` uses `useActiveGoal` to avoid a separate query — TanStack Query deduplicates concurrent requests for the same key.
+
+**References:**
+- Issue: GH-53
+- SRS v2 §6.3 FR-G-1..3, §6.7 FR-D-4; DDR-0005
+
+## [2026-05-28] Commit Summary
+
+**Change Type:** Feature
+**Scope:** Backend — goals interface (schemas, router, main.py registration) + IDOR tests (issue Tasks 7 & 10)
+
+**Summary:**
+5-endpoint goals router per SRS §9.6: `POST /goals` (201/409), `GET /goals/active` (200 nullable — goal=None when none, never 404), `GET /goals` (list), `PUT /goals/{id}` (200/404), `DELETE /goals/{id}` (204/404). `GoalCreateRequest.model_validator` enforces direction (lose⇒target<start, gain⇒target>start, target≠start). `GET /active` fetches latest weight at the composition root and passes it to `GetActiveGoalWithProgress` — cross-domain without polluting the `goals.domain` layer. Registered in `main.py`. 30 integration tests including auth guards, 409 conflict, progress computation, IDOR 404s, abandon-recreate. Architecture import-linter: 9/9 contracts pass. 387 total tests, mypy strict clean.
+
+**Rationale:**
+`GET /goals/active` returns 200+null (not 404) on no-goal to keep the frontend api-client error-free on the normal "no goal set yet" path. 404 stays reserved for IDOR on /{goal_id}, closing the information-disclosure side-channel (SRS §9.2). The cross-domain fetch at the router (composition root) keeps `goals.domain` pure and lets the import-linter continue to pass.
+
+**References:**
+- Issue: GH-53
+- SRS v2 §9.6, §6.3 FR-G-3, §7.1 (IDOR as 404)
+
+## [2026-05-28] Commit Summary
+
+**Change Type:** Feature
+**Scope:** Backend — goals migration 0003, ORM model, and repository (issue Tasks 3 & 6)
+
+**Summary:**
+Alembic migration `0003_goals` creates the `goals` table per SRS §8.2.4 with 7 CHECK constraints (goal_type, target/start value bounds, target_unit, achieved-consistency) and the partial unique index `idx_goals_one_active_per_user`. Critically, the index uses BOTH `postgresql_where` AND `sqlite_where` — without `sqlite_where`, SQLite would enforce a full UNIQUE ON goals(user_id), permanently preventing abandon-then-recreate. `GoalModel` defines the same index in `__table_args__` (so `create_all` builds it in unit tests). `SqlAlchemyGoalRepository.save()` catches `IntegrityError` and re-raises `ActiveGoalAlreadyExistsError` (race backstop). `GoalModel` also registered in `tests/integration/conftest.py` for `create_all`. 18 infra tests (5 migration up/down, 2 model, 11 repo including partial-index constraint and abandon-recreate).
+
+**Rationale:**
+The dual `postgresql_where`/`sqlite_where` is the key correctness insight: migration 0002 only used `postgresql_where` (fine for weight_entries since a user legitimately only ever has one active entry-per-date), but for goals the constraint must allow multiple rows (past + active), so the SQLite fallback to a full unique index is semantically wrong.
+
+**References:**
+- Issue: GH-53
+- SRS v2 §8.2.4 (goals schema)
+
+## [2026-05-28] Commit Summary
+
+**Change Type:** Feature
+**Scope:** Backend — goals application use cases (FR-G-1..3)
+
+**Summary:**
+TDD-first application layer for the goals bounded context: `SetActiveGoal` (checks active-goal conflict → `ActiveGoalAlreadyExistsError`), `UpdateGoal` (target_value + target_date only per FR-G-3), `GetActiveGoalWithProgress` (converts latest weight unit via `shared.units` before computing progress — Option B guarantee), `AbandonGoal` (idempotent soft-deactivate), `ListGoals`. 22 unit tests using `MagicMock` fake repos. All imports use ports (Protocol); zero framework imports in domain/application layers.
+
+**Rationale:**
+`GetActiveGoalWithProgress` takes `latest_weight_value/unit` from the router (composition root cross-domain pattern), converts via `shared.units`, then delegates to the pure `calculate_progress` — progress is never null due to unit mismatch. `UpdateGoal` is intentionally narrow (target_value + target_date only) per FR-G-3.
+
+**References:**
+- Issue: GH-53
+- SRS v2 §6.3 FR-G-1, FR-G-2, FR-G-3
+
+## [2026-05-28] Commit Summary
+
+**Change Type:** Feature
+**Scope:** Backend — shared unit converter (supports Option B for FR-G-2)
+
+**Summary:**
+Pure `convert_weight(value, from_unit, to_unit)` in `shared/units.py`. Converts between `'lbs'` and `'kg'` using the exact NIST conversion factor (0.45359237 kg/lb), returns identity when units match, raises `ValueError` on unknown units. 8 unit tests: lbs→kg, kg→lbs, identity ×2, round-trip, invalid from/to. Re-used by `get_active_goal_with_progress` so progress is never null due to a unit mismatch (Option B), and by FR-W-6 display formatting in Step 5 (DRY).
+
+**Rationale:**
+Placing the converter in `shared/` rather than `goals/domain/` ensures FR-W-6 (Step 5) builds display formatting on the same primitive. The `goals.application` layer may import from `shared` per the import-linter contracts.
+
+**References:**
+- Issue: GH-53
+
+## [2026-05-28] Commit Summary
+
+**Change Type:** Feature
+**Scope:** Backend — goals domain layer (FR-G-1..3, FR-G-2)
+
+**Summary:**
+TDD-first goals domain layer: `Goal` entity (dataclass; `GoalType` StrEnum; idempotent `abandon()` + `mark_achieved()` methods), `GoalProgress` value object, `calculate_progress(start, current, target)` pure function (O(1), clamped [0,100], zero-denominator guard), `GoalNotFoundError` / `ActiveGoalAlreadyExistsError` domain exceptions, and `IGoalRepository` `runtime_checkable` Protocol. 17 unit tests (8 progress boundary cases including lose/gain direction and clamp; 5 entity lifecycle; 2 exceptions; 2 port duck-type checks). Ruff/mypy/pytest all clean.
+
+**Rationale:**
+Domain-first TDD ensures the algorithmic core (`calculate_progress`) is fully covered by fast, framework-free unit tests before any persistence or HTTP code is written. `StrEnum` replaces `str+Enum` (UP042 ruff rule). Import-linter contracts for `goals` were already present in `pyproject.toml` from M2 scaffolding.
+
+**References:**
+- Issue: GH-53
+- SRS v2 §6.3 FR-G-1..3, FR-G-2; §4.2.3 (ADR-0012)
+
+## [2026-05-28] Commit Summary
+
+**Change Type:** Chore
+**Scope:** Docs / version control
+
+**Summary:**
+Track Milestone Three planning artifacts under version control. Commits `docs/plans/milestone-three-plan.md` (the M3 implementation brief covering Steps 1–6, the six-step Goals→Achievements→Preferences→Trends→Stretch→Closeout sequence) and extends `.gitignore` with the M3 rubric file pattern (`docs/plans/CS 499 Milestone Three Guidelines and Rubric.md`), mirroring how the M2 rubric was handled.
+
+**Rationale:**
+The plan file contains authoritative step sequencing, ADR/DDR numbering reconciliation, and locked architectural decisions referenced by every Phase 1–5 feature branch. Committing it makes the decision record part of the history alongside the code it governs.
+
+**References:**
+- Issue: GH-53
+- Plan: `docs/plans/milestone-three-plan.md`
+
 ## [2026-05-28 19:30 UTC] docs(closeout): record Resolution Review for issue #34 (GH-34)
 
 **Change Type:** Docs (closeout — issue resolution record)
@@ -2785,3 +2993,32 @@ Value-pinning tests are the correct safety net for a security-policy module: wit
 **References:**
 - Issue: GH-42
 - PR #46 review comments
+
+## [2026-05-30] Commit Summary
+
+**Change Type:** Fix
+**Scope:** Goals — UpdateGoal use case invariant guards (FR-G-3)
+
+**Summary:**
+Added two missing guards to the `UpdateGoal` use case identified by an adversarial Codex review: (1) `GoalNotActiveError` (HTTP 409) is raised when `PUT /goals/{id}` targets an abandoned or achieved goal — FR-G-3 requires updates to apply only to the active goal; (2) `InvalidGoalTargetError` (HTTP 422) is raised when the supplied `target_value` contradicts the goal's direction invariant (LOSE goals require target < start; GAIN goals require target > start). Both exceptions were added to `goals/domain/exceptions.py`; direction validation lives in a private `_validate_target_direction` helper in the application layer. Router catches translate each to the correct HTTP status. 8 new unit tests (TDD RED→GREEN) and 2 new integration tests cover abandoned-goal updates and direction-inverted updates. 397/397 tests pass; ruff and mypy clean; 98% coverage.
+
+**Rationale:**
+Leaving `get_by_id` (which returns any owned goal regardless of state) as the sole guard let stale-tab or direct API calls silently mutate historical records and corrupt the progress formula. The application layer is the correct place for these business-rule checks (not the repository, which is a pure persistence port, and not the router, which only translates domain errors to HTTP).
+
+**References:**
+- Adversarial Codex review findings (Finding 2 and Finding 3)
+- FR-G-3: SRS §6.3
+
+## [2026-05-30] Commit Summary
+
+**Change Type:** Fix
+**Scope:** Frontend — Playwright E2E failures (date timezone bug + goal target_date empty-string bug)
+
+**Summary:**
+Fixed three distinct frontend bugs that caused 8/35 Playwright E2E tests to fail. (1) Date timezone mismatch: `WeightEntryForm.tsx` and `weight-schemas.ts` used `new Date().toISOString().split('T')[0]` which returns the UTC date. In US timezones after sunset the UTC date is tomorrow relative to the local date, so the backend's `observation_date > date.today()` check rejected the entry as future. Fixed by computing the date from local date parts (getFullYear/getMonth/getDate). Same fix applied to the unit test file and the `weight-delete.spec.ts` E2E test which used `toISOString()` for its "yesterday" calculation. (2) Empty-string `target_date`: `GoalsPage.tsx` sent `values.target_date ?? null` but an empty date input produces `""` not `null`; `??` (nullish coalescing) passes `""` through unchanged. The backend rejected `""` as an invalid date. Fixed by using `|| null` in both `handleCreate` and `handleUpdate`. (3) Dev database migration: the `goals` table (migration 0003) had not been applied to the local dev database; `alembic upgrade head` was run to bring it current. 35/35 Playwright tests pass; 274/274 unit tests pass; ESLint and tsc clean.
+
+**Rationale:**
+The timezone bug was always latent but only manifested at night in US timezones when the UTC clock advances to the next day. Using `toISOString()` for dates that are compared to local server dates is a systematic error; the fix is to always use local date parts for user-facing date fields. The empty-string bug stemmed from using `??` (nullish coalescing) instead of `||` for a field that HTML date inputs emit as `""` when blank.
+
+**References:**
+- PR #63 / GH-53 (Phase 1 goals feature branch)

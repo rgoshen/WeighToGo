@@ -19,8 +19,8 @@ import { DashboardPage } from './features/dashboard/pages/DashboardPage';
 import { LoginPage } from './features/auth/pages/LoginPage';
 import { RegisterPage } from './features/auth/pages/RegisterPage';
 import { AchievementsPlaceholderPage } from './features/placeholders/AchievementsPlaceholderPage';
-import { GoalsPlaceholderPage } from './features/placeholders/GoalsPlaceholderPage';
 import { SettingsPlaceholderPage } from './features/placeholders/SettingsPlaceholderPage';
+import { GoalsPage } from './features/goals/pages/GoalsPage';
 import { WeightHistoryPage } from './features/weight/pages/WeightHistoryPage';
 import { WeightEntryFormPage } from './features/weight/pages/WeightEntryFormPage';
 
@@ -68,7 +68,7 @@ export function App() {
         <Route path="/weight" element={<WeightHistoryPage />} />
         <Route path="/weight/new" element={<WeightEntryFormPage />} />
         <Route path="/weight/:entryId/edit" element={<WeightEntryFormPage />} />
-        <Route path="/goals" element={<GoalsPlaceholderPage />} />
+        <Route path="/goals" element={<GoalsPage />} />
         <Route path="/achievements" element={<AchievementsPlaceholderPage />} />
         <Route path="/settings" element={<SettingsPlaceholderPage />} />
       </Route>

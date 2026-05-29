@@ -1,9 +1,7 @@
 import { z } from 'zod';
+import { toLocalISODate } from '../../../lib/date';
 
-const isNotFuture = (dateStr: string): boolean => {
-  const today = new Date().toISOString().split('T')[0]!;
-  return dateStr <= today;
-};
+const isNotFuture = (dateStr: string): boolean => dateStr <= toLocalISODate();
 
 export const weightEntrySchema = z.object({
   weight_value: z.coerce
