@@ -3126,3 +3126,28 @@ key ordering. Goals/achievements migration to the helper is a tracked follow-up 
 **References:**
 - Issue: GH-55
 - SRS §9.2
+
+## [2026-05-29] Commit Summary
+
+**Change Type:** Feature
+**Scope:** Preferences backend (domain / application / infrastructure / interface)
+
+**Summary:**
+Implemented the full preferences bounded context (4-layer Clean Architecture):
+domain entities (PreferenceKey StrEnum, Preference dataclass, DEFAULT_PREFERENCES),
+validate_preference_value (O(1), strict coercion policy), GetPreferences and
+SetPreference use cases, SqlAlchemyPreferenceRepository with atomic
+ON CONFLICT DO UPDATE upsert, PreferencesResponse / UpdatePreferenceRequest schemas,
+and the /api/v1/preferences router (GET + PUT with PreferenceKey path-param). Added
+import-linter contracts (3 new rules) and registered in main.py. 500 tests pass.
+
+**Rationale:**
+Each layer is independently testable with zero framework imports in domain/app
+(enforced by import-linter). Atomic upsert (ADR-0020) is race-free and idempotent.
+Lazy defaults (GetPreferences merges DEFAULT_PREFERENCES over stored rows) means
+no mandatory preferences setup at registration.
+
+**References:**
+- Issue: GH-55
+- ADR-0020: Preferences storage data structure
+- SRS §9.x, FR-P-1, FR-P-3
