@@ -27,6 +27,10 @@ function toastMessage(ach: AchievementRecord): string {
     return 'Goal reached! You hit your target weight.';
   }
   // parseFloat strips trailing zeros from the Numeric(6,2) serialised string.
+  if (ach.achievement_type === 'streak') {
+    const days = parseFloat(String(ach.threshold));
+    return `${days}-day logging streak! Keep it up.`;
+  }
   const lbs = parseFloat(String(ach.threshold));
   return `${lbs} lb milestone reached!`;
 }

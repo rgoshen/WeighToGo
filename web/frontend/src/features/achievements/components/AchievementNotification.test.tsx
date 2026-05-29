@@ -20,6 +20,14 @@ const goalReached: AchievementRecord = {
   earned_at: '2026-01-01T00:00:00Z',
 };
 
+const streak7: AchievementRecord = {
+  achievement_id: 4,
+  goal_id: 7,
+  achievement_type: 'streak',
+  threshold: 7,
+  earned_at: '2026-01-07T00:00:00Z',
+};
+
 describe('AchievementNotification', () => {
   it('renders nothing when achievements array is empty', () => {
     const { container } = render(
@@ -36,6 +44,11 @@ describe('AchievementNotification', () => {
   it('shows goal reached copy for goal_reached achievement', () => {
     render(<AchievementNotification achievements={[goalReached]} onDismissOne={() => undefined} />);
     expect(screen.getByText(/goal reached/i)).toBeInTheDocument();
+  });
+
+  it('shows streak toast copy for a streak achievement', () => {
+    render(<AchievementNotification achievements={[streak7]} onDismissOne={() => undefined} />);
+    expect(screen.getByText(/7-day logging streak/i)).toBeInTheDocument();
   });
 
   it('has role status for ARIA live region (NFR-A-3)', () => {

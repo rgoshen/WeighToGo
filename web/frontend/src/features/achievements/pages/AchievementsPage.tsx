@@ -21,6 +21,10 @@ function achievementLabel(ach: AchievementRecord): string {
   if (ach.achievement_type === 'goal_reached') return 'Goal Reached';
   // parseFloat strips trailing decimal zeros from the Pydantic-serialised
   // Numeric(6,2) string (e.g. "5.00" → 5) for clean display.
+  if (ach.achievement_type === 'streak') {
+    const days = parseFloat(String(ach.threshold));
+    return `${days}-day Streak`;
+  }
   const lbs = parseFloat(String(ach.threshold));
   return `${lbs} lb Milestone`;
 }

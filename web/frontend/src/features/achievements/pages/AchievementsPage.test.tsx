@@ -46,6 +46,22 @@ describe('AchievementsPage', () => {
     await waitFor(() => expect(screen.getByText(/5 lb milestone/i)).toBeInTheDocument());
   });
 
+  it('renders a streak achievement with day-count label', async () => {
+    vi.spyOn(achClientModule.achievementClient, 'list').mockResolvedValue({
+      items: [
+        {
+          achievement_id: 3,
+          goal_id: 7,
+          achievement_type: 'streak',
+          threshold: 7,
+          earned_at: '2026-01-07T00:00:00Z',
+        },
+      ],
+    });
+    render(<AchievementsPage />, { wrapper });
+    await waitFor(() => expect(screen.getByText(/7-day streak/i)).toBeInTheDocument());
+  });
+
   it('renders a goal_reached achievement with correct label', async () => {
     vi.spyOn(achClientModule.achievementClient, 'list').mockResolvedValue({
       items: [
