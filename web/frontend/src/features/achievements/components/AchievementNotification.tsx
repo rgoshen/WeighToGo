@@ -26,7 +26,9 @@ function toastMessage(ach: AchievementRecord): string {
   if (ach.achievement_type === 'goal_reached') {
     return 'Goal reached! You hit your target weight.';
   }
-  return `${ach.threshold} lb milestone reached!`;
+  // parseFloat strips trailing zeros from the Numeric(6,2) serialised string.
+  const lbs = parseFloat(String(ach.threshold));
+  return `${lbs} lb milestone reached!`;
 }
 
 export function AchievementNotification({ achievements, onDismissOne }: Props) {

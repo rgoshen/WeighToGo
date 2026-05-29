@@ -19,7 +19,10 @@ import type { AchievementRecord } from '../schemas/achievement';
 
 function achievementLabel(ach: AchievementRecord): string {
   if (ach.achievement_type === 'goal_reached') return 'Goal Reached';
-  return `${ach.threshold} lb Milestone`;
+  // parseFloat strips trailing decimal zeros from the Pydantic-serialised
+  // Numeric(6,2) string (e.g. "5.00" → 5) for clean display.
+  const lbs = parseFloat(String(ach.threshold));
+  return `${lbs} lb Milestone`;
 }
 
 function achievementDate(ach: AchievementRecord): string {
