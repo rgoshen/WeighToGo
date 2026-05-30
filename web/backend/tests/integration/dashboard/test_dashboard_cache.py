@@ -56,6 +56,49 @@ def test_creating_a_weight_entry_busts_the_dashboard_cache(client: TestClient) -
     assert after.json()["total_entries"] == 2
 
 
+def test_updating_a_weight_entry_busts_the_dashboard_cache(client: TestClient) -> None:
+    # ARRANGE — register, add one entry, prime the cache with a read
+    _register_and_login(client)
+    created = client.post(
+        "/api/v1/weight-entries",
+        json={"weight_value": 180.0, "weight_unit": "lbs", "observation_date": "2026-05-01"},
+    )
+    entry_id = created.json()["entry_id"]
+    first = client.get("/api/v1/dashboard/summary")
+    assert first.json()["latest_entry"]["weight_value"] == 180.0
+
+    # ACT — update the entry's weight (must invalidate the cache), then re-read
+    resp = client.put(
+        f"/api/v1/weight-entries/{entry_id}",
+        json={"weight_value": 175.0, "weight_unit": "lbs", "observation_date": "2026-05-01"},
+    )
+    assert resp.status_code == 200, resp.json()
+    after = client.get("/api/v1/dashboard/summary")
+
+    # ASSERT — fresh summary reflects the edited value (not the stale 180)
+    assert after.json()["latest_entry"]["weight_value"] == 175.0
+
+
+def test_deleting_a_weight_entry_busts_the_dashboard_cache(client: TestClient) -> None:
+    # ARRANGE — register, add one entry, prime the cache with a read
+    _register_and_login(client)
+    created = client.post(
+        "/api/v1/weight-entries",
+        json={"weight_value": 180.0, "weight_unit": "lbs", "observation_date": "2026-05-01"},
+    )
+    entry_id = created.json()["entry_id"]
+    first = client.get("/api/v1/dashboard/summary")
+    assert first.json()["total_entries"] == 1
+
+    # ACT — delete the entry (must invalidate the cache), then re-read
+    resp = client.delete(f"/api/v1/weight-entries/{entry_id}")
+    assert resp.status_code == 204
+    after = client.get("/api/v1/dashboard/summary")
+
+    # ASSERT — fresh count reflects the deletion (not the stale 1)
+    assert after.json()["total_entries"] == 0
+
+
 def _create_goal(client: TestClient) -> int:
     resp = client.post(
         "/api/v1/goals",

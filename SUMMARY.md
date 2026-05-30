@@ -3617,3 +3617,52 @@ intermittently breaking the goal-create and achievement-notification E2E specs.
 **Summary:** Introduce module-scoped seeded_uid fixture so _seed is called once per module; fixes UniqueViolation when second EXPLAIN test tried to re-insert perf@example.com after scope="module" kept the DB alive
 **Rationale:** scope="module" was correct (halves migration churn) but the two EXPLAIN tests each called _seed independently, violating the unique email constraint on the second call. One shared seeded_uid fixture seeds once and both tests receive the same uid.
 **References:** Issue: GH-56
+
+## [2026-05-30] Commit Summary
+
+**Change Type:** Fix
+**Scope:** weight_tracking router / dashboard cache (NFR-P-5)
+
+**Summary:**
+Dashboard TTL cache is now invalidated on weight-entry update and delete, not
+just create. Added one `invalidate_dashboard_cache(current_user_id)` call to the
+PUT and DELETE handlers, mirroring the existing create-path invalidation, plus
+two integration tests proving each mutation busts the cache. Corrected the
+dashboard read-through comment, which previously named only the create trigger.
+
+**Rationale:**
+Editing or deleting a weight entry could serve a stale dashboard summary
+(latest entry, counters) for up to the 30s TTL. The named helper is the existing
+DRY abstraction; three one-line call sites need no wrapper.
+
+**Bug Fix Context (if applicable):**
+Root cause: update/delete handlers omitted the invalidation call present in the
+create handler. Deferred from #62 (PR #74, ADR-0023) and tracked as a documented
+consequence; this closes the code half of that follow-up.
+
+**References:**
+- Issue: GH-77
+- ADR: 0023
+
+## [2026-05-30] Commit Summary
+
+**Change Type:** Docs
+**Scope:** ADR-0023 (TTL caching strategy)
+
+**Summary:**
+Amended ADR-0023 with a dated Update (2026-05-30) resolving the two follow-ups
+deferred from #62: weight-entry update/delete are now invalidation triggers, and
+the cross-worker strategy is explicitly decided — accept the per-process 30s TTL
+bound now, swap to a shared-cache adapter behind the same get/set/invalidate
+interface only if multi-worker deployment makes the staleness observable. Updated
+the Decision invalidation-triggers list and reframed the per-worker limitation as
+an accepted trade-off with a documented revisit trigger.
+
+**Rationale:**
+A shared backend (Redis) is disproportionate infra for one cached read model and
+out of scope for the milestone (YAGNI); the TTLCache interface is the designed
+swap point if that changes.
+
+**References:**
+- Issue: GH-77
+- ADR: 0023
