@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from weighttogo.shared.cache import DEFAULT_MAX_SIZE, DEFAULT_TTL_SECONDS, TTLCache
 
 
@@ -155,6 +157,12 @@ def test_default_ttl_constant_is_thirty_seconds() -> None:
 
 def test_default_maxsize_constant_is_set() -> None:
     assert DEFAULT_MAX_SIZE == 1024
+
+
+def test_maxsize_below_one_is_rejected() -> None:
+    # ARRANGE / ACT / ASSERT — a zero or negative cap is a programming error
+    with pytest.raises(ValueError, match="maxsize must be >= 1"):
+        TTLCache(maxsize=0)
 
 
 def test_set_never_grows_past_maxsize() -> None:
