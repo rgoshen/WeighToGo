@@ -57,27 +57,45 @@ staleness is an acceptable trade for avoiding repeated full-series reads.
 **Expiry data structure.** A `dict` mapping `key -> _Entry(value, expires_at)`,
 where `expires_at` is a `float` deadline taken from `time.monotonic()` at write
 time plus the TTL. Expiry is **lazy**: a `get` that finds an entry past its
-deadline deletes it and reports a miss. There is no background sweeper (YAGNI).
-A monotonic clock is used, not wall-clock time, so the TTL is immune to system
-clock adjustments. The `now` source is injectable, which makes expiry tests
-deterministic without sleeping.
+deadline removes it (via `pop`, see below) and reports a miss. There is no
+background sweeper (YAGNI). A monotonic clock is used, not wall-clock time, so
+the TTL is immune to system clock adjustments. The `now` source is injectable,
+which makes expiry tests deterministic without sleeping.
+
+Lazy eviction uses `dict.pop(key, None)`, not `del`. The sync dashboard endpoint
+runs in Starlette's AnyIO threadpool, so two threads can read the same expired
+entry and both attempt eviction; `del` would raise `KeyError` on the loser (a
+500), whereas `pop` is an idempotent no-op. This mirrors `invalidate`.
+
+**Bounded size.** The cache is capped at `maxsize` entries
+(`DEFAULT_MAX_SIZE = 1024`, one entry per active user in a worker process). An
+unbounded `dict` keyed by `user_id` is a memory-DoS surface: a flood of distinct
+keys grows it without limit. When a `set` would insert a *new* key into a full
+cache, the cache first evicts one entry — an **expired** entry if any exists
+(reclaiming it loses no useful data), otherwise the **oldest insertion** (`dict`
+preserves insertion order, so the first key is the oldest). Overwriting an
+existing key never grows the store and so skips eviction.
 
 The expiry comparison uses `now >= deadline` — a magnitude comparison, never a
 float-equality test. Because the deadline was derived by adding the TTL to a
 reading of the same monotonic clock, the comparison is exact at the boundary.
 
-**Complexity.** `get`, `set`, and `invalidate` are O(1) average — a single
-`dict` operation each. Space is O(k) where k is the number of distinct live
-keys (one per active user in the worker process).
+**Complexity.** `get` and `invalidate` are O(1) average — a single `dict`
+operation each. `set` is O(1) average; when the cache is at `maxsize` it evicts
+first, which is O(n) worst case (n = `maxsize`) to scan for an expired entry,
+otherwise O(1) to drop the oldest insertion. Space is O(`maxsize`) — growth is
+bounded by the cap, so a flood of distinct keys cannot exhaust memory.
 
-**Invalidation triggers.** A successful weight-entry **create** invalidates the
-requesting user's cache key. Detection runs at the composition root: the
-weight-entries router (interface layer) calls
-`invalidate_dashboard_cache(user_id)` after a successful create. The cache
-object and its accessors live in the dashboard interface layer; both routers are
-interface-layer modules, so this cross-context interface import respects the
-import contracts (the dashboard router already imports the `auth` and `goals`
-interfaces).
+**Invalidation triggers.** A successful **weight-entry create** and a successful
+**goal create, update, or delete (abandon)** each invalidate the requesting
+user's cache key. The cached `DashboardSummary` embeds active-goal progress, so
+goal mutations must bust it or a read in the TTL window serves a stale summary.
+Detection runs at the composition root: the weight-entries and goals routers
+(interface layer) call `invalidate_dashboard_cache(user_id)` after a successful
+mutation. The cache object and its accessors live in the dashboard interface
+layer; all three are interface-layer modules, so these cross-context interface
+imports respect the import contracts (verified by the import-linter architecture
+test).
 
 ## Rationale
 
@@ -116,24 +134,28 @@ touch it through a named function rather than a private attribute.
 
 ## Consequences
 
-- **Positive**: O(1) cache operations; staleness bounded to ≤ 30 s; a pure,
-  fully unit-tested structure with documented complexity; no new runtime
-  dependency; Clean Architecture isolation preserved (verified by the
-  import-linter architecture test).
-- **Negative**:
+- **Positive**: O(1) cache `get`/`invalidate` (O(n) worst-case `set` only on
+  eviction from a full cache); staleness bounded to ≤ 30 s; **memory bounded to
+  O(`maxsize`)**, so a key flood cannot exhaust memory; idempotent lazy eviction
+  safe under the AnyIO threadpool; a pure, fully unit-tested structure with
+  documented complexity; no new runtime dependency; Clean Architecture isolation
+  preserved (verified by the import-linter architecture test).
+- **Negative** (accepted limitations for a `[SHOULD]` stretch optimisation, all
+  bounded by the ≤ 30 s TTL; tracked in issue #77):
   - The cache is **per worker process** — it is not shared across uvicorn
     workers, so each worker warms its own copy and a write handled by one worker
-    does not invalidate another worker's copy. Bounded by the TTL (≤ 30 s).
-  - **Only weight-entry create is an invalidation trigger.** Editing or deleting
-    a weight entry does **not** currently bust the cache, so a dashboard read in
-    the ≤ 30 s window after an update or delete may be stale. This is an accepted
-    limitation for a `[SHOULD]` stretch optimisation; it is bounded by the TTL.
-- **Follow-ups**:
+    does not invalidate another worker's copy.
+  - **Weight-entry update and delete are not invalidation triggers.** Editing or
+    deleting a weight entry does **not** currently bust the cache, so a dashboard
+    read in the window after such a change may be stale. (Weight-entry *create*
+    and all goal mutations do invalidate.)
+- **Follow-ups** (issue #77):
   - Add update and delete of a weight entry as invalidation triggers (same
     `invalidate_dashboard_cache` call at those router edges).
-  - If multi-worker deployment becomes real, replace the in-process `TTLCache`
-    with a shared-cache adapter behind the same `get`/`set`/`invalidate`
-    interface (the swap point the interface was designed to allow).
+  - Decide the cross-worker strategy: if multi-worker deployment becomes real,
+    replace the in-process `TTLCache` with a shared-cache adapter behind the same
+    `get`/`set`/`invalidate` interface (the swap point the interface was designed
+    to allow).
 
 ## Alternatives Considered
 
