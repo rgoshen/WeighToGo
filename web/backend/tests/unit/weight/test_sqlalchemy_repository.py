@@ -1,8 +1,9 @@
 """Unit tests for SqlAlchemyWeightEntryRepository using an in-memory SQLite DB.
 
-Covers the range read added for the trend / rate-of-change read paths (FR-D-2,
-FR-D-3).  The range query rides the ``(user_id, observation_date)`` composite
-index; the index-usage proof itself runs on PostgreSQL in
+Covers the range read for the trend / rate-of-change paths (FR-D-2, FR-D-3) and
+the observation-date read used by streak detection (FR-Ach-3).  The range query
+rides the ``(user_id, observation_date)`` composite index; the index-usage proof
+itself runs on PostgreSQL in
 ``tests/integration/weight/test_index_usage_postgres.py``.
 """
 
@@ -29,6 +30,7 @@ from weighttogo.weight_tracking.infrastructure.repositories import (
 
 @pytest.fixture
 def db_session() -> Generator[Session, None, None]:
+    """In-memory SQLite session with all tables created and a seeded user."""
     engine = create_engine(
         "sqlite:///:memory:",
         connect_args={"check_same_thread": False},
@@ -123,3 +125,17 @@ def test_list_for_user_in_range_orders_oldest_first(db_session: Session) -> None
         date(2026, 5, 12),
         date(2026, 5, 20),
     ]
+
+
+def test_list_observation_dates_excludes_deleted_entries(db_session: Session) -> None:
+    # ARRANGE: two active dates + one deleted date (FR-Ach-3)
+    repo = SqlAlchemyWeightEntryRepository(db_session)
+    _save_entry(repo, date(2026, 1, 1), "180")
+    _save_entry(repo, date(2026, 1, 2), "180")
+    _save_entry(repo, date(2026, 1, 3), "180", is_deleted=True)
+
+    # ACT
+    result = repo.list_observation_dates(1)
+
+    # ASSERT: deleted entry excluded
+    assert result == {date(2026, 1, 1), date(2026, 1, 2)}
