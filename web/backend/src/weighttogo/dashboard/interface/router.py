@@ -85,7 +85,8 @@ def get_dashboard_summary(
         get_active_goal_with_progress=get_active_goal,
     )
     # Read-through cache (NFR-P-5): serve a cached summary when present and live,
-    # otherwise recompute and store it.  Invalidated on weight-entry create.
+    # otherwise recompute and store it.  Invalidated on any weight-entry
+    # create/update/delete and any goal create/update/delete (ADR-0023).
     summary = _dashboard_cache.get(current_user_id)
     if summary is None:
         summary = uc.execute(user_id=current_user_id)

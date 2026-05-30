@@ -383,6 +383,11 @@ def update_weight_entry(
         ) from exc
 
     logger.info("weight_entry_updated", entry_id=entry.entry_id, user_id=current_user_id)
+
+    # Invalidate the cached dashboard summary so the next read recomputes with
+    # this edit (NFR-P-5 invalidation trigger, ADR-0023).
+    invalidate_dashboard_cache(current_user_id)
+
     return WeightEntryResponse.model_validate(entry)
 
 
@@ -429,4 +434,9 @@ def delete_weight_entry(
         ) from exc
 
     logger.info("weight_entry_deleted", entry_id=entry_id, user_id=current_user_id)
+
+    # Invalidate the cached dashboard summary so the next read recomputes without
+    # this deleted entry (NFR-P-5 invalidation trigger, ADR-0023).
+    invalidate_dashboard_cache(current_user_id)
+
     return Response(status_code=status.HTTP_204_NO_CONTENT)
