@@ -78,7 +78,13 @@ function RateValue({ rate, unit }: { rate: number; unit: string }) {
     return <Typography variant="h5">No change this week</Typography>;
   }
 
-  const magnitude = formatWeight(Math.abs(rate), unit as Preferences['weightUnit']);
+  // When the backend omits a unit, show the bare magnitude with no suffix and,
+  // crucially, no dangling space where the unit would have gone. `formatWeight`
+  // always appends "<space><unit>", which leaves a trailing space for an empty
+  // unit, so format the magnitude directly in that case.
+  const magnitude = unit
+    ? formatWeight(Math.abs(rate), unit as Preferences['weightUnit'])
+    : Math.abs(rate).toFixed(1);
   const direction = rate < 0 ? 'Down' : 'Up';
 
   return (

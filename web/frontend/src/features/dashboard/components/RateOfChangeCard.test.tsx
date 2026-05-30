@@ -74,9 +74,13 @@ describe('RateOfChangeCard', () => {
     // Non-null rate with null unit is type-possible; treat the magnitude as-is.
     const nullUnit: RateOfChangeResponse = { weekly_rate: -2, unit: null, reason: null };
     render(<RateOfChangeCard rateOfChange={nullUnit} isLoading={false} isError={false} />);
-    expect(screen.getByText(/down/i)).toBeInTheDocument();
-    // 2.0 unconverted (no unit suffix when unit is unknown).
-    expect(screen.getByText(/2\.0/)).toBeInTheDocument();
+    // 2.0 unconverted, no unit suffix. Match against the raw textContent with
+    // whitespace normalisation disabled so a dangling space where the unit
+    // would have gone (the double-space regression) fails the assertion.
+    const node = screen.getByText('Down 2.0 / week', {
+      normalizer: (text) => text,
+    });
+    expect(node).toBeInTheDocument();
   });
 
   it('renders a no-change message when the rate is zero', () => {
