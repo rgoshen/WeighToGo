@@ -7,6 +7,33 @@ issues were resolved.
 
 ---
 
+## [2026-05-30 09:12] Commit Summary
+
+**Change Type:** Refactor
+**Scope:** Auth frontend test (LoginForm.test.tsx)
+
+**Summary:**
+Addressed PR #81 review feedback: the form-level-alert test still asserted the
+message with an inline regex (`toHaveTextContent(/invalid credentials/i)`), so
+only the prop side followed the constant. Switched the assertion to the imported
+constant — `expect(alert).toHaveTextContent(AUTH_INVALID_CREDENTIALS)` — so both
+the prop and the assertion track any future reword. LoginForm test file green
+(5 tests).
+
+**Rationale:**
+The inline regex was the second half of the very re-typing GH-47 set out to
+remove; a reword of the constant would have left the assertion failing on a pure
+copy change. The assertion is not tautological: LoginForm is under test and the
+constant flows prop → component → DOM, so a component that dropped or altered
+formError still fails. (It escaped criterion #2's grep only because the regex is
+lowercase and period-less, not matching `Invalid credentials\.`.)
+
+**References:**
+- Issue: GH-47
+- PR: #81 (review feedback)
+
+---
+
 ## [2026-05-30 08:58] Commit Summary
 
 **Change Type:** Refactor

@@ -70,7 +70,7 @@ describe('LoginForm', () => {
       </Wrapper>,
     );
     const alert = screen.getByRole('alert');
-    expect(alert).toHaveTextContent(/invalid credentials/i);
+    expect(alert).toHaveTextContent(AUTH_INVALID_CREDENTIALS);
   });
 
   it('disables the submit button while submitting', () => {
