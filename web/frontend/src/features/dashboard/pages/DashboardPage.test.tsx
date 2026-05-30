@@ -77,6 +77,20 @@ describe('DashboardPage', () => {
     expect(screen.getByRole('heading', { name: /dashboard/i })).toBeInTheDocument();
   });
 
+  it('passes the loading state through to the trend chart', () => {
+    // Never resolves, so the query stays in its loading state.
+    vi.spyOn(dashboardClient, 'summary').mockReturnValue(new Promise(() => {}));
+    render(<DashboardPage />, { wrapper });
+    // While loading, the chart renders its loading state, not the figure.
+    expect(screen.queryByRole('figure', { name: /weight trend/i })).not.toBeInTheDocument();
+  });
+
+  it('passes the error state through to the trend chart', async () => {
+    vi.spyOn(dashboardClient, 'summary').mockRejectedValue(new Error('boom'));
+    render(<DashboardPage />, { wrapper });
+    await waitFor(() => expect(screen.getByText(/failed to load trend data/i)).toBeInTheDocument());
+  });
+
   it('shows goal card when total_entries is 0 but active_goal is set', async () => {
     const summaryWithGoalNoEntries: DashboardSummaryResponse = {
       latest_entry: null,

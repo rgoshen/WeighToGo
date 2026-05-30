@@ -61,4 +61,39 @@ describe('WeightTrendChart', () => {
     render(<WeightTrendChart trend={series} today="2026-05-29" />);
     expect(screen.getByRole('figure', { name: /weight trend/i })).toBeInTheDocument();
   });
+
+  it('shows loading text while loading', () => {
+    render(<WeightTrendChart trend={[]} today="2026-05-29" isLoading />);
+    expect(screen.getByText(/loading/i)).toBeInTheDocument();
+  });
+
+  it('shows an error message on error', () => {
+    render(<WeightTrendChart trend={[]} today="2026-05-29" isError />);
+    expect(screen.getByText(/failed to load/i)).toBeInTheDocument();
+  });
+
+  it('names the chart region with the series unit for screen readers', () => {
+    render(<WeightTrendChart trend={series} today="2026-05-29" />);
+    expect(
+      screen.getByRole('figure', { name: /weight trend over time, measured in lbs/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('names the chart region with a kg unit when the series is in kg', () => {
+    const kgSeries: TrendPointResponse[] = [
+      { observation_date: '2026-05-20', weight_value: 80, weight_unit: 'kg' },
+    ];
+    render(<WeightTrendChart trend={kgSeries} today="2026-05-29" />);
+    expect(screen.getByRole('figure', { name: /measured in kg/i })).toBeInTheDocument();
+  });
+
+  it('formats the table weight values with one decimal and the unit', () => {
+    // 175 raw would render "175 lbs"; formatWeight renders "175.0 lbs".
+    const single: TrendPointResponse[] = [
+      { observation_date: '2026-05-20', weight_value: 175, weight_unit: 'lbs' },
+    ];
+    render(<WeightTrendChart trend={single} today="2026-05-29" />);
+    const table = screen.getByRole('table', { name: /weight trend/i });
+    expect(within(table).getByText('175.0 lbs')).toBeInTheDocument();
+  });
 });

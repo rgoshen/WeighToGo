@@ -63,7 +63,7 @@ export function DashboardPage() {
             />
           </Grid>
           <Grid size={{ xs: 12 }}>
-            <WeightTrendChart trend={data?.trend ?? []} />
+            <WeightTrendChart trend={data?.trend ?? []} isLoading={isLoading} isError={isError} />
           </Grid>
         </Grid>
       )}

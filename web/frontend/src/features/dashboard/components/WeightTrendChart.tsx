@@ -1,5 +1,13 @@
 import { useMemo, useState } from 'react';
-import { Box, Card, CardContent, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
+import {
+  Box,
+  Card,
+  CardContent,
+  ToggleButton,
+  ToggleButtonGroup,
+  Typography,
+  useTheme,
+} from '@mui/material';
 import { visuallyHidden } from '@mui/utils';
 import {
   CartesianGrid,
@@ -11,7 +19,8 @@ import {
   YAxis,
 } from 'recharts';
 import type { TrendPointResponse } from '../api/dashboard-client';
-import { formatObservationDate } from '../../../lib/format';
+import { formatObservationDate, formatWeight } from '../../../lib/format';
+import type { Preferences } from '../../../contexts/PreferencesContext';
 
 /** Selectable trend ranges (FR-D-2). `all` shows the full series. */
 type Range = '7' | '30' | '90' | 'all';
@@ -31,6 +40,10 @@ interface WeightTrendChartProps {
    * current date; passed explicitly by tests for determinism.
    */
   today?: string;
+  /** Whether the dashboard summary query is loading. */
+  isLoading?: boolean;
+  /** Whether the dashboard summary query errored. */
+  isError?: boolean;
 }
 
 /** Return the inclusive lower-bound date string for a range, or null for `all`. */
@@ -47,9 +60,17 @@ function rangeFloor(range: Range, today: string): string | null {
  * Accessibility (DDR-0006, NFR-A-3): the visual Recharts line chart is paired
  * with a visually-hidden data table that mirrors the selected series, so screen
  * reader users perceive the same data sighted users see. The chart region
- * carries an accessible name via `role="figure"` and `aria-label`.
+ * carries an accessible name via `role="figure"` and `aria-label`, and the
+ * Y-axis is labelled with the series unit. The line uses the theme primary
+ * colour, on which DDR-0006 bases its NFR-A-4 contrast claim.
  */
-export function WeightTrendChart({ trend, today }: WeightTrendChartProps) {
+export function WeightTrendChart({
+  trend,
+  today,
+  isLoading = false,
+  isError = false,
+}: WeightTrendChartProps) {
+  const theme = useTheme();
   const referenceDate = today ?? new Date().toISOString().slice(0, 10);
   const [range, setRange] = useState<Range>('all');
 
@@ -58,6 +79,10 @@ export function WeightTrendChart({ trend, today }: WeightTrendChartProps) {
     if (floor === null) return trend;
     return trend.filter((p) => p.observation_date >= floor);
   }, [trend, range, referenceDate]);
+
+  // The series is uniformly lbs from the backend; fall back to lbs when empty.
+  const unit = trend[0]?.weight_unit ?? 'lbs';
+  const axisLabel = `Weight (${unit})`;
 
   return (
     <Card>
@@ -90,22 +115,30 @@ export function WeightTrendChart({ trend, today }: WeightTrendChartProps) {
           </ToggleButtonGroup>
         </Box>
 
-        {trend.length === 0 ? (
+        {isLoading ? (
+          <Typography variant="body2" color="text.secondary">
+            Loading…
+          </Typography>
+        ) : isError ? (
+          <Typography variant="body2" color="error">
+            Failed to load trend data.
+          </Typography>
+        ) : trend.length === 0 ? (
           <Typography variant="body2" color="text.secondary">
             No trend data yet.
           </Typography>
         ) : (
-          <Box role="figure" aria-label="Weight trend over time">
+          <Box role="figure" aria-label={`Weight trend over time, measured in ${unit}`}>
             <ResponsiveContainer width="100%" height={280}>
               <LineChart data={visible} title="Weight trend over time">
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="observation_date" />
-                <YAxis />
+                <YAxis label={{ value: axisLabel, angle: -90, position: 'insideLeft' }} />
                 <Tooltip />
                 <Line
                   type="monotone"
                   dataKey="weight_value"
-                  stroke="currentColor"
+                  stroke={theme.palette.primary.main}
                   dot={false}
                   isAnimationActive={false}
                 />
@@ -125,7 +158,10 @@ export function WeightTrendChart({ trend, today }: WeightTrendChartProps) {
                   <tr key={p.observation_date}>
                     <td>{formatObservationDate(p.observation_date)}</td>
                     <td>
-                      {p.weight_value} {p.weight_unit}
+                      {formatWeight(
+                        Number(p.weight_value),
+                        p.weight_unit as Preferences['weightUnit'],
+                      )}
                     </td>
                   </tr>
                 ))}
