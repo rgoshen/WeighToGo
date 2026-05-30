@@ -31,6 +31,8 @@ import { useSetGoal } from '../hooks/useSetGoal';
 import { useUpdateGoal } from '../hooks/useUpdateGoal';
 import type { GoalFormValues } from '../schemas/goal-schemas';
 import { usePreferences } from '../../../contexts/PreferencesContext';
+import { formatWeightInPreferredUnit } from '../../../lib/format';
+import type { WeightUnit } from '../../../lib/unit-conversion';
 
 function mapError(err: unknown): string {
   if (err instanceof ApiError) {
@@ -47,6 +49,7 @@ export function GoalsPage() {
   const updateGoal = useUpdateGoal();
   const abandonGoal = useAbandonGoal();
   const { preferences } = usePreferences();
+  const preferredUnit = preferences.weightUnit;
 
   const [isEditing, setIsEditing] = useState(false);
   const [conflictError, setConflictError] = useState<string | null>(null);
@@ -133,7 +136,7 @@ export function GoalsPage() {
           onSubmit={handleCreate}
           conflictError={conflictError}
           isSubmitting={setGoal.isPending}
-          defaultUnit={preferences.weightUnit}
+          defaultUnit={preferredUnit}
         />
       </Box>
     );
@@ -189,7 +192,17 @@ export function GoalsPage() {
             {activeGoal.goal_type === 'lose' ? 'Lose weight' : 'Gain weight'}
           </Typography>
           <Typography variant="h5">
-            {activeGoal.start_value} → {activeGoal.target_value} {activeGoal.target_unit}
+            {formatWeightInPreferredUnit(
+              activeGoal.start_value,
+              activeGoal.target_unit as WeightUnit,
+              preferredUnit,
+            )}{' '}
+            →{' '}
+            {formatWeightInPreferredUnit(
+              activeGoal.target_value,
+              activeGoal.target_unit as WeightUnit,
+              preferredUnit,
+            )}
           </Typography>
           {activeGoal.target_date && (
             <Typography variant="body2" color="text.secondary">
