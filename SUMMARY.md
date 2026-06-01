@@ -7,6 +7,32 @@ issues were resolved.
 
 ---
 
+## [2026-06-01 14:34] Commit Summary
+
+**Change Type:** Feature
+**Scope:** Frontend loading UI (web)
+
+**Summary:**
+Added an optional `minHeight` prop to `LoadingSplash` (default `100vh`), applied as
+an inline style so it is reliably assertable. Lets the same splash serve both the
+full-viewport top-level Suspense fallback and a shorter content-area fallback
+inside the persistent AppLayout shell (next slice). Test-first
+(`LoadingSplash.test.tsx`): a new case asserts a custom `minHeight` is applied; the
+existing accessibility test (role=status + "Loading…") is unchanged.
+
+**Rationale:**
+Route-splitting (GH-91) needs two Suspense fallbacks — full-screen for
+initial/public loads and shorter inside the shell so a page-chunk load does not
+stretch the content region to viewport height (spec-gap audit G6). One
+parameterised component keeps this DRY rather than adding a second loading
+component.
+
+**References:**
+- Issue: GH-91
+- Spec-gap audit gap G6 (per-boundary fallback sizing)
+
+---
+
 ## [2026-06-01 14:29] Commit Summary
 
 **Change Type:** Feature
