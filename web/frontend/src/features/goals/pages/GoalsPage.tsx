@@ -63,7 +63,7 @@ export function GoalsPage() {
       <Typography variant="h6" component="h2" gutterBottom>
         Goal history
       </Typography>
-      <GoalHistoryList goals={goalHistory.data?.goals ?? []} />
+      <GoalHistoryList goals={goalHistory.data?.goals ?? []} preferredUnit={preferredUnit} />
     </Box>
   );
 

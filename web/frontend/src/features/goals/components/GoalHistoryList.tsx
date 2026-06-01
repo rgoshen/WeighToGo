@@ -8,18 +8,22 @@
 
 import { Box, Chip, List, ListItem, ListItemText, Paper, Typography } from '@mui/material';
 
+import { formatWeightInPreferredUnit } from '../../../lib/format';
+import type { WeightUnit } from '../../../lib/unit-conversion';
 import type { GoalRecord } from '../api/goal-client';
 
 interface GoalHistoryListProps {
   /** Past goals (non-active), newest first. */
   goals: GoalRecord[];
+  /** The unit to display weight values in (FR-P-1). */
+  preferredUnit: WeightUnit;
 }
 
 function outcomeLabel(goal: GoalRecord): string {
   return goal.is_achieved ? 'Achieved' : 'Abandoned';
 }
 
-export function GoalHistoryList({ goals }: GoalHistoryListProps) {
+export function GoalHistoryList({ goals, preferredUnit }: GoalHistoryListProps) {
   if (goals.length === 0) {
     return (
       <Paper elevation={0} sx={{ p: 3, textAlign: 'center' }}>
@@ -46,7 +50,17 @@ export function GoalHistoryList({ goals }: GoalHistoryListProps) {
             <ListItemText
               primary={
                 <Box component="span">
-                  {goal.start_value} → {goal.target_value} {goal.target_unit}
+                  {formatWeightInPreferredUnit(
+                    goal.start_value,
+                    goal.target_unit as WeightUnit,
+                    preferredUnit,
+                  )}
+                  {' → '}
+                  {formatWeightInPreferredUnit(
+                    goal.target_value,
+                    goal.target_unit as WeightUnit,
+                    preferredUnit,
+                  )}
                 </Box>
               }
               secondary={goal.goal_type === 'lose' ? 'Lose weight' : 'Gain weight'}

@@ -7,6 +7,29 @@ issues were resolved.
 
 ---
 
+## [2026-06-01 16:56] Commit Summary
+
+**Change Type:** Feat
+**Scope:** Frontend / GoalHistoryList (web, GH-92)
+
+**Summary:**
+Added `preferredUnit: WeightUnit` required prop to `GoalHistoryList`. Start and
+target values are now formatted with `formatWeightInPreferredUnit`, converting
+from the stored `goal.target_unit` to the caller-supplied preferred unit before
+display. Updated `GoalsPage.tsx` to pass `preferredUnit` (already in scope via
+`usePreferences`). Updated all test renders to supply the required prop; added
+two new tests for kg conversion and lbs formatting.
+
+**Rationale:**
+FR-P-1: goal history must honor the user's preferred weight unit. Keeping the
+prop on the component (not calling `usePreferences()` inside it) preserves the
+presentational-only contract — the page owns data/context, the component renders.
+
+**References:**
+- Issue: GH-92 (M3 remediation finding #4, slice ①)
+
+---
+
 ## [2026-06-01 16:54] Commit Summary
 
 **Change Type:** Feat
