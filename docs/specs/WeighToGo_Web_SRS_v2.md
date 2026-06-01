@@ -642,7 +642,7 @@ The system shall allow an authenticated user to modify their active goal's targe
 
 #### FR-G-4: Mark Goal Achieved `[MUST]` `[M3]`
 
-The system shall automatically detect when a weight entry causes a goal to be reached and record the achievement.
+When a weight entry **is created** that causes a goal to be reached, the system shall detect this and record the achievement. Such achievements are permanent: they are not revoked or recomputed when entries are later updated or deleted.
 
 #### FR-G-5: Goal History `[SHOULD]` `[M3]`
 
@@ -650,9 +650,11 @@ The system shall maintain a history of past goals (achieved or abandoned) for th
 
 ### 6.4 Achievements and Milestones (FR-Ach)
 
+Achievement detection operates on a **create-only & permanent** contract: detection runs when a weight entry is created, and earned achievements are never revoked or recomputed when entries are subsequently updated or deleted. This applies across the full write surface — including goal abandon, goal target/date edits, and weight-entry updates and deletes. See ADR-0026.
+
 #### FR-Ach-1: Goal Achievement Recording `[MUST]` `[M3]`
 
-The system shall record an achievement when a weight entry causes the active goal to be reached.
+The system shall record an achievement when a **newly created** weight entry causes the active goal to be reached.
 
 #### FR-Ach-2: Milestone Detection `[MUST]` `[M3]`
 
