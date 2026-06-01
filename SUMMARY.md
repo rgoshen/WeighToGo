@@ -7,6 +7,36 @@ issues were resolved.
 
 ---
 
+## [2026-06-01 14:29] Commit Summary
+
+**Change Type:** Feature
+**Scope:** Frontend route loading (web)
+
+**Summary:**
+Added `lazyNamed(loader, exportName)` in `web/frontend/src/lib/lazy-named.ts` — a
+typed wrapper over `React.lazy` that maps a module's *named* export onto the
+`.default` that `lazy` requires. First slice of GH-91 (route-level code
+splitting): the page components are named exports, so this enables
+`React.lazy(() => import('./Page'))`-style splitting without converting every page
+to a default export (which would break existing named imports in `main.tsx` and
+tests). Test-first (`lazy-named.test.tsx`): asserts a named export renders inside
+`<Suspense>`. Frontend gate green — eslint (0 errors), prettier, tsc clean; full
+suite 378 passing; coverage 94.65% stmts / 91.6% branches (above the 90%
+thresholds).
+
+**Rationale:**
+React's `lazy` load function must resolve to `{ default: Component }` (verified
+against the React 19 docs via context7). Rather than inline the
+`.then(m => ({ default: m.X }))` adapter at all 8 call sites (repetition flagged by
+the spec-gap audit, G2), a single typed helper keeps the call sites DRY and the
+named-export mapping in one tested place.
+
+**References:**
+- Issue: GH-91
+- Spec-gap audit gap G2 (named-export → default reconciliation)
+
+---
+
 ## [2026-05-30 10:45] Commit Summary
 
 **Change Type:** Enhancement
