@@ -70,15 +70,15 @@ class DashboardSummary:
 class BuildDashboardSummary:
     """Assemble the dashboard read model for the requesting user.
 
-    Composes the ``weight_tracking`` and ``goals`` bounded contexts. Two
-    repository reads are issued: a full indexed range read (``date.min`` to
-    ``date.max``) that populates ``latest_entry``, ``total_entries``, and the
-    trend series; and a second bounded indexed range read over the trailing
-    ``2 × WINDOW_DAYS`` days, anchored on the latest observation, whose rows
-    feed the weekly rate-of-change algorithm.  Goal progress is delegated to
+    Composes the ``weight_tracking`` and ``goals`` bounded contexts. One full
+    indexed range read (``date.min`` to ``date.max``) populates
+    ``latest_entry``, ``total_entries``, and the trend series.  The
+    rate-of-change inputs are sliced from that same result in memory to the
+    trailing ``2 × WINDOW_DAYS`` days anchored on the latest observation — no
+    second repository call is issued.  Goal progress is delegated to
     ``GetActiveGoalWithProgress`` (reused, not reimplemented).
 
-    Anchoring the bounded window on the latest observation means the rate is
+    Anchoring the in-memory slice on the latest observation means the rate is
     computed correctly even when the most recent entry predates today.
 
     Args:
@@ -125,16 +125,12 @@ class BuildDashboardSummary:
             )
         )
 
-        # Bounded read: trailing 2*WINDOW_DAYS days anchored on the latest
-        # observation. One indexed range scan covers both 7-day windows; the
-        # domain function partitions in memory. Skipped when no entries exist.
+        # Slice the already-loaded series to the trailing 2*WINDOW_DAYS window.
+        # Exclusive lower bound matches weekly_rate_of_change's own partitioning.
         if latest_entry is not None:
             anchor = latest_entry.observation_date
-            rate_raw = self._repo.list_for_user_in_range(
-                user_id,
-                anchor - timedelta(days=2 * WINDOW_DAYS),
-                anchor,
-            )
+            cutoff = anchor - timedelta(days=2 * WINDOW_DAYS)
+            rate_raw = [e for e in entries if cutoff < e.observation_date <= anchor]
         else:
             rate_raw = []
 

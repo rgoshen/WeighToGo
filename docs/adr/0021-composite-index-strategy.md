@@ -48,8 +48,8 @@ Trade-off versus no index: a sequential scan over the full table is O(n) per rea
 
 The rate-of-change path landed as issue #89.  Resolution:
 
-1. The rate-of-change path (#89) routes through the **`(user_id, observation_date)`** composite index (migration 0002) via a bounded range read — **not** the `(user_id, created_at)` index provisioned by this ADR.
-2. Evidence: `web/backend/tests/integration/weight/test_index_usage_postgres.py::test_observation_date_range_query_uses_index_not_seqscan` EXPLAINs this exact query shape and asserts `Index Scan`, not `Seq Scan`.
+1. The rate-of-change path (#89) uses the full indexed range read already issued for the trend series; the 14-day window is sliced in memory. That read routes through the **`(user_id, observation_date)`** composite index (migration 0002) — **not** the `(user_id, created_at)` index provisioned by this ADR.
+2. Evidence: `web/backend/tests/integration/weight/test_index_usage_postgres.py::test_observation_date_range_query_uses_index_not_seqscan` runs `EXPLAIN` with `enable_seqscan = off`, asserts the index name `idx_weight_entries_user_observation_desc` is present in the plan (Index or Bitmap Index Scan — the scan-type prefix varies with the planner's choice), and asserts no `Seq Scan on weight_entries`.
 3. **Open item — orphaned index:** the `(user_id, created_at)` index provisioned by this ADR now has no query consumer.  Deciding its fate (keep with a fresh justification, or drop) is deferred to the **M4 migration-discipline review** (SRS §13.3.1 deliverable 4). A tracking issue should be filed under the M4 epic.
 
 ## Alternatives Considered

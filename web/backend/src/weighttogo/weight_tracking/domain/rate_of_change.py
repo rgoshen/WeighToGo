@@ -9,8 +9,8 @@ window.  Because the two windows are one week apart, that difference is already
 expressed per week.
 
 Time complexity:  O(w) over the entries that fall inside the two 7-day windows,
-after the bounded indexed range read performed by the caller's repository
-(ADR-0021), which returns every entry spanning both 7-day windows.
+after the caller has sliced the full indexed range read to the trailing
+14-day window (ADR-0021).
 Space complexity: O(1) — only running sums and counts are retained.
 """
 

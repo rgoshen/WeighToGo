@@ -1738,7 +1738,7 @@ Milestone 3 introduces algorithmic complexity that the architecture is designed 
 3. **Streak detection.** FR-Ach-3 with an efficient single-pass longest-run scan over a set-backed sorted date sequence (see ADR-0022 for the algorithm choice and the longest-run vs. rolling-window rationale).
 4. **Cursor-based pagination.** FR-W-2 cursor-based pagination with full ADR documentation — delivered ahead of schedule in M2 (ADR-0015); listed here for milestone-scope continuity.
 5. **TTL-based caching layer.** NFR-P-5 implemented for rate-of-change calculations.
-6. **Weekly rate of change.** FR-D-3 computed from a single bounded indexed range read over the trailing 14-day window on the `(user_id, observation_date)` composite index, partitioned in memory into two adjacent 7-day windows. One range scan supersedes the original two-seek sketch — same `O(w)` bound, fewer B-tree descents.
+6. **Weekly rate of change.** FR-D-3 computed from the full indexed range read issued for the trend series; the 14-day window is sliced in memory before the rate algorithm runs, so no second repository call is needed. O(n) read cost is unavoidable (trend requires all entries); rate computation is O(w) over the in-memory slice.
 7. **Charts on dashboard.** FR-D-2 with Recharts or equivalent.
 8. **ADRs covering algorithmic choices.** Pagination strategy, caching strategy, milestone detection algorithm, streak detection algorithm.
 

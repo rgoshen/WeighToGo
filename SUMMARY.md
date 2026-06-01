@@ -3750,3 +3750,31 @@ only the "two-seek" mechanism wording changes to match the implemented design.
 **References:**
 - Issue: GH-89
 - ADR: 0021
+
+## [2026-06-01] Commit Summary
+
+**Change Type:** Fix
+**Scope:** dashboard / BuildDashboardSummary use case (PR #105 review response)
+
+**Summary:**
+Replaced the second bounded repository call with an in-memory list
+comprehension that slices the already-loaded `entries` to the trailing
+`2 × WINDOW_DAYS` window.  This removes the read-consistency gap (READ COMMITTED
+means two sequential SELECTs can see different committed rows) and eliminates a
+redundant round-trip (the full read is unavoidable for trend, so the bounded call
+bought nothing over an in-memory filter).  Updated two regression tests to assert
+the single-call contract and in-memory filter behaviour.  Also updated four
+documents to match the new implementation: class docstring, `rate_of_change.py`
+module docstring, SRS §13.2.1 deliverable 6, and ADR-0021 Follow-up paragraph
+(fixed overstated evidence claim: test uses `enable_seqscan = off` and asserts
+index name, not literal `Index Scan`).
+
+**Rationale:**
+`shared/db.py` sets no `isolation_level`; PostgreSQL defaults to READ COMMITTED.
+A concurrent POST between the two SELECTs would produce a response where
+`rate_of_change` reflects a row absent from `trend`/`total_entries`, then that
+inconsistent state gets frozen in the TTL cache.  The in-memory slice is strictly
+cheaper (no RTT) and eliminates the window entirely.
+
+**References:**
+- Issue: GH-89

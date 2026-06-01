@@ -220,45 +220,34 @@ def test_dashboard_does_not_write_when_goal_at_100_percent() -> None:
     assert cmd.readonly is True
 
 
-def test_rate_path_uses_bounded_window_not_full_series() -> None:
-    """Rate path requires a second bounded window call, not just the full series read."""
-    from datetime import timedelta
-
-    from weighttogo.weight_tracking.domain.rate_of_change import WINDOW_DAYS
-
+def test_rate_path_uses_single_repo_call_not_two() -> None:
+    """Rate inputs are sliced from the single full read in memory; no second DB call."""
     repo = MagicMock()
-    anchor = date(2026, 5, 20)
-    repo.list_for_user_in_range.return_value = [_make_entry(observation_date=anchor)]
+    repo.list_for_user_in_range.return_value = [_make_entry()]
     _run(repo)
-    calls = repo.list_for_user_in_range.call_args_list
-    assert len(calls) == 2
-    _, second_start, second_end = calls[1].args
-    assert second_start == anchor - timedelta(days=2 * WINDOW_DAYS)
-    assert second_end == anchor
-    assert second_start != date.min
+    assert repo.list_for_user_in_range.call_count == 1
 
 
-def test_rate_inputs_come_from_bounded_read_not_full_series() -> None:
-    """The rate path must consume the bounded read's rows, not the full series (AC#2)."""
+def test_rate_inputs_sliced_in_memory_to_14_day_window() -> None:
+    """Rate inputs must be the in-window slice of the single read, not the full series (AC#2)."""
     from unittest.mock import patch
 
     from weighttogo.weight_tracking.domain.rate_of_change import RateOfChange
 
     repo = MagicMock()
     anchor = date(2026, 5, 20)
-    full = [
-        _make_entry(entry_id=1, observation_date=date(2025, 1, 1)),  # >1y old; full read only
+    entries = [
+        _make_entry(entry_id=1, observation_date=date(2025, 1, 1)),  # >1y old; outside window
         _make_entry(entry_id=2, observation_date=anchor),
     ]
-    bounded = [_make_entry(entry_id=2, observation_date=anchor)]  # in-window only
-    repo.list_for_user_in_range.side_effect = [full, bounded]
+    repo.list_for_user_in_range.return_value = entries
     with patch(
         "weighttogo.dashboard.application.build_dashboard_summary.weekly_rate_of_change"
     ) as woc:
         woc.return_value = RateOfChange(weekly_rate=None, unit=None, reason="insufficient_data")
         result = _run(repo)
-    # latest / count / trend derive from the FULL read ...
+    # trend / count derive from the full read
     assert result.total_entries == 2  # type: ignore[attr-defined]
-    # ... but the rate function is fed ONLY the bounded rows.
+    # rate function receives only in-window entries, not the full series
     (rate_inputs,) = woc.call_args.args
     assert [e.observation_date for e in rate_inputs] == [anchor]
