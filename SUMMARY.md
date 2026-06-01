@@ -7,6 +7,38 @@ issues were resolved.
 
 ---
 
+## [2026-06-01 14:50] Commit Summary
+
+**Change Type:** Test
+**Scope:** Frontend CI / bundle budget (web)
+
+**Summary:**
+Added a `size-limit` bundle budget (Option A) to guard the route-splitting work
+against regressions. Installed `size-limit` + `@size-limit/file` (dev deps), added a
+`"size-limit"` config and `"size"` script to `package.json`, and a "Bundle size
+budget (size-limit)" step after Build in `frontend-ci.yml`. Two gzipped budgets,
+calibrated to the measured build with headroom: initial JS (entry + vendor-react +
+vendor-mui) ≤ 190 kB (currently 171.83 kB) and the largest lazy route chunk
+(DashboardPage incl. charts) ≤ 110 kB (currently 91.31 kB). Verified locally:
+`npm run build && npm run size` passes and reports the real chunk sizes, so the globs
+match the emitted files (not a vacuous pass).
+
+**Rationale:**
+The acceptance criterion requires the budget to *guard against regressions* — fail
+CI, not merely warn. size-limit exits non-zero when a budget is exceeded (verified
+against its docs). Budgeting the initial eager payload plus the largest lazy chunk
+catches the two regressions that matter: re-bloating first paint and a runaway
+feature chunk. `@size-limit/file` measures the already-built Vite output without
+re-bundling, and `gzip: true` matches the transport encoding (size-limit defaults to
+Brotli).
+
+**References:**
+- Issue: GH-91
+- Spec-gap audit gap G7 (built-output verification / regression budget)
+- NFR-P-2
+
+---
+
 ## [2026-06-01 14:46] Commit Summary
 
 **Change Type:** Performance

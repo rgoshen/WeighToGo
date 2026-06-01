@@ -56,3 +56,6 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Bundle size budget (size-limit)
+        run: npm run size
