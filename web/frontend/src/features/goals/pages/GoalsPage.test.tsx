@@ -276,6 +276,34 @@ describe('GoalsPage', () => {
     await screen.findByText(/server error|unexpected error/i);
   });
 
+  it('converts a lbs entry to preferred kg unit when prefilling the goal form', async () => {
+    prefs.current = 'kg';
+    vi.spyOn(goalClientModule.goalClient, 'getActive').mockResolvedValue({
+      goal: null,
+      progress_percent: null,
+      current_value: null,
+    });
+    vi.spyOn(weightClientModule.weightClient, 'list').mockResolvedValue({
+      items: [
+        {
+          entry_id: 1,
+          weight_value: 180,
+          weight_unit: 'lbs',
+          observation_date: '2026-05-28',
+          notes: null,
+          created_at: '2026-05-28T00:00:00Z',
+          updated_at: '2026-05-28T00:00:00Z',
+        },
+      ],
+      next_cursor: null,
+    });
+    render(<GoalsPage />, { wrapper: Wrapper });
+    // 180 lbs * 0.45359237 ≈ 81.6 kg (1 dp); form must use preferred unit as target_unit
+    const startInput = await screen.findByLabelText(/starting weight/i);
+    expect(startInput).toHaveValue(81.6);
+    expect(screen.getByRole('combobox', { name: /weight unit/i })).toHaveTextContent(/kg/i);
+  });
+
   it('renders past goals in a history section', async () => {
     vi.spyOn(goalClientModule.goalClient, 'getActive').mockResolvedValue({
       goal: null,

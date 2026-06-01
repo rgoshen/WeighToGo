@@ -7,6 +7,30 @@ issues were resolved.
 
 ---
 
+## [2026-06-01 16:59] Commit Summary
+
+**Change Type:** Feat
+**Scope:** Frontend / GoalFormWithPrefill (web, GH-92)
+
+**Summary:**
+Updated `GoalFormWithPrefill` in `GoalsPage.tsx` to convert the latest weight
+entry to the user's preferred unit before prefilling the goal creation form.
+The `target_unit` now defaults to `defaultUnit` (the user's preference) and
+`start_value` is converted via `convertWeight` then rounded to 1 dp. Adds
+`convertWeight` to the existing import from `unit-conversion`. New test verifies
+that a 180 lbs entry prefills as 81.6 kg when the preferred unit is kg.
+
+**Rationale:**
+FR-P-1: goal creation form must honor the user's preferred unit. The prefill
+used to adopt the stored entry's unit, presenting lbs to a kg-preferring user.
+Rounding to 1 dp mirrors the display style throughout the app and matches the
+active-goal display pattern at GoalsPage:208-218.
+
+**References:**
+- Issue: GH-92 (M3 remediation finding #4, slice ②)
+
+---
+
 ## [2026-06-01 16:56] Commit Summary
 
 **Change Type:** Feat

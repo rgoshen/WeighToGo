@@ -34,7 +34,7 @@ import { useUpdateGoal } from '../hooks/useUpdateGoal';
 import type { GoalFormValues } from '../schemas/goal-schemas';
 import { usePreferences } from '../../../contexts/PreferencesContext';
 import { formatWeightInPreferredUnit } from '../../../lib/format';
-import type { WeightUnit } from '../../../lib/unit-conversion';
+import { convertWeight, type WeightUnit } from '../../../lib/unit-conversion';
 
 function mapError(err: unknown): string {
   if (err instanceof ApiError) {
@@ -281,10 +281,15 @@ function GoalFormWithPrefill({
       .then((page) => {
         if (page.items[0]) {
           const entry = page.items[0];
+          const converted = convertWeight(
+            entry.weight_value,
+            entry.weight_unit as WeightUnit,
+            defaultUnit,
+          );
           setPrefillValues({
             goal_type: 'lose',
-            target_unit: entry.weight_unit as 'lbs' | 'kg',
-            start_value: entry.weight_value,
+            target_unit: defaultUnit,
+            start_value: Math.round(converted * 10) / 10,
           });
         }
       })
