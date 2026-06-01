@@ -7,6 +7,226 @@ issues were resolved.
 
 ---
 
+## [2026-06-01 15:44] Commit Summary
+
+**Change Type:** Fix
+**Scope:** Frontend CI / bundle budget (web)
+
+**Summary:**
+Replaced the static size-limit "Initial JS" entry with a custom budget check
+(`scripts/check-initial-js.mjs`) that follows the entry's actual eager dependency
+graph: it parses `dist/index.html` and gzip-sums the entry `<script>` plus every
+`<link rel="modulepreload">` chunk, asserting ≤ 215 kB. The previous static glob
+(index + vendor-react + vendor-mui) omitted the eager `schemas-*.js` chunk
+(~25 kB gz) that index.html modulepreloads, so CI passed while the true initial
+payload was unbudgeted. size-limit is retained for the lazy dashboard chunk; the
+`size` script runs both. Verified: the check now lists all five eager assets
+(incl. `schemas`) totaling 193.47 kB, within budget.
+
+**Rationale:**
+Addresses PR #107 review finding (P2). A glob list can't distinguish eager from lazy
+chunks and silently misses any new shared eager chunk; deriving the set from the
+entry + modulepreload graph counts every eager chunk automatically, so the budget
+cannot be fooled by a future shared chunk.
+
+**Bug Fix Context:**
+Root cause: size-limit measures only the files it is given, and the named set
+excluded an eager modulepreloaded chunk. The fix derives the measured set from
+`index.html` rather than hardcoding it.
+
+**References:**
+- Issue: GH-91
+- PR #107 review (P2 — initial-chunk budget completeness)
+- NFR-P-2
+
+---
+
+## [2026-06-01 15:39] Commit Summary
+
+**Change Type:** Fix
+**Scope:** Frontend routing (web)
+
+**Summary:**
+Keyed the AppLayout `<Outlet>` `ErrorBoundary` by `location.pathname` so it resets
+on navigation. Because the boundary lives inside the persistent shell and
+`ErrorBoundary` has no reset path, a caught protected-page failure previously left
+the fallback mounted across route changes — stranding the user until a full refresh.
+The boundary now remounts per route while the shell (outside it) stays mounted.
+Test-first (`App.error-boundary.test.tsx`): after a page failure, clicking a nav
+item renders the new route and clears the fallback. All frontend tests green.
+
+**Rationale:**
+Addresses PR #107 review finding (P2). Keying by `pathname` is the minimal
+React-idiomatic reset. The top-level App boundary is deliberately NOT keyed this
+way — it wraps AppLayout, so keying it would remount the entire shell on every
+navigation, defeating the persistent-shell design.
+
+**Bug Fix Context:**
+Root cause: a class `ErrorBoundary` whose `hasError` state (set by
+`getDerivedStateFromError`) has no reset, mounted in the persistent `AppLayout`. The
+`key={location.pathname}` forces a remount — and thus a state reset — on each route
+change.
+
+**References:**
+- Issue: GH-91
+- PR #107 review (P2 — error-boundary recovery)
+
+---
+
+## [2026-06-01 14:50] Commit Summary
+
+**Change Type:** Test
+**Scope:** Frontend CI / bundle budget (web)
+
+**Summary:**
+Added a `size-limit` bundle budget (Option A) to guard the route-splitting work
+against regressions. Installed `size-limit` + `@size-limit/file` (dev deps), added a
+`"size-limit"` config and `"size"` script to `package.json`, and a "Bundle size
+budget (size-limit)" step after Build in `frontend-ci.yml`. Two gzipped budgets,
+calibrated to the measured build with headroom: initial JS (entry + vendor-react +
+vendor-mui) ≤ 190 kB (currently 171.83 kB) and the largest lazy route chunk
+(DashboardPage incl. charts) ≤ 110 kB (currently 91.31 kB). Verified locally:
+`npm run build && npm run size` passes and reports the real chunk sizes, so the globs
+match the emitted files (not a vacuous pass).
+
+**Rationale:**
+The acceptance criterion requires the budget to *guard against regressions* — fail
+CI, not merely warn. size-limit exits non-zero when a budget is exceeded (verified
+against its docs). Budgeting the initial eager payload plus the largest lazy chunk
+catches the two regressions that matter: re-bloating first paint and a runaway
+feature chunk. `@size-limit/file` measures the already-built Vite output without
+re-bundling, and `gzip: true` matches the transport encoding (size-limit defaults to
+Brotli).
+
+**References:**
+- Issue: GH-91
+- Spec-gap audit gap G7 (built-output verification / regression budget)
+- NFR-P-2
+
+---
+
+## [2026-06-01 14:46] Commit Summary
+
+**Change Type:** Performance
+**Scope:** Frontend build (web)
+
+**Summary:**
+Split the large, rarely-changing vendor libraries out of the entry chunk via
+`build.rollupOptions.output.codeSplitting.groups` in `vite.config.ts`
+(`vendor-react`, `vendor-mui`). With route-level lazy loading already in place, the
+production entry chunk drops 529 kB → 23 kB; `vendor-react` (232 kB) and
+`vendor-mui` (310 kB) are now independently cacheable, and recharts stays in the
+lazy dashboard chunk (303 kB). No chunk exceeds 500 kB, so Vite's chunk-size warning
+is resolved (the original single chunk was ~1,018 kB). Verified by inspecting the
+production build output. Existing tests unaffected (build config does not change the
+Vitest run); the single-React-instance dedupe is preserved (react + react-dom
+grouped together) and will be confirmed at runtime by the E2E suite before the PR.
+
+**Rationale:**
+Vite 8 / Rolldown removed the object form of `manualChunks` and deprecated the
+function form (verified against the Vite 8 docs via context7); `codeSplitting.groups`
+is the current API. Route-splitting alone left React + MUI in the entry chunk
+(spec-gap audit G7); pulling them into named vendor chunks clears the 500 kB warning
+and improves caching, since vendor code changes far less often than app code.
+
+**References:**
+- Issue: GH-91
+- Spec-gap audit gap G7 (vendor chunk dominance / built-output verification)
+- NFR-P-2, SRS §10.1
+
+---
+
+## [2026-06-01 14:41] Commit Summary
+
+**Change Type:** Feature
+**Scope:** Frontend routing (web)
+
+**Summary:**
+Lazy-loaded all eight route page components in `App.tsx` via `lazyNamed`, so each
+page becomes its own bundle chunk loaded on demand (NFR-P-2 / SRS §10.1) — notably
+deferring `recharts` (dashboard) off the initial load. Wrapped the route tree in a
+top-level `ErrorBoundary` + `Suspense` (initial/public routes) and the AppLayout
+`<Outlet />` in a nested `ErrorBoundary` + `Suspense` (`minHeight="60vh"` fallback)
+so the shell stays mounted while a page chunk loads and a page failure is contained
+to the content area. This wires the previously-unmounted `ErrorBoundary`, closing
+the SRS §10.2 "all page slots wrapped in an error boundary" gap. Test-first
+(`App.error-boundary.test.tsx`): a failed protected page shows the fallback while
+the app bar persists; a failed public page shows the fallback. Gate green — 381
+tests pass, tsc clean, coverage 94.03% stmts / 91.62% branches (above 90%
+thresholds); existing routing tests pass unchanged (they already await via
+`waitFor`).
+
+**Rationale:**
+React `lazy` + `Suspense` is the idiomatic split for the JSX `<Routes>` API (vs the
+data-router `lazy`, a larger migration). Two boundaries keep the persistent shell
+mounted during protected-page transitions. Reusing the existing `ErrorBoundary`
+(rather than adding one) satisfies §10.2 and addresses spec-gap audit G1 — a failed
+lazy chunk (network blip / stale chunk after deploy) now surfaces a fallback instead
+of white-screening the app.
+
+**References:**
+- Issue: GH-91
+- Spec-gap audit gaps G1 (chunk-load failure / §10.2 boundary), G2 (lazyNamed)
+- SRS §10.1 (route structure), §10.2 (error boundaries)
+
+---
+
+## [2026-06-01 14:34] Commit Summary
+
+**Change Type:** Feature
+**Scope:** Frontend loading UI (web)
+
+**Summary:**
+Added an optional `minHeight` prop to `LoadingSplash` (default `100vh`), applied as
+an inline style so it is reliably assertable. Lets the same splash serve both the
+full-viewport top-level Suspense fallback and a shorter content-area fallback
+inside the persistent AppLayout shell (next slice). Test-first
+(`LoadingSplash.test.tsx`): a new case asserts a custom `minHeight` is applied; the
+existing accessibility test (role=status + "Loading…") is unchanged.
+
+**Rationale:**
+Route-splitting (GH-91) needs two Suspense fallbacks — full-screen for
+initial/public loads and shorter inside the shell so a page-chunk load does not
+stretch the content region to viewport height (spec-gap audit G6). One
+parameterised component keeps this DRY rather than adding a second loading
+component.
+
+**References:**
+- Issue: GH-91
+- Spec-gap audit gap G6 (per-boundary fallback sizing)
+
+---
+
+## [2026-06-01 14:29] Commit Summary
+
+**Change Type:** Feature
+**Scope:** Frontend route loading (web)
+
+**Summary:**
+Added `lazyNamed(loader, exportName)` in `web/frontend/src/lib/lazy-named.ts` — a
+typed wrapper over `React.lazy` that maps a module's *named* export onto the
+`.default` that `lazy` requires. First slice of GH-91 (route-level code
+splitting): the page components are named exports, so this enables
+`React.lazy(() => import('./Page'))`-style splitting without converting every page
+to a default export (which would break existing named imports in `main.tsx` and
+tests). Test-first (`lazy-named.test.tsx`): asserts a named export renders inside
+`<Suspense>`. Frontend gate green — eslint (0 errors), prettier, tsc clean; full
+suite 378 passing; coverage 94.65% stmts / 91.6% branches (above the 90%
+thresholds).
+
+**Rationale:**
+React's `lazy` load function must resolve to `{ default: Component }` (verified
+against the React 19 docs via context7). Rather than inline the
+`.then(m => ({ default: m.X }))` adapter at all 8 call sites (repetition flagged by
+the spec-gap audit, G2), a single typed helper keeps the call sites DRY and the
+named-export mapping in one tested place.
+
+**References:**
+- Issue: GH-91
+- Spec-gap audit gap G2 (named-export → default reconciliation)
+
+---
+
 ## [2026-05-30 10:45] Commit Summary
 
 **Change Type:** Enhancement

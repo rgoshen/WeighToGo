@@ -7,6 +7,27 @@ const apiPort = process.env['VITE_API_PORT'] ?? '8000';
 
 export default defineConfig({
   plugins: [react()],
+  build: {
+    rollupOptions: {
+      output: {
+        // Vite 8 / Rolldown removed the object form of `manualChunks` and
+        // deprecated the function form; `codeSplitting.groups` is the current
+        // API. Split the large, rarely-changing vendor libraries out of the
+        // entry chunk so no single chunk exceeds the 500 kB budget and vendors
+        // cache independently of app code (NFR-P-2). recharts is left in the
+        // lazy dashboard chunk — only that route imports it.
+        codeSplitting: {
+          groups: [
+            {
+              name: 'vendor-react',
+              test: /node_modules[\\/](react|react-dom|react-router|react-router-dom|scheduler)[\\/]/,
+            },
+            { name: 'vendor-mui', test: /node_modules[\\/](@mui|@emotion)[\\/]/ },
+          ],
+        },
+      },
+    },
+  },
   server: {
     proxy: {
       // Forward all /api/* requests to the FastAPI backend.
