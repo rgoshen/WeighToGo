@@ -31,10 +31,12 @@ function MenuIcon() {
     </SvgIcon>
   );
 }
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 
 import { protectedRoutes } from '../routes';
+import { ErrorBoundary } from './ErrorBoundary';
+import { LoadingSplash } from './LoadingSplash';
 import { NavList } from './NavList';
 import { UserMenu } from './UserMenu';
 
@@ -121,7 +123,14 @@ export function AppLayout() {
         }}
       >
         <Toolbar />
-        <Outlet />
+        {/* Each page slot is wrapped in an error boundary (SRS §10.2) and a
+            Suspense boundary so a lazy page chunk loads — or fails — without
+            unmounting the surrounding shell. */}
+        <ErrorBoundary>
+          <Suspense fallback={<LoadingSplash minHeight="60vh" />}>
+            <Outlet />
+          </Suspense>
+        </ErrorBoundary>
       </Box>
     </Box>
   );

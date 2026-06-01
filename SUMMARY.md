@@ -7,6 +7,41 @@ issues were resolved.
 
 ---
 
+## [2026-06-01 14:41] Commit Summary
+
+**Change Type:** Feature
+**Scope:** Frontend routing (web)
+
+**Summary:**
+Lazy-loaded all eight route page components in `App.tsx` via `lazyNamed`, so each
+page becomes its own bundle chunk loaded on demand (NFR-P-2 / SRS §10.1) — notably
+deferring `recharts` (dashboard) off the initial load. Wrapped the route tree in a
+top-level `ErrorBoundary` + `Suspense` (initial/public routes) and the AppLayout
+`<Outlet />` in a nested `ErrorBoundary` + `Suspense` (`minHeight="60vh"` fallback)
+so the shell stays mounted while a page chunk loads and a page failure is contained
+to the content area. This wires the previously-unmounted `ErrorBoundary`, closing
+the SRS §10.2 "all page slots wrapped in an error boundary" gap. Test-first
+(`App.error-boundary.test.tsx`): a failed protected page shows the fallback while
+the app bar persists; a failed public page shows the fallback. Gate green — 381
+tests pass, tsc clean, coverage 94.03% stmts / 91.62% branches (above 90%
+thresholds); existing routing tests pass unchanged (they already await via
+`waitFor`).
+
+**Rationale:**
+React `lazy` + `Suspense` is the idiomatic split for the JSX `<Routes>` API (vs the
+data-router `lazy`, a larger migration). Two boundaries keep the persistent shell
+mounted during protected-page transitions. Reusing the existing `ErrorBoundary`
+(rather than adding one) satisfies §10.2 and addresses spec-gap audit G1 — a failed
+lazy chunk (network blip / stale chunk after deploy) now surfaces a fallback instead
+of white-screening the app.
+
+**References:**
+- Issue: GH-91
+- Spec-gap audit gaps G1 (chunk-load failure / §10.2 boundary), G2 (lazyNamed)
+- SRS §10.1 (route structure), §10.2 (error boundaries)
+
+---
+
 ## [2026-06-01 14:34] Commit Summary
 
 **Change Type:** Feature
