@@ -3698,3 +3698,28 @@ swap point if that changes.
 **References:**
 - Issue: GH-77
 - ADR: 0023
+
+## [2026-06-01] Commit Summary
+
+**Change Type:** Fix
+**Scope:** dashboard / BuildDashboardSummary use case (NFR-P-3)
+
+**Summary:**
+Split the single full-history scan in `BuildDashboardSummary.execute()` into two
+sequential repository calls: one full indexed range read (`date.min → date.max`)
+for `latest_entry`, `total_entries`, and the trend series; and a second bounded
+indexed range read (trailing `2 × WINDOW_DAYS = 14` days, anchored on the latest
+observation date) whose rows feed `weekly_rate_of_change()`.  Two regression
+tests lock this contract: one asserts the bounded call is made with the correct
+window bounds; the other asserts via `side_effect` + patch that the rate function
+receives only the bounded rows, not the full series.
+
+**Rationale:**
+`weekly_rate_of_change` only examines the last 14 days of data.  Passing the
+full history (`O(n)`) violated NFR-P-3's documented `O(w)` cost.  The bounded
+repo call is a single B-tree descent + range scan — cheaper than two separate
+seeks and still `O(w)`.  Existing tests use `return_value` semantics (same list
+for both calls), so no existing test required modification.
+
+**References:**
+- Issue: GH-89
