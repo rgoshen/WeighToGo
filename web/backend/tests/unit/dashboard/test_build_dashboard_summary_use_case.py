@@ -218,3 +218,36 @@ def test_dashboard_does_not_write_when_goal_at_100_percent() -> None:
     _run(repo, gag=gag)
     cmd = gag.execute.call_args.args[0]
     assert cmd.readonly is True
+
+
+def test_rate_path_uses_single_repo_call_not_two() -> None:
+    """Rate inputs are sliced from the single full read in memory; no second DB call."""
+    repo = MagicMock()
+    repo.list_for_user_in_range.return_value = [_make_entry()]
+    _run(repo)
+    assert repo.list_for_user_in_range.call_count == 1
+
+
+def test_rate_inputs_sliced_in_memory_to_14_day_window() -> None:
+    """Rate inputs must be the in-window slice of the single read, not the full series (AC#2)."""
+    from unittest.mock import patch
+
+    from weighttogo.weight_tracking.domain.rate_of_change import RateOfChange
+
+    repo = MagicMock()
+    anchor = date(2026, 5, 20)
+    entries = [
+        _make_entry(entry_id=1, observation_date=date(2025, 1, 1)),  # >1y old; outside window
+        _make_entry(entry_id=2, observation_date=anchor),
+    ]
+    repo.list_for_user_in_range.return_value = entries
+    with patch(
+        "weighttogo.dashboard.application.build_dashboard_summary.weekly_rate_of_change"
+    ) as woc:
+        woc.return_value = RateOfChange(weekly_rate=None, unit=None, reason="insufficient_data")
+        result = _run(repo)
+    # trend / count derive from the full read
+    assert result.total_entries == 2  # type: ignore[attr-defined]
+    # rate function receives only in-window entries, not the full series
+    (rate_inputs,) = woc.call_args.args
+    assert [e.observation_date for e in rate_inputs] == [anchor]

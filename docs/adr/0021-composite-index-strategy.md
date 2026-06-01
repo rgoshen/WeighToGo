@@ -44,6 +44,14 @@ Trade-off versus no index: a sequential scan over the full table is O(n) per rea
 - **Negative**: One additional B-tree is maintained on every insert and update to `weight_entries`. At expected data volumes this overhead is negligible but is not zero. Under SQLite integration tests the index is wider than the partial index would be on PostgreSQL.
 - **Follow-ups**: Task 6 integration tests must verify the `created_at` index is used (EXPLAIN or row-count guard per NFR-P-3). When the rate-of-change path (#59) lands, confirm it routes through this index. If a `INCLUDE`-column covering index becomes warranted after measurement, a follow-up ADR should capture that decision.
 
+### Follow-up resolved (2026-06-01)
+
+The rate-of-change path landed as issue #89.  Resolution:
+
+1. The rate-of-change path (#89) uses the full indexed range read already issued for the trend series; the 14-day window is sliced in memory. That read routes through the **`(user_id, observation_date)`** composite index (migration 0002) — **not** the `(user_id, created_at)` index provisioned by this ADR.
+2. Evidence: `web/backend/tests/integration/weight/test_index_usage_postgres.py::test_observation_date_range_query_uses_index_not_seqscan` runs `EXPLAIN` with `enable_seqscan = off`, asserts the index name `idx_weight_entries_user_observation_desc` is present in the plan (Index or Bitmap Index Scan — the scan-type prefix varies with the planner's choice), and asserts no `Seq Scan on weight_entries`.
+3. **Open item — orphaned index:** the `(user_id, created_at)` index provisioned by this ADR now has no query consumer.  Deciding its fate (keep with a fresh justification, or drop) is deferred to the **M4 migration-discipline review** (SRS §13.3.1 deliverable 4). A tracking issue should be filed under the M4 epic.
+
 ## Alternatives Considered
 
 - **Covering index with `INCLUDE` columns** — A single index with included payload columns (e.g., `weight_value`, `unit`) would avoid a table heap fetch for covered queries. Rejected: no measured read-latency problem exists yet that would justify the additional index size and write overhead. This is a YAGNI violation at this stage; a follow-up ADR can revisit after profiling.

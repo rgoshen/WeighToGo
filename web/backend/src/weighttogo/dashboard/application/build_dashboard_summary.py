@@ -7,7 +7,7 @@ change), and FR-D-2 (trend series).
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 
 from weighttogo.goals.application.get_active_goal_with_progress import (
@@ -19,6 +19,7 @@ from weighttogo.shared.units import convert_weight
 from weighttogo.weight_tracking.domain.entities import WeightEntry
 from weighttogo.weight_tracking.domain.ports import IWeightEntryRepository
 from weighttogo.weight_tracking.domain.rate_of_change import (
+    WINDOW_DAYS,
     RateEntry,
     RateOfChange,
     weekly_rate_of_change,
@@ -69,15 +70,16 @@ class DashboardSummary:
 class BuildDashboardSummary:
     """Assemble the dashboard read model for the requesting user.
 
-    Composes the ``weight_tracking`` and ``goals`` bounded contexts. The active
-    weight series is loaded once via the indexed range read and every figure is
-    derived from it: the latest entry, the entry count, the trend series, and
-    the weekly rate of change. Goal progress is delegated to
+    Composes the ``weight_tracking`` and ``goals`` bounded contexts. One full
+    indexed range read (``date.min`` to ``date.max``) populates
+    ``latest_entry``, ``total_entries``, and the trend series.  The
+    rate-of-change inputs are sliced from that same result in memory to the
+    trailing ``2 × WINDOW_DAYS`` days anchored on the latest observation — no
+    second repository call is issued.  Goal progress is delegated to
     ``GetActiveGoalWithProgress`` (reused, not reimplemented).
 
-    Loading the full series once means the rate is anchored on the true latest
-    observation even when the most recent entry predates today, and avoids a
-    second indexed read.
+    Anchoring the in-memory slice on the latest observation means the rate is
+    computed correctly even when the most recent entry predates today.
 
     Args:
         weight_repo: The weight entry repository port.
@@ -123,6 +125,15 @@ class BuildDashboardSummary:
             )
         )
 
+        # Slice the already-loaded series to the trailing 2*WINDOW_DAYS window.
+        # Exclusive lower bound matches weekly_rate_of_change's own partitioning.
+        if latest_entry is not None:
+            anchor = latest_entry.observation_date
+            cutoff = anchor - timedelta(days=2 * WINDOW_DAYS)
+            rate_raw = [e for e in entries if cutoff < e.observation_date <= anchor]
+        else:
+            rate_raw = []
+
         # Normalise the rate inputs to a single canonical unit so the algorithm
         # never averages mixed units. Normalisation stays in the application
         # layer; the pure domain function operates on one-unit data.
@@ -132,7 +143,7 @@ class BuildDashboardSummary:
                 weight_value=convert_weight(e.weight_value, e.weight_unit, CANONICAL_UNIT),
                 weight_unit=CANONICAL_UNIT,
             )
-            for e in entries
+            for e in rate_raw
         ]
         rate_of_change = weekly_rate_of_change(rate_entries)
 
