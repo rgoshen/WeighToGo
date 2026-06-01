@@ -37,3 +37,5 @@ the next available number.
 | [0021](0021-composite-index-strategy.md) | Composite Index Strategy for Weight-History Reads | Accepted | 2026-05-29 | Web |
 | [0022](0022-streak-detection-algorithm.md) | Streak Detection Algorithm | Accepted | 2026-05-29 | Web |
 | [0023](0023-ttl-caching-strategy.md) | TTL-Based Server-Side Caching Strategy | Accepted | 2026-05-29 | Web |
+| 0024–0025 | *(reserved — not issued)* | — | — | — |
+| [0026](0026-achievement-write-flow-contract.md) | Achievement Write-Flow Contract | Accepted | 2026-05-31 | Web |
