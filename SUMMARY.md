@@ -7,6 +7,38 @@ issues were resolved.
 
 ---
 
+## [2026-06-01 15:39] Commit Summary
+
+**Change Type:** Fix
+**Scope:** Frontend routing (web)
+
+**Summary:**
+Keyed the AppLayout `<Outlet>` `ErrorBoundary` by `location.pathname` so it resets
+on navigation. Because the boundary lives inside the persistent shell and
+`ErrorBoundary` has no reset path, a caught protected-page failure previously left
+the fallback mounted across route changes — stranding the user until a full refresh.
+The boundary now remounts per route while the shell (outside it) stays mounted.
+Test-first (`App.error-boundary.test.tsx`): after a page failure, clicking a nav
+item renders the new route and clears the fallback. All frontend tests green.
+
+**Rationale:**
+Addresses PR #107 review finding (P2). Keying by `pathname` is the minimal
+React-idiomatic reset. The top-level App boundary is deliberately NOT keyed this
+way — it wraps AppLayout, so keying it would remount the entire shell on every
+navigation, defeating the persistent-shell design.
+
+**Bug Fix Context:**
+Root cause: a class `ErrorBoundary` whose `hasError` state (set by
+`getDerivedStateFromError`) has no reset, mounted in the persistent `AppLayout`. The
+`key={location.pathname}` forces a remount — and thus a state reset — on each route
+change.
+
+**References:**
+- Issue: GH-91
+- PR #107 review (P2 — error-boundary recovery)
+
+---
+
 ## [2026-06-01 14:50] Commit Summary
 
 **Change Type:** Test

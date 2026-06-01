@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -24,6 +25,9 @@ vi.mock('./features/auth/pages/LoginPage', () => ({
   LoginPage: () => {
     throw new Error('simulated login failure');
   },
+}));
+vi.mock('./features/settings/pages/SettingsPage', () => ({
+  SettingsPage: () => <div>settings loaded</div>,
 }));
 
 const authenticatedUser = {
@@ -84,5 +88,28 @@ describe('App route error boundary (SRS §10.2)', () => {
     );
 
     expect(await screen.findByText(/something went wrong/i)).toBeInTheDocument();
+  });
+
+  it('recovers when navigating to another route after a page failure', async () => {
+    vi.spyOn(authClient, 'me').mockResolvedValue(authenticatedUser);
+    const user = userEvent.setup();
+
+    render(
+      <FullProviders>
+        <MemoryRouter initialEntries={['/']}>
+          <App />
+        </MemoryRouter>
+      </FullProviders>,
+    );
+
+    // The dashboard throws on '/', so the error fallback renders first.
+    expect(await screen.findByText(/something went wrong/i)).toBeInTheDocument();
+
+    // Navigating to another route must reset the boundary and render the new
+    // page — not strand the user on the stale fallback until a full refresh.
+    await user.click(screen.getByRole('link', { name: /settings/i }));
+
+    expect(await screen.findByText('settings loaded')).toBeInTheDocument();
+    expect(screen.queryByText(/something went wrong/i)).not.toBeInTheDocument();
   });
 });

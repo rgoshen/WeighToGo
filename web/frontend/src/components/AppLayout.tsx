@@ -32,7 +32,7 @@ function MenuIcon() {
   );
 }
 import { Suspense, useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 
 import { protectedRoutes } from '../routes';
 import { ErrorBoundary } from './ErrorBoundary';
@@ -50,6 +50,7 @@ export function AppLayout() {
   const muiTheme = useTheme();
   const isDesktop = useMediaQuery(muiTheme.breakpoints.up('md'));
   const [mobileOpen, setMobileOpen] = useState(false);
+  const location = useLocation();
 
   function handleDrawerToggle() {
     setMobileOpen((prev) => !prev);
@@ -125,8 +126,10 @@ export function AppLayout() {
         <Toolbar />
         {/* Each page slot is wrapped in an error boundary (SRS §10.2) and a
             Suspense boundary so a lazy page chunk loads — or fails — without
-            unmounting the surrounding shell. */}
-        <ErrorBoundary>
+            unmounting the surrounding shell. Keyed by pathname so the boundary
+            resets on navigation; otherwise a caught error would persist and
+            strand the user on the fallback until a full refresh. */}
+        <ErrorBoundary key={location.pathname}>
           <Suspense fallback={<LoadingSplash minHeight="60vh" />}>
             <Outlet />
           </Suspense>
