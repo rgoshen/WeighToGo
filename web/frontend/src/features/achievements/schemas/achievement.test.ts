@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { parseThreshold } from './achievement';
+import { MILESTONE_THRESHOLD_UNIT, parseThreshold } from './achievement';
+
+describe('MILESTONE_THRESHOLD_UNIT', () => {
+  it('is the canonical pounds unit used by the backend weight-entry create handler', () => {
+    expect(MILESTONE_THRESHOLD_UNIT).toBe('lbs');
+  });
+});
 
 describe('parseThreshold', () => {
   it('parses a numeric string and strips trailing zeros', () => {

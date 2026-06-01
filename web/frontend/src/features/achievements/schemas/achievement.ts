@@ -1,4 +1,12 @@
 import { z } from 'zod';
+import type { WeightUnit } from '../../../lib/unit-conversion';
+
+/**
+ * Milestone thresholds are detected and stored in pounds — the weight-entry
+ * create handler normalizes to lbs before detection (FR-Ach-2 basis).
+ * Convert from this unit for display only.
+ */
+export const MILESTONE_THRESHOLD_UNIT: WeightUnit = 'lbs';
 
 export const achievementSchema = z.object({
   achievement_id: z.number(),

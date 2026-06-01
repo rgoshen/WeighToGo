@@ -7,6 +7,29 @@ issues were resolved.
 
 ---
 
+## [2026-06-01 16:54] Commit Summary
+
+**Change Type:** Feat
+**Scope:** Frontend / achievements schema (web, GH-92)
+
+**Summary:**
+Added `MILESTONE_THRESHOLD_UNIT: WeightUnit = 'lbs'` symbolic constant to
+`features/achievements/schemas/achievement.ts`. Imported from the unit-conversion
+module so the type system enforces the value is a valid `WeightUnit`. Accompanied
+by a documentation comment explaining the canonical-pounds invariant (backend
+weight-entry create handler normalizes to lbs before milestone detection).
+
+**Rationale:**
+Removes magic `'lbs'` string at two upcoming display sites (AchievementsPage and
+AchievementNotification). A named constant documents *why* lbs is the source unit,
+and a type-system rename would catch all callers. Aligns with D8/G3 from the GH-92
+design spec.
+
+**References:**
+- Issue: GH-92 (M3 remediation finding #4)
+
+---
+
 ## [2026-06-01 15:44] Commit Summary
 
 **Change Type:** Fix
