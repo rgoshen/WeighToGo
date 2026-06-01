@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.0](https://github.com/rgoshen-snhu/WeighToGo/compare/v0.2.1...v0.3.0) (2026-06-01)
+
+
+### Added
+
+* rate-limit achievements list endpoint to match goals (GH-79) ([#84](https://github.com/rgoshen-snhu/WeighToGo/issues/84)) ([b33f959](https://github.com/rgoshen-snhu/WeighToGo/commit/b33f95989c3841ad6b10dc700a036e7cfdcf64bb))
+* route-level code splitting and bundle-size budget (GH-91) ([#107](https://github.com/rgoshen-snhu/WeighToGo/issues/107)) ([a658f52](https://github.com/rgoshen-snhu/WeighToGo/commit/a658f52109e88a887622d2777092faa8ef264e69))
+
+
+### Fixed
+
+* **dashboard:** bounded 14-day read for rate-of-change, drop full-history scan (GH-89) ([#105](https://github.com/rgoshen-snhu/WeighToGo/issues/105)) ([0b731b0](https://github.com/rgoshen-snhu/WeighToGo/commit/0b731b0052ad7bed2e58dde025819401f21b98a2))
+
 ## [0.2.1](https://github.com/rgoshen-snhu/WeighToGo/compare/v0.2.0...v0.2.1) (2026-05-30)
 
 
