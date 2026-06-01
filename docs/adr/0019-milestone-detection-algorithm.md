@@ -84,3 +84,7 @@ partial indexes are used:
   Over-engineered for current scale.  Rejected.
 - **DB-only idempotency (no frozenset)** — Requires catching `IntegrityError`
   on every INSERT.  Exception-as-flow-control is harder to test.  Rejected.
+
+## Related ADRs
+
+- **ADR-0026** — Achievement Write-Flow Contract: extends this decision to an explicit create-only & permanent contract covering the full weight-entry write surface (update, delete).
