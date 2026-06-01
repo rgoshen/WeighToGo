@@ -17,7 +17,7 @@
     "test": "vitest",
     "test:ci": "vitest run --coverage",
     "test:e2e": "playwright test",
-    "size": "size-limit"
+    "size": "node scripts/check-initial-js.mjs && size-limit"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -62,16 +62,6 @@
     "vitest": "^4.1.7"
   },
   "size-limit": [
-    {
-      "name": "Initial JS (entry + eager vendor chunks)",
-      "path": [
-        "dist/assets/index-*.js",
-        "dist/assets/vendor-react-*.js",
-        "dist/assets/vendor-mui-*.js"
-      ],
-      "limit": "190 kB",
-      "gzip": true
-    },
     {
       "name": "Largest lazy route chunk (dashboard incl. charts)",
       "path": "dist/assets/DashboardPage-*.js",

@@ -7,6 +7,40 @@ issues were resolved.
 
 ---
 
+## [2026-06-01 15:44] Commit Summary
+
+**Change Type:** Fix
+**Scope:** Frontend CI / bundle budget (web)
+
+**Summary:**
+Replaced the static size-limit "Initial JS" entry with a custom budget check
+(`scripts/check-initial-js.mjs`) that follows the entry's actual eager dependency
+graph: it parses `dist/index.html` and gzip-sums the entry `<script>` plus every
+`<link rel="modulepreload">` chunk, asserting ≤ 215 kB. The previous static glob
+(index + vendor-react + vendor-mui) omitted the eager `schemas-*.js` chunk
+(~25 kB gz) that index.html modulepreloads, so CI passed while the true initial
+payload was unbudgeted. size-limit is retained for the lazy dashboard chunk; the
+`size` script runs both. Verified: the check now lists all five eager assets
+(incl. `schemas`) totaling 193.47 kB, within budget.
+
+**Rationale:**
+Addresses PR #107 review finding (P2). A glob list can't distinguish eager from lazy
+chunks and silently misses any new shared eager chunk; deriving the set from the
+entry + modulepreload graph counts every eager chunk automatically, so the budget
+cannot be fooled by a future shared chunk.
+
+**Bug Fix Context:**
+Root cause: size-limit measures only the files it is given, and the named set
+excluded an eager modulepreloaded chunk. The fix derives the measured set from
+`index.html` rather than hardcoding it.
+
+**References:**
+- Issue: GH-91
+- PR #107 review (P2 — initial-chunk budget completeness)
+- NFR-P-2
+
+---
+
 ## [2026-06-01 15:39] Commit Summary
 
 **Change Type:** Fix
