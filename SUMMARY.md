@@ -7,6 +7,37 @@ issues were resolved.
 
 ---
 
+## [2026-06-01 14:46] Commit Summary
+
+**Change Type:** Performance
+**Scope:** Frontend build (web)
+
+**Summary:**
+Split the large, rarely-changing vendor libraries out of the entry chunk via
+`build.rollupOptions.output.codeSplitting.groups` in `vite.config.ts`
+(`vendor-react`, `vendor-mui`). With route-level lazy loading already in place, the
+production entry chunk drops 529 kB → 23 kB; `vendor-react` (232 kB) and
+`vendor-mui` (310 kB) are now independently cacheable, and recharts stays in the
+lazy dashboard chunk (303 kB). No chunk exceeds 500 kB, so Vite's chunk-size warning
+is resolved (the original single chunk was ~1,018 kB). Verified by inspecting the
+production build output. Existing tests unaffected (build config does not change the
+Vitest run); the single-React-instance dedupe is preserved (react + react-dom
+grouped together) and will be confirmed at runtime by the E2E suite before the PR.
+
+**Rationale:**
+Vite 8 / Rolldown removed the object form of `manualChunks` and deprecated the
+function form (verified against the Vite 8 docs via context7); `codeSplitting.groups`
+is the current API. Route-splitting alone left React + MUI in the entry chunk
+(spec-gap audit G7); pulling them into named vendor chunks clears the 500 kB warning
+and improves caching, since vendor code changes far less often than app code.
+
+**References:**
+- Issue: GH-91
+- Spec-gap audit gap G7 (vendor chunk dominance / built-output verification)
+- NFR-P-2, SRS §10.1
+
+---
+
 ## [2026-06-01 14:41] Commit Summary
 
 **Change Type:** Feature
