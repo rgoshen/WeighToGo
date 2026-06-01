@@ -3723,3 +3723,30 @@ for both calls), so no existing test required modification.
 
 **References:**
 - Issue: GH-89
+
+## [2026-06-01] Commit Summary
+
+**Change Type:** Docs
+**Scope:** SRS §13.2.1, rate_of_change.py, BuildDashboardSummary, ADR-0021
+
+**Summary:**
+Reconcile four documents with the bounded-read implementation landed in GH-89:
+(1) SRS §13.2.1 deliverable 6 reworded from "two indexed lookups" to "single
+bounded indexed range read…partitioned in memory"; (2) `rate_of_change.py`
+module docstring updated to replace "two indexed seeks" with "bounded indexed
+range read"; (3) `BuildDashboardSummary` class docstring rewritten to describe
+the two-read contract accurately, dropping the "avoids a second indexed read"
+claim; (4) ADR-0021 Consequences annotated with a dated "Follow-up resolved"
+paragraph — the rate path uses `(user_id, observation_date)`, not `created_at`;
+the orphaned `created_at` index is flagged and its disposition deferred to the
+M4 migration-discipline review.
+
+**Rationale:**
+All four documents described the old single-read behaviour.  Leaving them stale
+would create a spec/code divergence exactly when the SRS and ADRs are used as
+evidence of milestone quality.  The SRS reword preserves the `O(w)` intent;
+only the "two-seek" mechanism wording changes to match the implemented design.
+
+**References:**
+- Issue: GH-89
+- ADR: 0021
