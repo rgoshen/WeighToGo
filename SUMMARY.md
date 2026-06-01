@@ -3778,3 +3778,27 @@ cheaper (no RTT) and eliminates the window entirely.
 
 **References:**
 - Issue: GH-89
+
+## [2026-06-01] Commit Summary
+
+**Change Type:** Fix
+**Scope:** Playwright e2e configuration (flaky CI test)
+
+**Summary:**
+Added `retries: process.env.CI ? 1 : 0` to `playwright.config.ts`. The
+`preferences flow > seed` test has a 10-second window for a React Query
+`useActiveGoal` refetch to complete after `POST /goals`; under CI runner load
+with 2 concurrent workers, this window is occasionally missed. A re-run of the
+identical code passed cleanly (42/42), confirming no code regression — the
+failure was a timing flake.  Standard Playwright practice: 1 retry on CI where
+scheduling is less predictable, 0 retries locally for immediate failure feedback.
+No retries were previously configured.
+
+**Rationale:**
+The root cause is not test logic but infrastructure timing variability.  Fixing
+the timing window itself (e.g. longer timeout, `waitForResponse`) would make
+the test slower; one retry on CI is the low-cost idiomatic fix that doesn't
+paper over real failures (they still fail after the retry).
+
+**References:**
+- Issue: GH-89

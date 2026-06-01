@@ -8,6 +8,7 @@ const API_PORT = process.env.VITE_API_PORT ?? '8000';
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: false,
+  retries: process.env.CI ? 1 : 0,
   use: { baseURL: 'http://localhost:5173', trace: 'retain-on-failure' },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: [
