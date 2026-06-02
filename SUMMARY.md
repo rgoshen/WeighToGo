@@ -4252,3 +4252,29 @@ paper over real failures (they still fail after the retry).
 
 **References:**
 - Issue: GH-89
+
+## [2026-06-01] Commit Summary
+
+**Change Type:** Docs
+**Scope:** OpenAPI snapshot / achievements response schema
+
+**Summary:**
+Corrected the `AchievementResponse` Pydantic docstring in
+`web/backend/.../achievements/interface/schemas.py` so `achievement_type` lists
+all three delivered types (`goal_reached`, `milestone`, `streak`) and `threshold`
+notes that streaks carry a day-count threshold (not milestones only). Regenerated
+`docs/api/openapi.json` from the live `app.openapi()` so the published contract
+matches the source. The regeneration also picked up two pre-existing snapshot
+drifts unrelated to streak: the list-achievements endpoint description now
+includes its rate-limit note and `request` argument (present in the router source
+but missing from the stale snapshot), and numeric goal bounds serialize as
+`1500.0`/`0.0` floats per the current Pydantic output.
+
+**Rationale:**
+The OpenAPI snapshot is generated from the FastAPI app, with no generation script
+or guard test. Fixing the source docstring and regenerating keeps source and
+snapshot in sync and prevents the drift from reappearing on the next regeneration,
+rather than hand-patching only the snapshot string.
+
+**References:**
+- Issue: GH-94
