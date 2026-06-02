@@ -7,7 +7,7 @@ has the equivalent fixture wired to the FastAPI test client.
 
 from __future__ import annotations
 
-from collections.abc import Generator
+from collections.abc import Callable, Generator
 
 import pytest
 from sqlalchemy import create_engine, text
@@ -17,7 +17,7 @@ from sqlalchemy.pool import StaticPool
 # Import all models so Base.metadata knows every table before create_all.
 from weighttogo.achievements.infrastructure.models import AchievementModel  # noqa: F401
 from weighttogo.audit.infrastructure.models import AuditLogModel  # noqa: F401
-from weighttogo.auth.infrastructure.models import Base
+from weighttogo.auth.infrastructure.models import Base, UserModel
 from weighttogo.goals.infrastructure.models import GoalModel  # noqa: F401
 from weighttogo.preferences.infrastructure.models import UserPreferenceModel  # noqa: F401
 from weighttogo.weight_tracking.infrastructure.models import WeightEntryModel  # noqa: F401
@@ -49,3 +49,22 @@ def db_session() -> Generator[Session, None, None]:
         session.close()
         Base.metadata.drop_all(engine)
         engine.dispose()
+
+
+@pytest.fixture()
+def make_user(db_session: Session) -> Callable[..., int]:
+    """Factory fixture that inserts a minimal UserModel and returns its user_id."""
+
+    def _inner(email: str = "test@example.com") -> int:
+        user = UserModel(
+            email=email,
+            password_hash="x",
+            display_name="U",
+            is_active=True,
+            failed_login_count=0,
+        )
+        db_session.add(user)
+        db_session.flush()
+        return int(user.user_id)
+
+    return _inner

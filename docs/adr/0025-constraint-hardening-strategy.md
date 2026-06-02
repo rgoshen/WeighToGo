@@ -22,7 +22,7 @@ Every CHECK constraint lives in two places:
 1. **The ORM model's `__table_args__`** — enforced by `Base.metadata.create_all` on the SQLite integration suite.
 2. **The Alembic migration** — enforced on PostgreSQL/production via `op.create_check_constraint`.
 
-Constraints present in earlier migrations (`0002`, `0004`, `0005/0008`, `0006`) but absent from the ORM models are backfilled to `__table_args__` in the same PR as migration `0010`. No new migration is needed for these — the constraints already exist in the database; the backfill closes only the SQLite test-fidelity gap.
+Constraints present in earlier migrations (`0002`, `0003`, `0004`, `0005/0008`, `0006`) but absent from the ORM models are backfilled to `__table_args__` in the same PR as migration `0010`. No new migration is needed for these — the constraints already exist in the database; the backfill closes only the SQLite test-fidelity gap.
 
 ### Audit methodology
 
@@ -35,7 +35,7 @@ Each table was evaluated on four axes: missing NOT NULL, value-domain CHECK gaps
 | `users` | No value-domain CHECK gaps worth migration complexity (app layer sufficient) | No change |
 | `refresh_tokens` | Token lifecycle is tightly application-controlled | No change |
 | `weight_entries` | 5 CHECKs in migration `0002` absent from model | Model backfill |
-| `goals` | Direction invariant in `0004` absent from model; `target_date` bound missing | Model backfill + new CHECK in `0010` |
+| `goals` | 7 CHECKs in migration `0003` absent from model; direction invariant in `0004` absent from model; `target_date` bound missing | Model backfill + new CHECK in `0010` |
 | `achievements` | Type-valid CHECK in `0005/0008` absent from model; `threshold > 0` missing | Model backfill + new CHECK in `0010` |
 | `user_preferences` | Key/value CHECKs in `0006` absent from model | Model backfill |
 | `audit_log` | Both CHECKs already in model `__table_args__` (established pattern) | No change |

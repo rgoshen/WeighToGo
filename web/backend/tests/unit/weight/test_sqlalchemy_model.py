@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import UTC, date, datetime
 from decimal import Decimal
 
@@ -10,22 +11,7 @@ from sqlalchemy import BigInteger, Boolean, Date, DateTime, Numeric, String
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from weighttogo.auth.infrastructure.models import UserModel
 from weighttogo.weight_tracking.infrastructure.models import WeightEntryModel
-
-
-def _make_user(session: Session) -> int:
-    """Insert a minimal valid user and return its user_id."""
-    user = UserModel(
-        email="w@example.com",
-        password_hash="x",
-        display_name="W",
-        is_active=True,
-        failed_login_count=0,
-    )
-    session.add(user)
-    session.flush()
-    return int(user.user_id)
 
 
 def test_weight_entry_model_table_name() -> None:
@@ -81,9 +67,11 @@ def test_model_accepts_decimal_weight_value() -> None:
     assert entry.weight_value == Decimal("175.50")
 
 
-def test_weight_entry_negative_value_rejected(db_session: Session) -> None:
+def test_weight_entry_negative_value_rejected(
+    db_session: Session, make_user: Callable[..., int]
+) -> None:
     # ARRANGE
-    user_id = _make_user(db_session)
+    user_id = make_user()
     db_session.add(
         WeightEntryModel(
             user_id=user_id,
@@ -98,8 +86,11 @@ def test_weight_entry_negative_value_rejected(db_session: Session) -> None:
         db_session.flush()
 
 
-def test_weight_entry_invalid_unit_rejected(db_session: Session) -> None:
-    user_id = _make_user(db_session)
+def test_weight_entry_invalid_unit_rejected(
+    db_session: Session, make_user: Callable[..., int]
+) -> None:
+    # ARRANGE
+    user_id = make_user()
     db_session.add(
         WeightEntryModel(
             user_id=user_id,
@@ -109,5 +100,6 @@ def test_weight_entry_invalid_unit_rejected(db_session: Session) -> None:
             is_deleted=False,
         )
     )
+    # ACT / ASSERT
     with pytest.raises(IntegrityError):
         db_session.flush()

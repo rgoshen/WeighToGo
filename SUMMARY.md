@@ -9,6 +9,29 @@ issues were resolved.
 
 ## [2026-06-02] Commit Summary
 
+**Change Type:** Fix
+**Scope:** goals/achievements/models, tests/unit, docs/adr
+
+**Summary:**
+Address PR #120 review comments: add 7 missing GoalModel CHECKs from migration 0003,
+add 3 missing AchievementModel indexes from migration 0005, consolidate _make_user
+into a shared make_user fixture in tests/unit/conftest.py, update ADR-0025 to
+include migration 0003 in the backfill scope.
+
+**Rationale:**
+Goals model was missing all value-domain CHECKs from 0003 (only 0004 backfilled).
+Achievement idempotency indexes were omitted, leaving the dedup contract untestable
+on SQLite. _make_user was duplicated across 4 test files. ADR-0025 claimed full
+0002-0006 coverage but omitted 0003's goals constraints.
+
+**References:**
+- Issue: GH-98
+- PR: #120
+
+---
+
+## [2026-06-02] Commit Summary
+
 **Change Type:** Feature
 **Scope:** alembic/versions, tests/integration/goals
 

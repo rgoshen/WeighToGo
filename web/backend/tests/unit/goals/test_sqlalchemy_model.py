@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import date
 from decimal import Decimal
 
@@ -9,21 +10,7 @@ import pytest
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from weighttogo.auth.infrastructure.models import UserModel
 from weighttogo.goals.infrastructure.models import GoalModel
-
-
-def _make_user(session: Session) -> int:
-    user = UserModel(
-        email="g@example.com",
-        password_hash="x",
-        display_name="G",
-        is_active=True,
-        failed_login_count=0,
-    )
-    session.add(user)
-    session.flush()
-    return int(user.user_id)
 
 
 def test_goal_model_tablename() -> None:
@@ -50,9 +37,11 @@ def test_goal_model_has_required_columns() -> None:
     assert expected <= col_names
 
 
-def test_goal_direction_invariant_violated_rejected(db_session: Session) -> None:
-    # A lose goal where target_value > start_value violates the invariant.
-    user_id = _make_user(db_session)
+def test_goal_direction_invariant_violated_rejected(
+    db_session: Session, make_user: Callable[..., int]
+) -> None:
+    # ARRANGE — a lose goal where target_value > start_value violates the invariant.
+    user_id = make_user()
     db_session.add(
         GoalModel(
             user_id=user_id,
@@ -64,12 +53,16 @@ def test_goal_direction_invariant_violated_rejected(db_session: Session) -> None
             is_achieved=False,
         )
     )
+    # ACT / ASSERT
     with pytest.raises(IntegrityError):
         db_session.flush()
 
 
-def test_goal_target_date_before_epoch_rejected(db_session: Session) -> None:
-    user_id = _make_user(db_session)
+def test_goal_target_date_before_epoch_rejected(
+    db_session: Session, make_user: Callable[..., int]
+) -> None:
+    # ARRANGE
+    user_id = make_user()
     db_session.add(
         GoalModel(
             user_id=user_id,
@@ -82,5 +75,25 @@ def test_goal_target_date_before_epoch_rejected(db_session: Session) -> None:
             target_date=date(2019, 12, 31),  # before epoch — invalid
         )
     )
+    # ACT / ASSERT
+    with pytest.raises(IntegrityError):
+        db_session.flush()
+
+
+def test_goal_invalid_type_rejected(db_session: Session, make_user: Callable[..., int]) -> None:
+    # ARRANGE
+    user_id = make_user()
+    db_session.add(
+        GoalModel(
+            user_id=user_id,
+            target_value=Decimal("150.0"),
+            target_unit="lbs",
+            start_value=Decimal("200.0"),
+            goal_type="invalid_type",
+            is_active=True,
+            is_achieved=False,
+        )
+    )
+    # ACT / ASSERT
     with pytest.raises(IntegrityError):
         db_session.flush()

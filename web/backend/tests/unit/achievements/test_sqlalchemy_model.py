@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import UTC, datetime
 from decimal import Decimal
 
@@ -9,21 +10,7 @@ import pytest
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from weighttogo.auth.infrastructure.models import UserModel
 from weighttogo.goals.infrastructure.models import GoalModel
-
-
-def _make_user(session: Session) -> int:
-    user = UserModel(
-        email="a@example.com",
-        password_hash="x",
-        display_name="A",
-        is_active=True,
-        failed_login_count=0,
-    )
-    session.add(user)
-    session.flush()
-    return int(user.user_id)
 
 
 def _make_goal(session: Session, user_id: int) -> int:
@@ -54,10 +41,13 @@ def test_achievement_model_has_required_columns() -> None:
     assert {"id", "user_id", "goal_id", "achievement_type", "threshold", "earned_at"} <= cols
 
 
-def test_achievement_invalid_type_rejected(db_session: Session) -> None:
+def test_achievement_invalid_type_rejected(
+    db_session: Session, make_user: Callable[..., int]
+) -> None:
     from weighttogo.achievements.infrastructure.models import AchievementModel
 
-    user_id = _make_user(db_session)
+    # ARRANGE
+    user_id = make_user()
     goal_id = _make_goal(db_session, user_id)
     db_session.add(
         AchievementModel(
@@ -68,14 +58,18 @@ def test_achievement_invalid_type_rejected(db_session: Session) -> None:
             earned_at=datetime.now(UTC),
         )
     )
+    # ACT / ASSERT
     with pytest.raises(IntegrityError):
         db_session.flush()
 
 
-def test_achievement_threshold_zero_rejected(db_session: Session) -> None:
+def test_achievement_threshold_zero_rejected(
+    db_session: Session, make_user: Callable[..., int]
+) -> None:
     from weighttogo.achievements.infrastructure.models import AchievementModel
 
-    user_id = _make_user(db_session)
+    # ARRANGE
+    user_id = make_user()
     goal_id = _make_goal(db_session, user_id)
     db_session.add(
         AchievementModel(
@@ -86,5 +80,39 @@ def test_achievement_threshold_zero_rejected(db_session: Session) -> None:
             earned_at=datetime.now(UTC),
         )
     )
+    # ACT / ASSERT
+    with pytest.raises(IntegrityError):
+        db_session.flush()
+
+
+def test_duplicate_milestone_achievement_rejected(
+    db_session: Session, make_user: Callable[..., int]
+) -> None:
+    from weighttogo.achievements.infrastructure.models import AchievementModel
+
+    # ARRANGE — two milestone rows with identical (goal_id, type, threshold)
+    user_id = make_user()
+    goal_id = _make_goal(db_session, user_id)
+    now = datetime.now(UTC)
+    db_session.add(
+        AchievementModel(
+            user_id=user_id,
+            goal_id=goal_id,
+            achievement_type="milestone",
+            threshold=Decimal("25.0"),
+            earned_at=now,
+        )
+    )
+    db_session.flush()
+    db_session.add(
+        AchievementModel(
+            user_id=user_id,
+            goal_id=goal_id,
+            achievement_type="milestone",
+            threshold=Decimal("25.0"),
+            earned_at=now,
+        )
+    )
+    # ACT / ASSERT
     with pytest.raises(IntegrityError):
         db_session.flush()

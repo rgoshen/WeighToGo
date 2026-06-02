@@ -51,7 +51,19 @@ class GoalModel(Base):
             postgresql_where=text("is_active = TRUE"),
             sqlite_where=text("is_active = 1"),
         ),
-        # Backfill: direction invariant already enforced in migration 0004.
+        # Backfill from migration 0003.
+        CheckConstraint("goal_type IN ('lose', 'gain')", name="goals_goal_type_valid"),
+        CheckConstraint("target_value > 0", name="goals_target_value_positive"),
+        CheckConstraint("target_value <= 1500", name="goals_target_value_max"),
+        CheckConstraint("start_value > 0", name="goals_start_value_positive"),
+        CheckConstraint("start_value <= 1500", name="goals_start_value_max"),
+        CheckConstraint("target_unit IN ('lbs', 'kg')", name="goals_target_unit_valid"),
+        CheckConstraint(
+            "(is_achieved = FALSE AND achieved_at IS NULL)"
+            " OR (is_achieved = TRUE AND achieved_at IS NOT NULL)",
+            name="goals_achieved_consistency",
+        ),
+        # Backfill from migration 0004.
         CheckConstraint(
             "(goal_type = 'lose' AND target_value < start_value)"
             " OR (goal_type = 'gain' AND target_value > start_value)",
