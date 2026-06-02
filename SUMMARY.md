@@ -7,6 +7,25 @@ issues were resolved.
 
 ---
 
+## [2026-06-02 07:18] Commit Summary
+
+**Change Type:** Chore
+**Scope:** CI / Integration Tests
+
+**Summary:**
+Ran the four `@pytest.mark.postgres` index-plan tests locally against a throwaway
+PostgreSQL 16 database and confirmed the CI `NFR-P-3 index usage (PostgreSQL)` job
+is green on main (run 26794898436). No production code changed.
+
+**Rationale:**
+The M3 Web App Quality Review (Assumption #1 / Remediation #7) flagged that the
+`@pytest.mark.postgres` suite had not been run locally. This verifies the gap is
+closed: the composite indexes from migrations 0002 and 0007 are proven effective
+on the production engine.
+
+**References:**
+- Issue: GH-90
+
 ## [2026-06-01 18:45] Commit Summary
 
 **Change Type:** Chore
