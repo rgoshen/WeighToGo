@@ -1307,13 +1307,13 @@ Protected routes require authentication. An unauthenticated user attempting acce
 | `/weight` | `WeightHistoryPage` | M2 | Full weight entry list with CRUD |
 | `/weight/new` | `WeightEntryFormPage` | M2 | Create a new weight entry |
 | `/weight/:entryId/edit` | `WeightEntryFormPage` | M2 | Edit an existing weight entry |
-| `/goals` | `GoalsPlaceholderPage` | M2 (placeholder), M3 (full) | Goal management |
-| `/achievements` | `AchievementsPlaceholderPage` | M2 (placeholder), M3 (full) | Achievement history |
-| `/settings` | `SettingsPlaceholderPage` | M2 (placeholder), M3 (full) | User preferences |
+| `/goals` | `GoalsPage` | M2 (placeholder), M3 (full) | Goal management |
+| `/achievements` | `AchievementsPage` | M2 (placeholder), M3 (full) | Achievement history |
+| `/settings` | `SettingsPage` | M2 (placeholder), M3 (full) | User preferences |
 
-#### 10.1.3 Placeholder Page Requirements
+#### 10.1.3 Milestone Two Placeholder Pages
 
-Each placeholder page (`GoalsPlaceholderPage`, `AchievementsPlaceholderPage`, `SettingsPlaceholderPage`) is fully accessible, auth-gated, and renders a clear "Coming in Milestone N" notice with a brief description of what the page will contain. Placeholders are not mocked-out stubs; they are real components that real users would see during the M2 demonstration.
+In Milestone 2, `/goals`, `/achievements`, and `/settings` were served by dedicated placeholder pages (`GoalsPlaceholderPage`, `AchievementsPlaceholderPage`, `SettingsPlaceholderPage`). Each was fully accessible, auth-gated, and rendered a clear "Coming in Milestone N" notice with a brief description of what the page would contain. The placeholders were not mocked-out stubs; they were real components that real users would see during the M2 demonstration. Milestone 3 replaced these placeholders with the delivered `GoalsPage`, `AchievementsPage`, and `SettingsPage` components named in the table above, so the M3 route table no longer references placeholder pages.
 
 ### 10.2 Layouts and Navigation
 

@@ -4278,3 +4278,25 @@ rather than hand-patching only the snapshot string.
 
 **References:**
 - Issue: GH-94
+
+## [2026-06-01] Commit Summary
+
+**Change Type:** Docs
+**Scope:** SRS v2 §10 frontend route table
+
+**Summary:**
+Reconciled the SRS §10.1.2 protected-route table to name the delivered M3 page
+components (`GoalsPage`, `AchievementsPage`, `SettingsPage`) instead of the
+Milestone 2 placeholder names (`GoalsPlaceholderPage`,
+`AchievementsPlaceholderPage`, `SettingsPlaceholderPage`). Reworded §10.1.3 to
+frame the placeholder pages as Milestone 2 history that Milestone 3 replaced with
+the real components, so the section no longer contradicts the corrected table.
+
+**Rationale:**
+The route table is the authoritative routing contract; naming components that no
+longer back those routes is documentation drift versus the delivered M3 frontend
+(App.tsx wires the real pages). The M2 placeholder history is preserved, not
+deleted, to keep the milestone record accurate.
+
+**References:**
+- Issue: GH-94
