@@ -10,17 +10,8 @@
  */
 
 import { useEffect, useState } from 'react';
-import {
-  Alert,
-  Box,
-  Button,
-  Card,
-  CardContent,
-  CircularProgress,
-  Divider,
-  Stack,
-  Typography,
-} from '@mui/material';
+import { Alert, Box, Button, Card, CardContent, Divider, Stack, Typography } from '@mui/material';
+import { LoadingSpinner } from '../../../components/LoadingSpinner';
 import { weightClient } from '../../weight/api/weight-client';
 import { ApiError } from '../../../lib/api-client';
 import { GoalForm } from '../components/GoalForm';
@@ -34,7 +25,7 @@ import { useUpdateGoal } from '../hooks/useUpdateGoal';
 import type { GoalFormValues } from '../schemas/goal-schemas';
 import { usePreferences } from '../../../contexts/PreferencesContext';
 import { formatWeightInPreferredUnit } from '../../../lib/format';
-import type { WeightUnit } from '../../../lib/unit-conversion';
+import { convertWeight, type WeightUnit } from '../../../lib/unit-conversion';
 
 function mapError(err: unknown): string {
   if (err instanceof ApiError) {
@@ -51,7 +42,7 @@ export function GoalsPage() {
   const updateGoal = useUpdateGoal();
   const abandonGoal = useAbandonGoal();
   const goalHistory = useGoals({ history: true });
-  const { preferences } = usePreferences();
+  const { preferences, isLoading: prefsLoading } = usePreferences();
   const preferredUnit = preferences.weightUnit;
 
   const [isEditing, setIsEditing] = useState(false);
@@ -63,16 +54,12 @@ export function GoalsPage() {
       <Typography variant="h6" component="h2" gutterBottom>
         Goal history
       </Typography>
-      <GoalHistoryList goals={goalHistory.data?.goals ?? []} />
+      <GoalHistoryList goals={goalHistory.data?.goals ?? []} preferredUnit={preferredUnit} />
     </Box>
   );
 
   if (isLoading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-        <CircularProgress aria-label="Loading goals" />
-      </Box>
-    );
+    return <LoadingSpinner label="Loading goals" />;
   }
 
   if (isError) {
@@ -144,12 +131,17 @@ export function GoalsPage() {
             {actionError}
           </Alert>
         )}
-        <GoalFormWithPrefill
-          onSubmit={handleCreate}
-          conflictError={conflictError}
-          isSubmitting={setGoal.isPending}
-          defaultUnit={preferredUnit}
-        />
+        {prefsLoading ? (
+          <LoadingSpinner label="Loading preferences" size={24} py={4} />
+        ) : (
+          <GoalFormWithPrefill
+            key={preferredUnit}
+            onSubmit={handleCreate}
+            conflictError={conflictError}
+            isSubmitting={setGoal.isPending}
+            defaultUnit={preferredUnit}
+          />
+        )}
         {historySection}
       </Box>
     );
@@ -281,27 +273,33 @@ function GoalFormWithPrefill({
       .then((page) => {
         if (page.items[0]) {
           const entry = page.items[0];
+          const entryUnit = entry.weight_unit;
+          // Guard unknown units at the data boundary — skip prefill rather
+          // than passing an unrecognised unit to convertWeight, which throws.
+          if (entryUnit !== 'lbs' && entryUnit !== 'kg') return;
+          // Round only when a unit conversion actually occurs; passing the
+          // stored value through unrounded preserves its 2-dp precision.
+          const startValue =
+            entryUnit === defaultUnit
+              ? entry.weight_value
+              : Math.round(convertWeight(entry.weight_value, entryUnit, defaultUnit) * 10) / 10;
           setPrefillValues({
             goal_type: 'lose',
-            target_unit: entry.weight_unit as 'lbs' | 'kg',
-            start_value: entry.weight_value,
+            target_unit: defaultUnit,
+            start_value: startValue,
           });
         }
       })
       .catch(() => {
-        // No entries — form renders with manual-entry defaults
+        // Network / API error — form renders with manual-entry defaults.
       })
       .finally(() => {
         setIsPrefetching(false);
       });
-  }, []);
+  }, [defaultUnit]); // reactive: re-prefetch when preferred unit changes
 
   if (isPrefetching) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-        <CircularProgress size={24} aria-label="Loading your latest weight" />
-      </Box>
-    );
+    return <LoadingSpinner label="Loading your latest weight" size={24} py={4} />;
   }
 
   return (

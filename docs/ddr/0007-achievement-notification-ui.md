@@ -22,6 +22,8 @@ region, NFR-A-3) and must respect `prefers-reduced-motion` (NFR-A-6).
   toast at a time, FIFO).
 - `goal_reached` copy: "Goal reached! You hit your target weight."
 - Milestone copy: "{N} lb milestone reached!" where N is the threshold value.
+  *(Unit display superseded by [DDR-0009](0009-milestone-display-unit.md): the threshold
+  is now converted to the user's preferred unit before display.)*
 - The user can dismiss early via a close action on the Alert.
 
 ## Rationale

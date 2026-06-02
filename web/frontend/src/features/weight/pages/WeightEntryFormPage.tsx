@@ -12,6 +12,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { AchievementNotification } from '../../achievements/components/AchievementNotification';
 import { useVisibleAchievements } from '../../achievements/hooks/useVisibleAchievements';
 import type { AchievementRecord } from '../../achievements/schemas/achievement';
+import { usePreferences } from '../../../contexts/PreferencesContext';
 import { ApiError, ValidationError } from '../../../lib/api-client';
 import { WeightEntryForm } from '../components/WeightEntryForm';
 import { useCreateWeightEntry } from '../hooks/useCreateWeightEntry';
@@ -45,6 +46,7 @@ export function WeightEntryFormPage() {
   const updateMutation = useUpdateWeightEntry();
   const isSubmitting = createMutation.isPending || updateMutation.isPending;
 
+  const { preferences } = usePreferences();
   const [newAchievements, setNewAchievements] = useState<AchievementRecord[]>([]);
   const visibleAchievements = useVisibleAchievements(newAchievements);
   const pendingNavRef = useRef(false);
@@ -145,7 +147,11 @@ export function WeightEntryFormPage() {
         conflictError={conflictError}
         isSubmitting={isSubmitting}
       />
-      <AchievementNotification achievements={visibleAchievements} onDismissOne={handleDismissOne} />
+      <AchievementNotification
+        achievements={visibleAchievements}
+        onDismissOne={handleDismissOne}
+        preferredUnit={preferences.weightUnit}
+      />
     </Box>
   );
 }

@@ -40,10 +40,10 @@ test.describe.serial('achievement notification flow', () => {
 
     // Achievement toast should appear (role="status", FR-N-1)
     await expect(page.getByRole('status')).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByText(/5 lb milestone/i)).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(/5\.0 lbs milestone/i)).toBeVisible({ timeout: 10_000 });
   });
 
-  test('/achievements page lists the earned 5 lb milestone', async ({ page }) => {
+  test('/achievements page lists the earned 5.0 lbs milestone', async ({ page }) => {
     await page.goto('/login');
     await page.getByLabel(/email/i).fill(email);
     await page.getByLabel(/password/i).fill(password);
@@ -51,6 +51,6 @@ test.describe.serial('achievement notification flow', () => {
     await expect(page).toHaveURL('/', { timeout: 10_000 });
 
     await page.goto('/achievements');
-    await expect(page.getByText(/5 lb milestone/i)).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(/5\.0 lbs milestone/i)).toBeVisible({ timeout: 10_000 });
   });
 });

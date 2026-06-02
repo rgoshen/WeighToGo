@@ -7,6 +7,236 @@ issues were resolved.
 
 ---
 
+## [2026-06-01 18:01] Commit Summary
+
+**Change Type:** Fix
+**Scope:** Frontend / PR #108 review findings (web, GH-92)
+
+**Summary:**
+Addressed 9 confirmed PR review findings across docs, types, and code:
+
+Docs (#6, #7): Fixed DDR-0009 Related section — ADR-0019 → ADR-0020 (Preferences
+Storage Data Structure); SRS line 661 → 687 (FR-P-1, not FR-Ach-2 body).
+
+Type safety (#5): Changed `MILESTONE_THRESHOLD_UNIT: WeightUnit = 'lbs'` to
+`= 'lbs' satisfies WeightUnit` — preserves the `'lbs'` literal type instead of
+widening to the union; a rename to an invalid value is caught at compile time.
+
+Spinner reuse (#8): Extended `LoadingSpinner` with optional `size` and `py` props;
+replaced all three hand-rolled `Box + CircularProgress` spinners in `GoalsPage`
+with `<LoadingSpinner>`.
+
+Prefill effect (#1 #2 #3 #4): Rewrote the `GoalFormWithPrefill` `useEffect`:
+- Skip 1-dp rounding when `entryUnit === defaultUnit` (same-unit case was silently
+  quantizing 2-dp stored values)
+- Guard unknown units at the data boundary (`!== 'lbs' && !== 'kg'`) before calling
+  `convertWeight`; `.catch` now handles only network errors, not conversion panics
+- Added `[defaultUnit]` to deps array (resolves `react-hooks/exhaustive-deps`); added
+  `key={preferredUnit}` on the `GoalFormWithPrefill` call site so a preference refetch
+  remounts the component rather than triggering a synchronous setState in the effect
+
+`formatMilestoneWeight` helper (#9): Extracted the `parseThreshold + null-guard +
+formatWeightInPreferredUnit` pattern shared by `AchievementsPage.achievementLabel` and
+`AchievementNotification.toastMessage` into a tested function in `achievement.ts`.
+
+**Rationale:**
+Addresses all confirmed PR review findings. Items pushed back: parallel prefs+weight
+fetch (valid optimization, scope-expanding refactor, separate issue); `<WeightValue>`
+component (premature abstraction, pattern just landed); wrong-unit flash on
+AchievementsPage (self-correcting, reviewer-confirmed cosmetic).
+
+**References:**
+- Issue: GH-92 (PR #108 review)
+
+---
+
+## [2026-06-01 17:23] Commit Summary
+
+**Change Type:** Fix
+**Scope:** Frontend / GoalFormWithPrefill (web, GH-92)
+
+**Summary:**
+Fixed a preferences-loading race in `GoalFormWithPrefill`. On cold loads,
+`PreferencesProvider` returns the default `'lbs'` unit until its query resolves.
+The prefetch effect closed over that stale `defaultUnit` on mount and never
+re-ran (empty dep array). Now `GoalsPage` reads `isLoading` from `usePreferences()`
+and gates `GoalFormWithPrefill` behind `!prefsLoading` — the component only mounts
+after `defaultUnit` is the real loaded preference, so the closed-over value is
+always correct. A loading spinner (`aria-label="Loading preferences"`) is shown
+while prefs are in-flight. GoalsPage test updated to make `isLoading` configurable
+in the mock; new test verifies the form is absent while prefs load.
+
+**Rationale:**
+PR review P2: kg-preferring users on cold loads would see a lbs-prefilled form
+because the effect fired once with the default lbs value and GoalForm's own unit
+sync is suppressed when defaultValues are provided. Gating on prefsLoading is the
+minimal fix — no double-fetch, no dep-array churn.
+
+**References:**
+- Issue: GH-92 (PR #108 review finding P2)
+
+---
+
+## [2026-06-01 17:04] Commit Summary
+
+**Change Type:** Test
+**Scope:** Frontend E2E / achievement-notification.spec.ts (web, GH-92)
+
+**Summary:**
+Updated `e2e/achievement-notification.spec.ts` assertions at lines 43 and 54
+from `/5 lb milestone/i` to `/5\.0 lbs milestone/i` to match the new formatted
+copy. Also renamed the second test title to reflect the new format. Confirmed
+`preferences.spec.ts` suppression test does not positively assert milestone copy
+and requires no change. Full FE suite (vitest, lint, typecheck) passes with
+94.23% statement coverage.
+
+**Rationale:**
+E2E specs assert observable UI copy; they must reflect the updated formatted
+milestone string. The default E2E user has the lbs preference.
+
+**References:**
+- Issue: GH-92 (M3 remediation finding #4, E2E [G2] step)
+
+---
+
+## [2026-06-01 17:03] Commit Summary
+
+**Change Type:** Docs
+**Scope:** DDR-0009, DDR-0007, DDR README (web, GH-92)
+
+**Summary:**
+Created `docs/ddr/0009-milestone-display-unit.md` documenting the decision to
+convert milestone thresholds from canonical pounds to the user's preferred unit
+at display time. Added the index row to `docs/ddr/README.md`. Added a one-line
+pointer note to DDR-0007's milestone-copy bullet noting the unit display is
+superseded by DDR-0009.
+
+**Rationale:**
+AC #3 requires the milestone unit semantics to be "documented and intentional."
+DDR-0009 documents the canonical-pounds invariant, the detection asymmetry, the
+copy standardization side effect, and the alternatives considered.
+
+**References:**
+- Issue: GH-92 (M3 remediation finding #4, docs step)
+
+---
+
+## [2026-06-01 17:02] Commit Summary
+
+**Change Type:** Feat
+**Scope:** Frontend / AchievementNotification + WeightEntryFormPage (web, GH-92)
+
+**Summary:**
+Added `preferredUnit: WeightUnit` required prop to `AchievementNotification`.
+`toastMessage` now accepts the unit and uses `formatWeightInPreferredUnit` with
+`MILESTONE_THRESHOLD_UNIT` to convert the milestone threshold for display.
+`WeightEntryFormPage` wires `preferences.weightUnit` from `usePreferences()` to
+the notification's `preferredUnit` prop. All 9 notification tests updated to pass
+the prop; new test covers kg toast conversion.
+
+**Rationale:**
+FR-P-1: milestone toast must honor the user's preferred unit. Keeping the prop on
+the component (not calling `usePreferences()` inside it) preserves the
+presentational-only contract.
+
+**References:**
+- Issue: GH-92 (M3 remediation finding #4, slice ③b)
+
+---
+
+## [2026-06-01 17:00] Commit Summary
+
+**Change Type:** Feat
+**Scope:** Frontend / AchievementsPage (web, GH-92)
+
+**Summary:**
+Updated `AchievementsPage` to read `usePreferences()` and convert milestone
+labels from canonical lbs to the user's preferred unit. `achievementLabel`
+now accepts a `preferredUnit` parameter and uses `formatWeightInPreferredUnit`
+with `MILESTONE_THRESHOLD_UNIT` as the source unit. Updated tests: added
+`usePreferences` mock, reset prefs in afterEach, renamed existing test,
+updated lbs assertion to formatted form (`5.0 lbs`), and added kg conversion
+test (`2.3 kg Milestone`).
+
+**Rationale:**
+FR-P-1: milestone labels must display in the user's preferred unit. The
+`MILESTONE_THRESHOLD_UNIT` constant makes the source-unit contract explicit.
+
+**References:**
+- Issue: GH-92 (M3 remediation finding #4, slice ③a)
+
+---
+
+## [2026-06-01 16:59] Commit Summary
+
+**Change Type:** Feat
+**Scope:** Frontend / GoalFormWithPrefill (web, GH-92)
+
+**Summary:**
+Updated `GoalFormWithPrefill` in `GoalsPage.tsx` to convert the latest weight
+entry to the user's preferred unit before prefilling the goal creation form.
+The `target_unit` now defaults to `defaultUnit` (the user's preference) and
+`start_value` is converted via `convertWeight` then rounded to 1 dp. Adds
+`convertWeight` to the existing import from `unit-conversion`. New test verifies
+that a 180 lbs entry prefills as 81.6 kg when the preferred unit is kg.
+
+**Rationale:**
+FR-P-1: goal creation form must honor the user's preferred unit. The prefill
+used to adopt the stored entry's unit, presenting lbs to a kg-preferring user.
+Rounding to 1 dp mirrors the display style throughout the app and matches the
+active-goal display pattern at GoalsPage:208-218.
+
+**References:**
+- Issue: GH-92 (M3 remediation finding #4, slice ②)
+
+---
+
+## [2026-06-01 16:56] Commit Summary
+
+**Change Type:** Feat
+**Scope:** Frontend / GoalHistoryList (web, GH-92)
+
+**Summary:**
+Added `preferredUnit: WeightUnit` required prop to `GoalHistoryList`. Start and
+target values are now formatted with `formatWeightInPreferredUnit`, converting
+from the stored `goal.target_unit` to the caller-supplied preferred unit before
+display. Updated `GoalsPage.tsx` to pass `preferredUnit` (already in scope via
+`usePreferences`). Updated all test renders to supply the required prop; added
+two new tests for kg conversion and lbs formatting.
+
+**Rationale:**
+FR-P-1: goal history must honor the user's preferred weight unit. Keeping the
+prop on the component (not calling `usePreferences()` inside it) preserves the
+presentational-only contract — the page owns data/context, the component renders.
+
+**References:**
+- Issue: GH-92 (M3 remediation finding #4, slice ①)
+
+---
+
+## [2026-06-01 16:54] Commit Summary
+
+**Change Type:** Feat
+**Scope:** Frontend / achievements schema (web, GH-92)
+
+**Summary:**
+Added `MILESTONE_THRESHOLD_UNIT: WeightUnit = 'lbs'` symbolic constant to
+`features/achievements/schemas/achievement.ts`. Imported from the unit-conversion
+module so the type system enforces the value is a valid `WeightUnit`. Accompanied
+by a documentation comment explaining the canonical-pounds invariant (backend
+weight-entry create handler normalizes to lbs before milestone detection).
+
+**Rationale:**
+Removes magic `'lbs'` string at two upcoming display sites (AchievementsPage and
+AchievementNotification). A named constant documents *why* lbs is the source unit,
+and a type-system rename would catch all callers. Aligns with D8/G3 from the GH-92
+design spec.
+
+**References:**
+- Issue: GH-92 (M3 remediation finding #4)
+
+---
+
 ## [2026-06-01 15:44] Commit Summary
 
 **Change Type:** Fix

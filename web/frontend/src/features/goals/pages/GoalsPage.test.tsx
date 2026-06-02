@@ -8,7 +8,7 @@ import * as goalClientModule from '../api/goal-client';
 import * as weightClientModule from '../../weight/api/weight-client';
 import { GoalsPage } from './GoalsPage';
 
-const prefs = { current: 'lbs' as 'lbs' | 'kg' };
+const prefs = { current: 'lbs' as 'lbs' | 'kg', loading: false };
 vi.mock('../../../contexts/PreferencesContext', () => ({
   usePreferences: () => ({
     preferences: {
@@ -17,7 +17,7 @@ vi.mock('../../../contexts/PreferencesContext', () => ({
       notifyMilestone: true,
       notifyStreak: true,
     },
-    isLoading: false,
+    isLoading: prefs.loading,
     setPreference: vi.fn(),
   }),
 }));
@@ -67,6 +67,7 @@ const MOCK_ACTIVE_GOAL: goalClientModule.GoalRecord = {
 
 beforeEach(() => {
   prefs.current = 'lbs';
+  prefs.loading = false;
   vi.spyOn(weightClientModule.weightClient, 'list').mockResolvedValue({
     items: [],
     next_cursor: null,
@@ -77,6 +78,22 @@ beforeEach(() => {
 });
 
 describe('GoalsPage', () => {
+  it('does not mount the goal form while preferences are still loading', async () => {
+    prefs.loading = true;
+    vi.spyOn(goalClientModule.goalClient, 'getActive').mockResolvedValue({
+      goal: null,
+      progress_percent: null,
+      current_value: null,
+    });
+    render(<GoalsPage />, { wrapper: Wrapper });
+    // Wait for the goals query to resolve (heading appears) — this proves the
+    // active-goal loading spinner is gone and only the prefs gate can suppress
+    // the form. The prefill effect would capture the default 'lbs' unit if
+    // GoalFormWithPrefill were allowed to mount before preferences load.
+    await screen.findByRole('heading', { name: /^goals$/i });
+    expect(screen.queryByRole('button', { name: /set goal/i })).not.toBeInTheDocument();
+  });
+
   it('shows goal creation form when no active goal', async () => {
     vi.spyOn(goalClientModule.goalClient, 'getActive').mockResolvedValue({
       goal: null,
@@ -274,6 +291,86 @@ describe('GoalsPage', () => {
     const abandonBtn = await screen.findByRole('button', { name: /abandon goal/i });
     await userEvent.click(abandonBtn);
     await screen.findByText(/server error|unexpected error/i);
+  });
+
+  it('converts a lbs entry to preferred kg unit when prefilling the goal form', async () => {
+    prefs.current = 'kg';
+    vi.spyOn(goalClientModule.goalClient, 'getActive').mockResolvedValue({
+      goal: null,
+      progress_percent: null,
+      current_value: null,
+    });
+    vi.spyOn(weightClientModule.weightClient, 'list').mockResolvedValue({
+      items: [
+        {
+          entry_id: 1,
+          weight_value: 180,
+          weight_unit: 'lbs',
+          observation_date: '2026-05-28',
+          notes: null,
+          created_at: '2026-05-28T00:00:00Z',
+          updated_at: '2026-05-28T00:00:00Z',
+        },
+      ],
+      next_cursor: null,
+    });
+    render(<GoalsPage />, { wrapper: Wrapper });
+    // 180 lbs * 0.45359237 ≈ 81.6 kg (1 dp); form must use preferred unit as target_unit
+    const startInput = await screen.findByLabelText(/starting weight/i);
+    expect(startInput).toHaveValue(81.6);
+    expect(screen.getByRole('combobox', { name: /weight unit/i })).toHaveTextContent(/kg/i);
+  });
+
+  it('does not round the prefill start_value when entry unit equals preferred unit', async () => {
+    // Same-unit case: convertWeight is a no-op; rounding 180.45 → 180.5 is wrong
+    vi.spyOn(goalClientModule.goalClient, 'getActive').mockResolvedValue({
+      goal: null,
+      progress_percent: null,
+      current_value: null,
+    });
+    vi.spyOn(weightClientModule.weightClient, 'list').mockResolvedValue({
+      items: [
+        {
+          entry_id: 1,
+          weight_value: 180.45,
+          weight_unit: 'lbs',
+          observation_date: '2026-05-28',
+          notes: null,
+          created_at: '2026-05-28T00:00:00Z',
+          updated_at: '2026-05-28T00:00:00Z',
+        },
+      ],
+      next_cursor: null,
+    });
+    render(<GoalsPage />, { wrapper: Wrapper });
+    const startInput = await screen.findByLabelText(/starting weight/i);
+    expect(startInput).toHaveValue(180.45);
+  });
+
+  it('renders the form with empty defaults when latest entry has an unknown unit', async () => {
+    vi.spyOn(goalClientModule.goalClient, 'getActive').mockResolvedValue({
+      goal: null,
+      progress_percent: null,
+      current_value: null,
+    });
+    vi.spyOn(weightClientModule.weightClient, 'list').mockResolvedValue({
+      items: [
+        {
+          entry_id: 1,
+          weight_value: 14,
+          weight_unit: 'stone', // unexpected unit — must not crash
+          observation_date: '2026-05-28',
+          notes: null,
+          created_at: '2026-05-28T00:00:00Z',
+          updated_at: '2026-05-28T00:00:00Z',
+        },
+      ],
+      next_cursor: null,
+    });
+    render(<GoalsPage />, { wrapper: Wrapper });
+    // Form must appear (no crash) with an empty starting-weight input
+    const startInput = await screen.findByLabelText(/starting weight/i);
+    expect(startInput).toHaveValue(null);
   });
 
   it('renders past goals in a history section', async () => {
