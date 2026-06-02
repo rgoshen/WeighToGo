@@ -1,0 +1,66 @@
+name: Migration Health
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'web/backend/alembic/**'
+      - 'web/backend/tests/integration/migrations/**'
+      - 'web/backend/tests/**/test_migration_*.py'
+      - '.github/workflows/migration-ci.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'web/backend/alembic/**'
+      - 'web/backend/tests/integration/migrations/**'
+      - 'web/backend/tests/**/test_migration_*.py'
+      - '.github/workflows/migration-ci.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  migration-round-trips:
+    name: Migration round-trip (PostgreSQL)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web/backend
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: weighttogo
+          POSTGRES_PASSWORD: weighttogo
+          POSTGRES_DB: weighttogo_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U weighttogo"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Migration tests (round-trip + structure)
+        env:
+          WEIGHTTOGO_TEST_POSTGRES_DSN: postgresql+psycopg://weighttogo:weighttogo@localhost:5432/weighttogo_test
+          SECRET_KEY: ci-test-secret-key-at-least-32-bytes-long
+        run: |
+          uv run pytest -m postgres tests/integration/migrations/ -v
+          uv run pytest tests/ -k "test_migration_0" -v

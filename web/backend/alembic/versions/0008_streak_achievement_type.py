@@ -39,6 +39,13 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    """Revert the CHECK constraint to the original two types."""
+    """Revert the CHECK constraint to the original two types.
+
+    Deletes streak achievements before narrowing the constraint so that
+    data-bearing rollbacks succeed — PostgreSQL validates existing rows when
+    adding a CHECK, so any row with achievement_type='streak' would cause
+    create_check_constraint to fail without this cleanup step.
+    """
+    op.execute("DELETE FROM achievements WHERE achievement_type = 'streak'")
     op.drop_constraint("achievements_type_valid", "achievements", type_="check")
     op.create_check_constraint("achievements_type_valid", "achievements", _OLD)
