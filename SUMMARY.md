@@ -7,6 +7,26 @@ issues were resolved.
 
 ---
 
+## [2026-06-02 14:13] Issue #97 — Audit Log Vertical Slice complete
+
+**Change Type:** Feature
+**Scope:** audit/ domain; auth/weight_tracking/goals/preferences routers; alembic/versions/0009
+
+**Summary:**
+Full audit log vertical slice delivered: AuditLogModel (migration 0009), AuditEvent
+domain entity, RecordAuditEvent use case, SqlAlchemyAuditRepository, and composition-root
+wiring in four routers. Auth events fail-open; data-mutation events fail-closed. Import
+linter contracts enforce Clean Architecture boundary. 4 postgres index-plan assertions.
+
+**Rationale:**
+SRS §8.2.7 / §13.3.1 #1 / ADR-0024. Audit trail is M4's database-security showcase.
+
+**References:**
+- Issue: GH-97
+- ADR: docs/adr/0024-audit-log-structure.md
+
+---
+
 ## [2026-06-02 14:12] Task 11 — PostgreSQL index-plan assertions for audit_log
 
 **Change Type:** Test
