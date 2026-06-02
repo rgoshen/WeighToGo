@@ -7,6 +7,25 @@ issues were resolved.
 
 ---
 
+## [2026-06-02 14:04] Task 4 — AuditLogModel and SqlAlchemyAuditRepository
+
+**Change Type:** Feature
+**Scope:** audit/infrastructure
+
+**Summary:**
+Add AuditLogModel (SQLAlchemy 2, cross-dialect BigInt/JSON) with two CHECK constraints
+and two composite indexes. Add SqlAlchemyAuditRepository (append-only). Register model
+in integration conftest for create_all coverage.
+
+**Rationale:**
+Infrastructure layer per Clean Architecture. CHECK constraints enforced in
+model __table_args__ for SQLite test harness (ADR-0024).
+
+**References:**
+- Issue: GH-97
+
+---
+
 ## [2026-06-02 14:03] Task 3 — RecordAuditEvent use case
 
 **Change Type:** Feature

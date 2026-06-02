@@ -21,6 +21,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from weighttogo.achievements.infrastructure.models import AchievementModel  # noqa: F401
+from weighttogo.audit.infrastructure.models import AuditLogModel  # noqa: F401
 from weighttogo.auth.infrastructure.models import Base
 from weighttogo.auth.interface.router import limiter
 from weighttogo.goals.infrastructure.models import GoalModel  # noqa: F401
