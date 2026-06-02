@@ -15,6 +15,12 @@ from fastapi import APIRouter, Depends, Request, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
+from weighttogo.audit.application.record_audit_event import (
+    RecordAuditEvent,
+    RecordAuditEventCommand,
+)
+from weighttogo.audit.domain.entities import AuditEventType, ResourceType
+from weighttogo.audit.infrastructure.repositories import SqlAlchemyAuditRepository
 from weighttogo.auth.interface.router import get_current_user_id, limiter
 from weighttogo.preferences.application.get_preferences import GetPreferences, GetPreferencesCommand
 from weighttogo.preferences.application.set_preference import SetPreference, SetPreferenceCommand
@@ -32,6 +38,32 @@ from weighttogo.shared.problem_detail import build_problem_detail
 logger = structlog.stdlib.get_logger(__name__)
 
 router = APIRouter(prefix="/preferences", tags=["preferences"])
+
+
+def _record_mutation_audit(
+    session: Session,
+    request: Request,
+    *,
+    event_type: AuditEventType,
+    user_id: int,
+    resource_type: ResourceType,
+    resource_id: int | None = None,
+) -> None:
+    """Write a data-mutation audit event fail-closed (ADR-0024).
+
+    Shares the request-scoped session: if the INSERT fails the
+    whole operation rolls back atomically.
+    """
+    RecordAuditEvent(SqlAlchemyAuditRepository(session)).execute(
+        RecordAuditEventCommand(
+            event_type=event_type,
+            user_id=user_id,
+            resource_type=resource_type,
+            resource_id=resource_id,
+            request_id=request.headers.get("x-request-id"),
+            ip_address=str(request.client.host) if request.client else None,
+        )
+    )
 
 
 def _pref_repo(session: Session) -> SqlAlchemyPreferenceRepository:
@@ -115,5 +147,12 @@ def update_preference(
             ),
         )
 
+    _record_mutation_audit(
+        session,
+        request,
+        event_type=AuditEventType.PREFERENCE_UPDATED,
+        user_id=current_user_id,
+        resource_type=ResourceType.PREFERENCE,
+    )
     logger.info("preference_updated", key=key, user_id=current_user_id)
     return preferences_response_from_dict(resolved)

@@ -7,6 +7,375 @@ issues were resolved.
 
 ---
 
+## [2026-06-02 14:16] Fix — Address 8 PR review comments on audit log
+
+**Change Type:** Fix
+**Scope:** audit/; auth/interface/router.py; weight_tracking,goals,preferences routers
+
+**Summary:**
+(1) models.py created_at: add server_default=func.now() to match migration.
+(2) Postgres index tests: assert index name appears in EXPLAIN plan.
+(3) request_id truncation: add test for >64-char truncation.
+(4) account_locked event: add masked email metadata for parity with login_failed.
+(5) ON DELETE SET NULL: add behavioral integration test (delete user, audit survives).
+(6) Migration test: assert created_at DESC ordering.
+(7) Mutation routers: extract _record_mutation_audit helper (DRY).
+(8) ip_address: truncate to VARCHAR(45) for consistency with request_id.
+
+**Rationale:**
+Addressed all 8 review comments on the audit log PR. The _record_mutation_audit
+helper eliminates 7 repetitive inline audit blocks across weight_tracking, goals,
+and preferences routers. The server_default addition ensures the DB applies the
+timestamp even when the ORM skips the Python-side default. The new tests close
+gaps in truncation coverage and FK behavioral verification.
+
+**References:**
+- Issue: GH-97
+
+---
+
+## [2026-06-02 14:15] Fix — Three P2 PR review issues in audit log
+
+**Change Type:** Fix
+**Scope:** auth/interface/router.py; audit/infrastructure/repositories.py; tests/integration/audit/test_index_usage_audit_postgres.py
+
+**Summary:**
+(1) Auth _audit helper now uses session.begin_nested()+flush() so the INSERT is
+isolated in a SAVEPOINT and DB errors are caught before escaping as 500s.
+(2) request_id truncated to 64 chars in SqlAlchemyAuditRepository to match
+VARCHAR(64) constraint and prevent client-controlled header from failing mutations.
+(3) Postgres index tests rewritten: Alembic migrations, 150 seeded rows, ANALYZE,
+SET enable_seqscan=off — matching the weight index test pattern.
+
+**Rationale:**
+PR review P2 findings. Fail-open was incomplete; request_id unbounded; index
+tests too fragile with 1 row.
+
+**References:**
+- Issue: GH-97
+
+---
+
+## [2026-06-02 14:14] Fix — Migration 0009 index ordering to match ADR-0024 DESC spec
+
+**Change Type:** Fix
+**Scope:** alembic/versions/0009_audit_log.py
+
+**Summary:**
+Update idx_audit_log_user_created and idx_audit_log_event_type_created to use
+DESC ordering (sa.text("created_at DESC")) in the migration, matching ADR-0024
+specification and AuditLogModel.__table_args__ declaration.
+
+**Rationale:**
+Migration was creating ascending indexes; ADR-0024 specifies newest-first DESC
+ordering for audit queries. Model and migration were divergent.
+
+**References:**
+- Issue: GH-97
+
+---
+
+## [2026-06-02 14:13] Issue #97 — Audit Log Vertical Slice complete
+
+**Change Type:** Feature
+**Scope:** audit/ domain; auth/weight_tracking/goals/preferences routers; alembic/versions/0009
+
+**Summary:**
+Full audit log vertical slice delivered: AuditLogModel (migration 0009), AuditEvent
+domain entity, RecordAuditEvent use case, SqlAlchemyAuditRepository, and composition-root
+wiring in four routers. Auth events fail-open; data-mutation events fail-closed. Import
+linter contracts enforce Clean Architecture boundary. 4 postgres index-plan assertions.
+
+**Rationale:**
+SRS §8.2.7 / §13.3.1 #1 / ADR-0024. Audit trail is M4's database-security showcase.
+
+**References:**
+- Issue: GH-97
+- ADR: docs/adr/0024-audit-log-structure.md
+
+---
+
+## [2026-06-02 14:12] Task 11 — PostgreSQL index-plan assertions for audit_log
+
+**Change Type:** Test
+**Scope:** tests/integration/audit
+
+**Summary:**
+Add @pytest.mark.postgres index-plan assertions for idx_audit_log_user_created and
+idx_audit_log_event_type_created. Tests skip locally without DSN; CI perf-postgres
+job picks them up automatically.
+
+**Rationale:**
+NFR-P-3 requires proven index usage on the production engine (ADR-0024).
+
+**References:**
+- Issue: GH-97
+
+---
+
+## [2026-06-02 14:11] Task 10 — Preferences router audit wiring
+
+**Change Type:** Feature
+**Scope:** preferences/interface/router.py
+
+**Summary:**
+Wire preference.updated audit event at the preferences composition root.
+Write is fail-closed (same session). No resource_id (preferences keyed by user+key).
+
+**Rationale:**
+Preference changes must be auditable (ADR-0024). No resource_id needed since
+preferences are identified by (user_id, preference_key), not a surrogate PK.
+
+**References:**
+- Issue: GH-97
+
+---
+
+## [2026-06-02 14:10] Task 9 — Goals router audit wiring
+
+**Change Type:** Feature
+**Scope:** goals/interface/router.py
+
+**Summary:**
+Wire goal.created, goal.updated, goal.abandoned audit events at the goals
+composition root. All writes are fail-closed (same session).
+
+**Rationale:**
+Goal mutations need atomicity — unaudited goal changes are a compliance gap (ADR-0024).
+
+**References:**
+- Issue: GH-97
+
+---
+
+## [2026-06-02 14:09] Fix — Remove unused request param from list_weight_entries
+
+**Change Type:** Fix
+**Scope:** weight_tracking/interface/router.py
+
+**Summary:**
+Remove dead `request: Request` parameter from `list_weight_entries` GET endpoint.
+The endpoint has no rate-limiter decorator and writes no audit row.
+
+**Rationale:**
+Pyright flagged the unused parameter. CLAUDE.md §4 prohibits dead code.
+
+**References:**
+- Issue: GH-97
+
+---
+
+## [2026-06-02 14:08] Task 8 — Weight tracking router audit wiring
+
+**Change Type:** Feature
+**Scope:** weight_tracking/interface/router.py
+
+**Summary:**
+Wire weight_entry.created, weight_entry.updated, weight_entry.deleted audit events
+at the weight_tracking composition root. All writes are fail-closed (same session).
+
+**Rationale:**
+Data mutations need atomicity with the operation — if the audit write fails, the
+whole operation should roll back (ADR-0024).
+
+**References:**
+- Issue: GH-97
+
+---
+
+## [2026-06-02 14:07] Task 7 — Auth router audit wiring
+
+**Change Type:** Feature
+**Scope:** auth/interface/router.py
+
+**Summary:**
+Wire audit events at the auth composition root: auth.register, auth.login_succeeded,
+auth.login_failed (masked email in metadata), auth.account_locked, auth.logout,
+auth.token_refreshed. All writes are fail-open (try/except + logger.warning).
+
+**Rationale:**
+Auth events are best-effort telemetry — an audit hiccup must never block a valid
+login or logout. Fail-open per ADR-0024.
+
+**References:**
+- Issue: GH-97
+
+---
+
+## [2026-06-02 14:06] Task 6 — Import-linter contracts for audit domain
+
+**Change Type:** Chore
+**Scope:** pyproject.toml
+
+**Summary:**
+Add import-linter layer-ordering and framework-exclusion contracts for the audit
+bounded context. Audit has no interface layer (backend-only), so layers are
+infrastructure → application → domain only.
+
+**Rationale:**
+Enforces Clean Architecture dependency rule for the new domain (SRS §4.2).
+
+**References:**
+- Issue: GH-97
+
+---
+
+## [2026-06-02 14:05] Task 5 — Migration 0009_audit_log
+
+**Change Type:** Feature
+**Scope:** alembic/versions
+
+**Summary:**
+Add Alembic migration 0009_audit_log creating the audit_log table with two CHECK
+constraints, FK with ON DELETE SET NULL, and two composite indexes. Structure test
+verifies constraint names, index names, revision chain, and downgrade function.
+
+**Rationale:**
+Migration is self-contained (hardcoded strings, no app imports) per Alembic convention.
+Model __table_args__ enforces the same constraints on SQLite via create_all (ADR-0024).
+
+**References:**
+- Issue: GH-97
+
+---
+
+## [2026-06-02 14:04] Task 4 — AuditLogModel and SqlAlchemyAuditRepository
+
+**Change Type:** Feature
+**Scope:** audit/infrastructure
+
+**Summary:**
+Add AuditLogModel (SQLAlchemy 2, cross-dialect BigInt/JSON) with two CHECK constraints
+and two composite indexes. Add SqlAlchemyAuditRepository (append-only). Register model
+in integration conftest for create_all coverage.
+
+**Rationale:**
+Infrastructure layer per Clean Architecture. CHECK constraints enforced in
+model __table_args__ for SQLite test harness (ADR-0024).
+
+**References:**
+- Issue: GH-97
+
+---
+
+## [2026-06-02 14:03] Task 3 — RecordAuditEvent use case
+
+**Change Type:** Feature
+**Scope:** audit/application
+
+**Summary:**
+Add RecordAuditEventCommand (frozen dataclass) and RecordAuditEvent use case. Returns
+None — the audit row is a side-effect. Tested with FakeAuditRepository.
+
+**Rationale:**
+Application layer per Clean Architecture. No framework imports.
+
+**References:**
+- Issue: GH-97
+
+---
+
+## [2026-06-02] Fix — Audit domain quality: runtime_checkable + StrEnum assertions
+
+**Change Type:** Fix
+**Scope:** audit/domain
+
+**Summary:**
+Add `@runtime_checkable` to `IAuditRepository` Protocol (consistent with every other domain port in the codebase). Revert `str(AuditEventType.X)` / `str(ResourceType.X)` wrappers in test assertions to direct equality — `StrEnum` subclasses `str`, so the wrappers were unnecessary and non-idiomatic.
+
+**Rationale:**
+`@runtime_checkable` is required for `isinstance` checks; omitting it was a consistency gap. Direct StrEnum equality is both idiomatic and type-correct; mypy handles StrEnum-to-str-literal comparisons cleanly with `from __future__ import annotations`.
+
+**References:**
+- Issue: GH-97
+
+---
+
+## [2026-06-02 14:02] Task 2 — Audit domain entities and port
+
+**Change Type:** Feature
+**Scope:** audit/domain
+
+**Summary:**
+Add AuditEventType StrEnum (14 taxonomy values), ResourceType StrEnum, AuditEvent
+dataclass, and IAuditRepository Protocol to the new audit bounded context.
+
+**Rationale:**
+Framework-free domain layer per Clean Architecture (SRS §4.2 / ADR-0024).
+
+**References:**
+- Issue: GH-97
+
+---
+
+## [2026-06-02 14:01] Commit Summary
+
+**Change Type:** Docs
+**Scope:** ADR-0024 / SUMMARY
+
+**Summary:**
+Fixed remaining formatting issues in ADR-0024: removed four `---` horizontal rule
+separators between sections (none appear in peer ADRs 0022–0023); swapped
+`## Alternatives Considered` and `## Consequences` to restore the canonical
+Context → Decision → Rationale → Consequences → Alternatives Considered order.
+Corrected SUMMARY.md timestamps on the two preceding entries from 00:00/00:01 to
+13:59/14:00 to maintain newest-first ordering relative to the existing 07:18 entry.
+
+**Rationale:**
+Structural and timestamp consistency with project ADR conventions.
+
+**References:**
+- Issue: GH-97
+
+---
+
+## [2026-06-02 14:00] Commit Summary
+
+**Change Type:** Docs
+**Scope:** ADR-0024 / ADR README / SUMMARY
+
+**Summary:**
+Fixed formatting issues in Task 1 deliverables to match project conventions:
+ADR-0024 header converted from bold-inline to dash-list format; `Deciders` field
+removed. ADR-0024 restructured to add a dedicated `## Rationale` section, moving
+the seven "why" sub-sections out of `## Decision` to match the
+Context → Decision → Rationale → Consequences → Alternatives Considered order
+used by all peer ADRs. `docs/adr/README.md` 0025 placeholder row updated with
+the reserved title and Pending status. `SUMMARY.md` timestamp corrected to
+include HH:MM per the required format.
+
+**Rationale:**
+Consistency with the project's ADR convention (0009–0023) is required for
+maintainability and peer review. The structural separation of factual decisions
+from their rationale matches the template and makes each section independently
+scannable.
+
+**References:**
+- Issue: GH-97
+
+---
+
+## [2026-06-02 13:59] Commit Summary
+
+**Change Type:** Docs
+**Scope:** ADR / Architecture Decision Records
+
+**Summary:**
+Created ADR-0024 documenting the audit log structure for the M4 Phase 1 vertical
+slice. Added the corresponding index row to `docs/adr/README.md`.
+
+**Rationale:**
+SRS §8.2.7 deferred the `audit_log` schema to M4. ADR-0024 captures all design
+decisions before any implementation begins: schema columns, event taxonomy, failure
+handling asymmetry (fail-closed for data mutations, fail-open for auth events),
+append-only invariant, ON DELETE SET NULL vs CASCADE, VARCHAR CHECK vs ENUM, and
+composition-root wiring strategy.
+
+**References:**
+- Issue: GH-97
+
+---
+
 ## [2026-06-02 07:18] Commit Summary
 
 **Change Type:** Chore

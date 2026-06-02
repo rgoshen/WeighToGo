@@ -21,6 +21,12 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response,
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
+from weighttogo.audit.application.record_audit_event import (
+    RecordAuditEvent,
+    RecordAuditEventCommand,
+)
+from weighttogo.audit.domain.entities import AuditEventType, ResourceType
+from weighttogo.audit.infrastructure.repositories import SqlAlchemyAuditRepository
 from weighttogo.auth.interface.router import get_current_user_id, limiter
 from weighttogo.dashboard.interface.router import invalidate_dashboard_cache
 from weighttogo.goals.application.abandon_goal import AbandonGoal, AbandonGoalCommand
@@ -52,6 +58,32 @@ from weighttogo.weight_tracking.infrastructure.repositories import SqlAlchemyWei
 logger = structlog.stdlib.get_logger(__name__)
 
 router = APIRouter(prefix="/goals", tags=["goals"])
+
+
+def _record_mutation_audit(
+    session: Session,
+    request: Request,
+    *,
+    event_type: AuditEventType,
+    user_id: int,
+    resource_type: ResourceType,
+    resource_id: int | None = None,
+) -> None:
+    """Write a data-mutation audit event fail-closed (ADR-0024).
+
+    Shares the request-scoped session: if the INSERT fails the
+    whole operation rolls back atomically.
+    """
+    RecordAuditEvent(SqlAlchemyAuditRepository(session)).execute(
+        RecordAuditEventCommand(
+            event_type=event_type,
+            user_id=user_id,
+            resource_type=resource_type,
+            resource_id=resource_id,
+            request_id=request.headers.get("x-request-id"),
+            ip_address=str(request.client.host) if request.client else None,
+        )
+    )
 
 
 def _goal_repo(session: Session) -> SqlAlchemyGoalRepository:
@@ -113,6 +145,15 @@ def create_goal(
         ) from exc
 
     logger.info("goal_created", goal_id=goal.goal_id, user_id=current_user_id)
+
+    _record_mutation_audit(
+        session,
+        request,
+        event_type=AuditEventType.GOAL_CREATED,
+        user_id=current_user_id,
+        resource_type=ResourceType.GOAL,
+        resource_id=goal.goal_id,
+    )
 
     # The cached dashboard summary embeds active-goal progress, so a new goal
     # must bust it or the next read serves a stale (goal-less) summary
@@ -273,6 +314,15 @@ def update_goal(
 
     logger.info("goal_updated", goal_id=goal.goal_id, user_id=current_user_id)
 
+    _record_mutation_audit(
+        session,
+        request,
+        event_type=AuditEventType.GOAL_UPDATED,
+        user_id=current_user_id,
+        resource_type=ResourceType.GOAL,
+        resource_id=goal_id,
+    )
+
     # Target/date changes alter the cached dashboard's goal progress; invalidate
     # so the next read recomputes (NFR-P-5 invalidation trigger, ADR-0023).
     invalidate_dashboard_cache(current_user_id)
@@ -322,6 +372,15 @@ def abandon_goal(
         ) from exc
 
     logger.info("goal_abandoned", goal_id=goal_id, user_id=current_user_id)
+
+    _record_mutation_audit(
+        session,
+        request,
+        event_type=AuditEventType.GOAL_ABANDONED,
+        user_id=current_user_id,
+        resource_type=ResourceType.GOAL,
+        resource_id=goal_id,
+    )
 
     # Abandoning removes the active goal the cached dashboard shows; invalidate
     # so the next read reflects the deactivation (NFR-P-5 trigger, ADR-0023).

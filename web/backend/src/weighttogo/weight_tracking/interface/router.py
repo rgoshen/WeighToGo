@@ -30,6 +30,12 @@ from weighttogo.achievements.infrastructure.repositories import SqlAlchemyAchiev
 from weighttogo.achievements.interface.schemas import (
     AchievementResponse as AchievementResponseSchema,
 )
+from weighttogo.audit.application.record_audit_event import (
+    RecordAuditEvent,
+    RecordAuditEventCommand,
+)
+from weighttogo.audit.domain.entities import AuditEventType, ResourceType
+from weighttogo.audit.infrastructure.repositories import SqlAlchemyAuditRepository
 from weighttogo.auth.interface.router import get_current_user_id, limiter
 from weighttogo.dashboard.interface.router import invalidate_dashboard_cache
 from weighttogo.goals.infrastructure.repositories import SqlAlchemyGoalRepository
@@ -80,6 +86,32 @@ router = APIRouter(prefix="/weight-entries", tags=["weight"])
 
 _DEFAULT_PAGE_SIZE = 20
 _MAX_PAGE_SIZE = 100
+
+
+def _record_mutation_audit(
+    session: Session,
+    request: Request,
+    *,
+    event_type: AuditEventType,
+    user_id: int,
+    resource_type: ResourceType,
+    resource_id: int | None = None,
+) -> None:
+    """Write a data-mutation audit event fail-closed (ADR-0024).
+
+    Shares the request-scoped session: if the INSERT fails the
+    whole operation rolls back atomically.
+    """
+    RecordAuditEvent(SqlAlchemyAuditRepository(session)).execute(
+        RecordAuditEventCommand(
+            event_type=event_type,
+            user_id=user_id,
+            resource_type=resource_type,
+            resource_id=resource_id,
+            request_id=request.headers.get("x-request-id"),
+            ip_address=str(request.client.host) if request.client else None,
+        )
+    )
 
 
 def _weight_repo(session: Session) -> SqlAlchemyWeightEntryRepository:
@@ -143,6 +175,15 @@ def create_weight_entry(
         ) from exc
 
     logger.info("weight_entry_created", entry_id=entry.entry_id, user_id=current_user_id)
+
+    _record_mutation_audit(
+        session,
+        request,
+        event_type=AuditEventType.WEIGHT_ENTRY_CREATED,
+        user_id=current_user_id,
+        resource_type=ResourceType.WEIGHT_ENTRY,
+        resource_id=entry.entry_id,
+    )
 
     # Invalidate the cached dashboard summary so the next read recomputes with
     # this new entry (NFR-P-5 invalidation trigger, ADR-0023).
@@ -224,7 +265,6 @@ def create_weight_entry(
     summary="List weight entries (FR-W-2)",
 )
 def list_weight_entries(
-    request: Request,
     limit: int = Query(default=_DEFAULT_PAGE_SIZE, ge=1, le=_MAX_PAGE_SIZE),
     cursor: str | None = None,
     session: Session = Depends(get_db_session),
@@ -233,7 +273,6 @@ def list_weight_entries(
     """Return a paginated list of weight entries for the authenticated user.
 
     Args:
-        request: The incoming HTTP request.
         limit: Maximum number of entries per page (1..100, default 20).
             Out-of-range values return 422 rather than being silently clamped,
             so clients learn they exceeded the contract.
@@ -384,6 +423,15 @@ def update_weight_entry(
 
     logger.info("weight_entry_updated", entry_id=entry.entry_id, user_id=current_user_id)
 
+    _record_mutation_audit(
+        session,
+        request,
+        event_type=AuditEventType.WEIGHT_ENTRY_UPDATED,
+        user_id=current_user_id,
+        resource_type=ResourceType.WEIGHT_ENTRY,
+        resource_id=entry_id,
+    )
+
     # Invalidate the cached dashboard summary so the next read recomputes with
     # this edit (NFR-P-5 invalidation trigger, ADR-0023).
     invalidate_dashboard_cache(current_user_id)
@@ -438,6 +486,15 @@ def delete_weight_entry(
         ) from exc
 
     logger.info("weight_entry_deleted", entry_id=entry_id, user_id=current_user_id)
+
+    _record_mutation_audit(
+        session,
+        request,
+        event_type=AuditEventType.WEIGHT_ENTRY_DELETED,
+        user_id=current_user_id,
+        resource_type=ResourceType.WEIGHT_ENTRY,
+        resource_id=entry_id,
+    )
 
     # Invalidate the cached dashboard summary so the next read recomputes without
     # this deleted entry (NFR-P-5 invalidation trigger, ADR-0023).

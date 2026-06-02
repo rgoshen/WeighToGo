@@ -26,6 +26,12 @@ from slowapi import Limiter
 from slowapi.util import get_remote_address
 from sqlalchemy.orm import Session
 
+from weighttogo.audit.application.record_audit_event import (
+    RecordAuditEvent,
+    RecordAuditEventCommand,
+)
+from weighttogo.audit.domain.entities import AuditEventType
+from weighttogo.audit.infrastructure.repositories import SqlAlchemyAuditRepository
 from weighttogo.auth.application.authenticate_user import AuthenticateUser, AuthenticateUserCommand
 from weighttogo.auth.application.issue_tokens import IssueTokens, IssueTokensCommand
 from weighttogo.auth.application.refresh_session import RefreshSession, RefreshSessionCommand
@@ -49,6 +55,7 @@ from weighttogo.auth.infrastructure.repositories import (
 from weighttogo.auth.interface.schemas import LoginRequest, RegisterRequest, UserResponse
 from weighttogo.config import get_settings
 from weighttogo.shared.db import get_db_session
+from weighttogo.shared.logging import mask_pii
 
 logger = structlog.stdlib.get_logger(__name__)
 
@@ -193,6 +200,36 @@ def _clear_auth_cookies(response: Response) -> None:
     response.delete_cookie(key=_REFRESH_COOKIE, path="/api/v1/auth", **delete_kwargs)  # type: ignore[arg-type]
 
 
+def _audit(
+    session: Session,
+    event_type: AuditEventType,
+    request: Request,
+    *,
+    user_id: int | None = None,
+    metadata: dict[str, object] | None = None,
+) -> None:
+    """Write an auth audit event fail-open (ADR-0024).
+
+    Uses a nested transaction (SAVEPOINT) so the flush is isolated: if the
+    INSERT is rejected by PostgreSQL the savepoint rolls back, the main
+    session is unaffected, and no 500 escapes to the caller.
+    """
+    try:
+        with session.begin_nested():
+            RecordAuditEvent(SqlAlchemyAuditRepository(session)).execute(
+                RecordAuditEventCommand(
+                    event_type=event_type,
+                    user_id=user_id,
+                    request_id=request.headers.get("x-request-id"),
+                    ip_address=str(request.client.host) if request.client else None,
+                    metadata=metadata,
+                )
+            )
+            session.flush()
+    except Exception:
+        logger.warning("audit_write_failed", event_type=str(event_type))
+
+
 # ── Endpoints ─────────────────────────────────────────────────────────────────
 
 
@@ -258,6 +295,7 @@ def register(
     assert user.user_id is not None
     tokens = issue_uc.execute(IssueTokensCommand(user_id=user.user_id))
     _set_auth_cookies(response, tokens.access_token, tokens.raw_refresh_token, settings)
+    _audit(session, AuditEventType.AUTH_REGISTER, request, user_id=user.user_id)
 
     logger.info("user_registered", user_id=user.user_id)
     return UserResponse(
@@ -322,12 +360,24 @@ def login(
             AuthenticateUserCommand(email=str(payload.email), password=payload.password)
         )
     except AccountLockedError as exc:
+        _audit(
+            session,
+            AuditEventType.AUTH_ACCOUNT_LOCKED,
+            request,
+            metadata={"email": mask_pii(str(payload.email))},
+        )
         logger.warning("account_locked", locked_until=str(exc.locked_until))
         raise HTTPException(
             status_code=status.HTTP_423_LOCKED,
             detail="Account is temporarily locked. Please try again later.",
         ) from exc
     except InvalidCredentialsError as exc:
+        _audit(
+            session,
+            AuditEventType.AUTH_LOGIN_FAILED,
+            request,
+            metadata={"email": mask_pii(str(payload.email))},
+        )
         logger.info("login_failed")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -337,6 +387,7 @@ def login(
     assert user.user_id is not None
     tokens = issue_uc.execute(IssueTokensCommand(user_id=user.user_id))
     _set_auth_cookies(response, tokens.access_token, tokens.raw_refresh_token, settings)
+    _audit(session, AuditEventType.AUTH_LOGIN_SUCCEEDED, request, user_id=user.user_id)
 
     logger.info("user_logged_in", user_id=user.user_id)
     return UserResponse(
@@ -380,6 +431,7 @@ def logout(
             revoke_uc.execute(RevokeSessionCommand(raw_refresh_token=refresh_token))
 
     _clear_auth_cookies(response)
+    _audit(session, AuditEventType.AUTH_LOGOUT, request)
     logger.info("user_logged_out")
 
 
@@ -451,6 +503,7 @@ def refresh(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated.")
 
     _set_auth_cookies(response, tokens.access_token, tokens.raw_refresh_token, settings)
+    _audit(session, AuditEventType.AUTH_TOKEN_REFRESHED, request, user_id=user.user_id)
     return UserResponse(
         user_id=user.user_id,  # type: ignore[arg-type]
         email=user.email,
