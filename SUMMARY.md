@@ -4329,3 +4329,51 @@ paper over real failures (they still fail after the retry).
 
 **References:**
 - Issue: GH-89
+
+## [2026-06-01 18:44] Commit Summary
+
+**Change Type:** Refactor
+**Scope:** features/weight — WeightEntryForm + weight-schemas
+
+**Summary:**
+Adopted React Hook Form's `useWatch` hook in place of `watch('notes')` so the
+React Compiler can memoize `WeightEntryForm` (the `watch()` function is
+incompatible with compiler memoization and triggered a
+`react-hooks/incompatible-library` "Compilation Skipped" warning). Replaced the
+`zodResolver(weightEntrySchema) as any` cast and its
+`eslint-disable @typescript-eslint/no-explicit-any` with the typed three-generic
+`useForm<WeightEntryFormInput, unknown, WeightEntryFormValues>` form, and added a
+`WeightEntryFormInput` (`z.input`) export to the schema.
+
+**Rationale:**
+`useWatch` is React Hook Form's documented, compiler-safe equivalent of
+`watch(name)`. The `as any` existed because `weight_value` uses
+`z.coerce.number()`, making the schema's input type differ from its output
+(`z.infer`) type; parameterising `useForm` with separate input/output generics is
+the canonical, sound way to type the resolver without a cast. No shared resolver
+helper was introduced because the input/output generics are schema-specific at the
+`useForm` call site, so a wrapper would not remove meaningful duplication (KISS/YAGNI).
+
+**References:**
+- Issue: GH-95
+
+## [2026-06-01 18:45] Commit Summary
+
+**Change Type:** Refactor
+**Scope:** features/goals — GoalForm + goal-schemas
+
+**Summary:**
+Replaced the `zodResolver(goalFormSchema) as any` cast and its
+`eslint-disable @typescript-eslint/no-explicit-any` with the typed three-generic
+`useForm<GoalFormInput, unknown, GoalFormValues>` form, and added a
+`GoalFormInput` (`z.input`) export to the schema. Mirrors the WeightEntryForm
+resolver fix.
+
+**Rationale:**
+`goalFormSchema` coerces `target_value` and `start_value` with
+`z.coerce.number()`, so the schema input type differs from its `z.infer` output
+type; the separate input/output `useForm` generics type the resolver soundly
+without a cast. No `useWatch` change here — GoalForm never used `watch()`.
+
+**References:**
+- Issue: GH-95

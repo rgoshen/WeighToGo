@@ -15,4 +15,11 @@ export const weightEntrySchema = z.object({
   notes: z.string().max(500, 'Notes must be 500 characters or fewer.').optional(),
 });
 
+/**
+ * Pre-transform field type for React Hook Form's `TFieldValues` generic.
+ * Differs from {@link WeightEntryFormValues} because `weight_value` uses
+ * `z.coerce.number()`, so the form's raw input type and validated output
+ * type are not identical.
+ */
+export type WeightEntryFormInput = z.input<typeof weightEntrySchema>;
 export type WeightEntryFormValues = z.infer<typeof weightEntrySchema>;

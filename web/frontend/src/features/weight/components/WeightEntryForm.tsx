@@ -22,9 +22,13 @@ import {
 } from '@mui/material';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { usePreferences } from '../../../contexts/PreferencesContext';
-import { type WeightEntryFormValues, weightEntrySchema } from '../schemas/weight-schemas';
+import {
+  type WeightEntryFormInput,
+  type WeightEntryFormValues,
+  weightEntrySchema,
+} from '../schemas/weight-schemas';
 import { toLocalISODate } from '../../../lib/date';
 
 interface WeightEntryFormProps {
@@ -57,12 +61,10 @@ export function WeightEntryForm({
     register,
     handleSubmit,
     control,
-    watch,
     setValue,
     formState: { errors },
-  } = useForm<WeightEntryFormValues>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: zodResolver(weightEntrySchema) as any,
+  } = useForm<WeightEntryFormInput, unknown, WeightEntryFormValues>({
+    resolver: zodResolver(weightEntrySchema),
     defaultValues: defaultValues ?? {
       weight_value: undefined,
       weight_unit: preferences.weightUnit,
@@ -80,7 +82,9 @@ export function WeightEntryForm({
     }
   }, [prefsLoading, preferences.weightUnit, defaultValues, setValue]);
 
-  const notesValue = watch('notes') ?? '';
+  // useWatch (not watch()) so the React Compiler can memoize this component;
+  // watch() returns a function the compiler refuses to memoize safely.
+  const notesValue = useWatch({ control, name: 'notes' }) ?? '';
 
   return (
     <Box

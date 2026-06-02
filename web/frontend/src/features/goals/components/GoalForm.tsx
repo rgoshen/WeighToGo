@@ -21,7 +21,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { usePreferences } from '../../../contexts/PreferencesContext';
-import { type GoalFormValues, goalFormSchema } from '../schemas/goal-schemas';
+import { type GoalFormInput, type GoalFormValues, goalFormSchema } from '../schemas/goal-schemas';
 
 interface GoalFormProps {
   /** Called with validated form values on submit. */
@@ -54,9 +54,8 @@ export function GoalForm({
     control,
     setValue,
     formState: { errors },
-  } = useForm<GoalFormValues>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: zodResolver(goalFormSchema) as any,
+  } = useForm<GoalFormInput, unknown, GoalFormValues>({
+    resolver: zodResolver(goalFormSchema),
     defaultValues: defaultValues ?? {
       goal_type: 'lose',
       target_value: undefined,
