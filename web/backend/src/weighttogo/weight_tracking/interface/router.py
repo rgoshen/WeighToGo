@@ -241,7 +241,6 @@ def create_weight_entry(
     summary="List weight entries (FR-W-2)",
 )
 def list_weight_entries(
-    request: Request,
     limit: int = Query(default=_DEFAULT_PAGE_SIZE, ge=1, le=_MAX_PAGE_SIZE),
     cursor: str | None = None,
     session: Session = Depends(get_db_session),
@@ -250,7 +249,6 @@ def list_weight_entries(
     """Return a paginated list of weight entries for the authenticated user.
 
     Args:
-        request: The incoming HTTP request.
         limit: Maximum number of entries per page (1..100, default 20).
             Out-of-range values return 422 rather than being silently clamped,
             so clients learn they exceeded the contract.

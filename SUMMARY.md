@@ -7,6 +7,23 @@ issues were resolved.
 
 ---
 
+## [2026-06-02 14:09] Fix — Remove unused request param from list_weight_entries
+
+**Change Type:** Fix
+**Scope:** weight_tracking/interface/router.py
+
+**Summary:**
+Remove dead `request: Request` parameter from `list_weight_entries` GET endpoint.
+The endpoint has no rate-limiter decorator and writes no audit row.
+
+**Rationale:**
+Pyright flagged the unused parameter. CLAUDE.md §4 prohibits dead code.
+
+**References:**
+- Issue: GH-97
+
+---
+
 ## [2026-06-02 14:08] Task 8 — Weight tracking router audit wiring
 
 **Change Type:** Feature
