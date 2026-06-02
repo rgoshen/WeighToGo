@@ -5,11 +5,12 @@ ADR-0024: append-only — no update or delete paths are exposed.
 
 from __future__ import annotations
 
-from typing import Protocol
+from typing import Protocol, runtime_checkable
 
 from weighttogo.audit.domain.entities import AuditEvent
 
 
+@runtime_checkable
 class IAuditRepository(Protocol):
     """Append-only audit event store."""
 

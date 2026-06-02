@@ -9,29 +9,29 @@ from weighttogo.audit.domain.entities import AuditEvent, AuditEventType, Resourc
 
 def test_audit_event_type_has_all_auth_values() -> None:
     # ARRANGE / ACT — just verify the enum members exist at import time
-    assert str(AuditEventType.AUTH_REGISTER) == "auth.register"
-    assert str(AuditEventType.AUTH_LOGIN_SUCCEEDED) == "auth.login_succeeded"
-    assert str(AuditEventType.AUTH_LOGIN_FAILED) == "auth.login_failed"
-    assert str(AuditEventType.AUTH_LOGOUT) == "auth.logout"
-    assert str(AuditEventType.AUTH_TOKEN_REFRESHED) == "auth.token_refreshed"
-    assert str(AuditEventType.AUTH_TOKEN_REUSE_DETECTED) == "auth.token_reuse_detected"
-    assert str(AuditEventType.AUTH_ACCOUNT_LOCKED) == "auth.account_locked"
+    assert AuditEventType.AUTH_REGISTER.value == "auth.register"
+    assert AuditEventType.AUTH_LOGIN_SUCCEEDED.value == "auth.login_succeeded"
+    assert AuditEventType.AUTH_LOGIN_FAILED.value == "auth.login_failed"
+    assert AuditEventType.AUTH_LOGOUT.value == "auth.logout"
+    assert AuditEventType.AUTH_TOKEN_REFRESHED.value == "auth.token_refreshed"
+    assert AuditEventType.AUTH_TOKEN_REUSE_DETECTED.value == "auth.token_reuse_detected"
+    assert AuditEventType.AUTH_ACCOUNT_LOCKED.value == "auth.account_locked"
 
 
 def test_audit_event_type_has_all_mutation_values() -> None:
-    assert str(AuditEventType.WEIGHT_ENTRY_CREATED) == "weight_entry.created"
-    assert str(AuditEventType.WEIGHT_ENTRY_UPDATED) == "weight_entry.updated"
-    assert str(AuditEventType.WEIGHT_ENTRY_DELETED) == "weight_entry.deleted"
-    assert str(AuditEventType.GOAL_CREATED) == "goal.created"
-    assert str(AuditEventType.GOAL_UPDATED) == "goal.updated"
-    assert str(AuditEventType.GOAL_ABANDONED) == "goal.abandoned"
-    assert str(AuditEventType.PREFERENCE_UPDATED) == "preference.updated"
+    assert AuditEventType.WEIGHT_ENTRY_CREATED.value == "weight_entry.created"
+    assert AuditEventType.WEIGHT_ENTRY_UPDATED.value == "weight_entry.updated"
+    assert AuditEventType.WEIGHT_ENTRY_DELETED.value == "weight_entry.deleted"
+    assert AuditEventType.GOAL_CREATED.value == "goal.created"
+    assert AuditEventType.GOAL_UPDATED.value == "goal.updated"
+    assert AuditEventType.GOAL_ABANDONED.value == "goal.abandoned"
+    assert AuditEventType.PREFERENCE_UPDATED.value == "preference.updated"
 
 
 def test_resource_type_values() -> None:
-    assert str(ResourceType.WEIGHT_ENTRY) == "weight_entry"
-    assert str(ResourceType.GOAL) == "goal"
-    assert str(ResourceType.PREFERENCE) == "preference"
+    assert ResourceType.WEIGHT_ENTRY.value == "weight_entry"
+    assert ResourceType.GOAL.value == "goal"
+    assert ResourceType.PREFERENCE.value == "preference"
 
 
 def test_audit_event_constructs_with_all_fields() -> None:

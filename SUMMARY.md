@@ -7,6 +7,22 @@ issues were resolved.
 
 ---
 
+## [2026-06-02] Fix — Audit domain quality: runtime_checkable + StrEnum assertions
+
+**Change Type:** Fix
+**Scope:** audit/domain
+
+**Summary:**
+Add `@runtime_checkable` to `IAuditRepository` Protocol (consistent with every other domain port in the codebase). Revert `str(AuditEventType.X)` / `str(ResourceType.X)` wrappers in test assertions to direct equality — `StrEnum` subclasses `str`, so the wrappers were unnecessary and non-idiomatic.
+
+**Rationale:**
+`@runtime_checkable` is required for `isinstance` checks; omitting it was a consistency gap. Direct StrEnum equality is both idiomatic and type-correct; mypy handles StrEnum-to-str-literal comparisons cleanly with `from __future__ import annotations`.
+
+**References:**
+- Issue: GH-97
+
+---
+
 ## [2026-06-02 14:02] Task 2 — Audit domain entities and port
 
 **Change Type:** Feature
