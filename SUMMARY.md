@@ -7,6 +7,24 @@ issues were resolved.
 
 ---
 
+## [2026-06-02] Commit Summary
+
+**Change Type:** Docs
+**Scope:** docs/adr
+
+**Summary:**
+Add ADR-0025 documenting the constraint hardening strategy for M4 Phase 2 (GH-98).
+
+**Rationale:**
+ADR written before implementation code per project convention. Documents the dual-declaration
+pattern, defense-in-depth policy, audit methodology, and rationale for the target_date
+lower-bound epoch choice over a cross-column constraint.
+
+**References:**
+- Issue: GH-98
+
+---
+
 ## [2026-06-02 14:16] Fix — Address 8 PR review comments on audit log
 
 **Change Type:** Fix

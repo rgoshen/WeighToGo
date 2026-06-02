@@ -38,5 +38,5 @@ the next available number.
 | [0022](0022-streak-detection-algorithm.md) | Streak Detection Algorithm | Accepted | 2026-05-29 | Web |
 | [0023](0023-ttl-caching-strategy.md) | TTL-Based Server-Side Caching Strategy | Accepted | 2026-05-29 | Web |
 | [0024](0024-audit-log-structure.md) | Audit Log Structure | Accepted | 2026-06-02 | Web |
-| 0025 | *(reserved — Constraint Hardening Strategy, M4 Phase 2)* | Pending | — | Web |
+| [0025](0025-constraint-hardening-strategy.md) | Constraint Hardening Strategy | Accepted | 2026-06-02 | Web |
 | [0026](0026-achievement-write-flow-contract.md) | Achievement Write-Flow Contract | Accepted | 2026-05-31 | Web |
