@@ -7,6 +7,31 @@ issues were resolved.
 
 ---
 
+## [2026-06-02] GH-99 — Phase 3: Migration-Discipline Review
+
+**Change Type:** Test / Chore
+**Scope:** Alembic migrations, CI, docs/architecture
+
+**Summary:**
+Added structure-verification tests for migrations 0001, 0004, and 0005 (previously
+untested); a full-chain PostgreSQL round-trip test (`upgrade head` → `downgrade base`
+→ `upgrade head`) with schema sentinels for all seven SRS domain tables; a dedicated
+`migration-ci.yml` CI workflow with `workflow_dispatch` support; and
+`docs/architecture/migration_table.md` rationalising all ten migrations by purpose and
+milestone. No schema changes.
+
+**Rationale:**
+SRS §13.3.1 #4 requires every migration to be reversible and a from-scratch apply to
+be verified in CI. The round-trip test proves the full 0001–0010 chain is reversible
+on PostgreSQL (the only engine that can execute `ALTER TABLE DROP/ADD CONSTRAINT`
+without batch mode). The dedicated CI job surfaces migration failures as a distinct
+named check rather than burying them inside the general backend job.
+
+**References:**
+- Issue: GH-99
+
+---
+
 ## [2026-06-02] Commit Summary
 
 **Change Type:** Fix
