@@ -7,6 +7,25 @@ issues were resolved.
 
 ---
 
+## [2026-06-02 14:14] Fix — Migration 0009 index ordering to match ADR-0024 DESC spec
+
+**Change Type:** Fix
+**Scope:** alembic/versions/0009_audit_log.py
+
+**Summary:**
+Update idx_audit_log_user_created and idx_audit_log_event_type_created to use
+DESC ordering (sa.text("created_at DESC")) in the migration, matching ADR-0024
+specification and AuditLogModel.__table_args__ declaration.
+
+**Rationale:**
+Migration was creating ascending indexes; ADR-0024 specifies newest-first DESC
+ordering for audit queries. Model and migration were divergent.
+
+**References:**
+- Issue: GH-97
+
+---
+
 ## [2026-06-02 14:13] Issue #97 — Audit Log Vertical Slice complete
 
 **Change Type:** Feature

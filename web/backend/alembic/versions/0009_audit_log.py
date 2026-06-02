@@ -78,8 +78,16 @@ def upgrade() -> None:
             name="audit_log_resource_consistency",
         ),
     )
-    op.create_index("idx_audit_log_user_created", "audit_log", ["user_id", "created_at"])
-    op.create_index("idx_audit_log_event_type_created", "audit_log", ["event_type", "created_at"])
+    op.create_index(
+        "idx_audit_log_user_created",
+        "audit_log",
+        ["user_id", sa.text("created_at DESC")],
+    )
+    op.create_index(
+        "idx_audit_log_event_type_created",
+        "audit_log",
+        ["event_type", sa.text("created_at DESC")],
+    )
 
 
 def downgrade() -> None:
