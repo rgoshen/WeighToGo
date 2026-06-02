@@ -9,6 +9,27 @@ issues were resolved.
 
 ## [2026-06-02] Commit Summary
 
+**Change Type:** Refactor
+**Scope:** weight_tracking/infrastructure/models
+
+**Summary:**
+Backfill WeightEntryModel.__table_args__ with 5 CHECK constraints already present in
+migration 0002; add rejection tests proving SQLite now enforces them.
+
+**Rationale:**
+Migration 0002 declared weight_entries_value_positive, weight_entries_value_max,
+weight_entries_unit_valid, weight_entries_observation_not_future, and
+weight_entries_deletion_consistency but the ORM model had no __table_args__. SQLite
+integration tests built via create_all were running without these guards. Backfill
+closes the fidelity gap without a new migration (constraints already exist in DB).
+
+**References:**
+- Issue: GH-98
+
+---
+
+## [2026-06-02] Commit Summary
+
 **Change Type:** Test
 **Scope:** tests/unit
 

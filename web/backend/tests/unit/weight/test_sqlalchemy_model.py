@@ -5,9 +5,27 @@ from __future__ import annotations
 from datetime import UTC, date, datetime
 from decimal import Decimal
 
+import pytest
 from sqlalchemy import BigInteger, Boolean, Date, DateTime, Numeric, String
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
 
+from weighttogo.auth.infrastructure.models import UserModel
 from weighttogo.weight_tracking.infrastructure.models import WeightEntryModel
+
+
+def _make_user(session: Session) -> int:
+    """Insert a minimal valid user and return its user_id."""
+    user = UserModel(
+        email="w@example.com",
+        password_hash="x",
+        display_name="W",
+        is_active=True,
+        failed_login_count=0,
+    )
+    session.add(user)
+    session.flush()
+    return int(user.user_id)
 
 
 def test_weight_entry_model_table_name() -> None:
@@ -61,3 +79,35 @@ def test_model_accepts_decimal_weight_value() -> None:
         deleted_at=None,
     )
     assert entry.weight_value == Decimal("175.50")
+
+
+def test_weight_entry_negative_value_rejected(db_session: Session) -> None:
+    # ARRANGE
+    user_id = _make_user(db_session)
+    db_session.add(
+        WeightEntryModel(
+            user_id=user_id,
+            weight_value=Decimal("-1.0"),
+            weight_unit="lbs",
+            observation_date=date(2026, 1, 1),
+            is_deleted=False,
+        )
+    )
+    # ACT / ASSERT
+    with pytest.raises(IntegrityError):
+        db_session.flush()
+
+
+def test_weight_entry_invalid_unit_rejected(db_session: Session) -> None:
+    user_id = _make_user(db_session)
+    db_session.add(
+        WeightEntryModel(
+            user_id=user_id,
+            weight_value=Decimal("150.0"),
+            weight_unit="pounds",
+            observation_date=date(2026, 1, 1),
+            is_deleted=False,
+        )
+    )
+    with pytest.raises(IntegrityError):
+        db_session.flush()

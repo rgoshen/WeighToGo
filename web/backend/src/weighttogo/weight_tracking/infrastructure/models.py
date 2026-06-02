@@ -15,7 +15,17 @@ from datetime import UTC, datetime
 from datetime import date as date_type
 from decimal import Decimal
 
-from sqlalchemy import BigInteger, Boolean, Date, DateTime, ForeignKey, Integer, Numeric, String
+from sqlalchemy import (
+    BigInteger,
+    Boolean,
+    CheckConstraint,
+    Date,
+    DateTime,
+    ForeignKey,
+    Integer,
+    Numeric,
+    String,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from weighttogo.auth.infrastructure.models import Base
@@ -36,6 +46,20 @@ class WeightEntryModel(Base):
     """
 
     __tablename__ = "weight_entries"
+    __table_args__ = (
+        CheckConstraint("weight_value > 0", name="weight_entries_value_positive"),
+        CheckConstraint("weight_value <= 1500", name="weight_entries_value_max"),
+        CheckConstraint("weight_unit IN ('lbs', 'kg')", name="weight_entries_unit_valid"),
+        CheckConstraint(
+            "observation_date <= CURRENT_DATE",
+            name="weight_entries_observation_not_future",
+        ),
+        CheckConstraint(
+            "(is_deleted = FALSE AND deleted_at IS NULL)"
+            " OR (is_deleted = TRUE AND deleted_at IS NOT NULL)",
+            name="weight_entries_deletion_consistency",
+        ),
+    )
 
     entry_id: Mapped[int] = mapped_column(_BigInt, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(
