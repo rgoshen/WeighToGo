@@ -13,7 +13,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from decimal import Decimal
 
-from sqlalchemy import BigInteger, DateTime, ForeignKey, Integer, Numeric, String
+from sqlalchemy import BigInteger, CheckConstraint, DateTime, ForeignKey, Integer, Numeric, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from weighttogo.auth.infrastructure.models import Base
@@ -27,6 +27,18 @@ class AchievementModel(Base):
     """ORM model for the ``achievements`` table (Issue #54 design spec)."""
 
     __tablename__ = "achievements"
+    __table_args__ = (
+        # Backfill: type constraint already enforced in migrations 0005/0008.
+        CheckConstraint(
+            "achievement_type IN ('goal_reached', 'milestone', 'streak')",
+            name="achievements_type_valid",
+        ),
+        # New (migration 0010): threshold must be positive or null.
+        CheckConstraint(
+            "threshold IS NULL OR threshold > 0",
+            name="achievements_threshold_positive",
+        ),
+    )
 
     id: Mapped[int] = mapped_column(_BigInt, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(

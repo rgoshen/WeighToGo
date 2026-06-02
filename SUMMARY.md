@@ -10,6 +10,25 @@ issues were resolved.
 ## [2026-06-02] Commit Summary
 
 **Change Type:** Refactor
+**Scope:** achievements/infrastructure/models
+
+**Summary:**
+Backfill AchievementModel.__table_args__ with achievements_type_valid CHECK (migrations
+0005/0008); add achievements_threshold_positive CHECK (new, will be in migration 0010);
+add rejection tests.
+
+**Rationale:**
+Type-valid CHECK existed in the DB but not the model. Threshold-positive is a new guard
+preventing zero/negative thresholds that would break milestone-detection math.
+
+**References:**
+- Issue: GH-98
+
+---
+
+## [2026-06-02] Commit Summary
+
+**Change Type:** Refactor
 **Scope:** goals/infrastructure/models
 
 **Summary:**
