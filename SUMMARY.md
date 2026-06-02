@@ -4252,3 +4252,32 @@ paper over real failures (they still fail after the retry).
 
 **References:**
 - Issue: GH-89
+
+## [2026-06-01 18:45] Commit Summary
+
+**Change Type:** Chore
+**Scope:** web/frontend — features/placeholders
+
+**Summary:**
+Removed the three retired Milestone 2 "Coming in Milestone 3" placeholder
+artifacts (AchievementsPlaceholderPage.tsx, SettingsPlaceholderPage.tsx,
+PlaceholderPages.test.tsx) from web/frontend/src/features/placeholders/, and
+the now-empty placeholders/ directory.
+
+**Rationale:**
+The real Milestone 3 Achievements and Settings pages are wired in App.tsx via
+lazy-loaded imports from features/achievements/pages/ and
+features/settings/pages/. The placeholder components were unrouted and
+referenced only by their own colocated test, leaving dead code and test drift
+in a released M3 codebase. A tree-wide search across web/frontend (src, e2e,
+config) confirmed no production import, route, or lazy-load referenced them;
+the only remaining mentions are two accurate historical doc-comments in the
+real pages, left intact as out of scope. Removal (rather than relocation to
+docs) was chosen because git history preserves the artifacts as portfolio
+evidence and a non-compiling .tsx in docs would only add maintenance surface.
+Full frontend suite verified green (lint, format, typecheck, 388 tests) with
+no coverage loss for live behavior — the deleted test exercised only the
+deleted components.
+
+**References:**
+- Issue: GH-93
