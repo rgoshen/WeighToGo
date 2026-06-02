@@ -7,6 +7,33 @@ issues were resolved.
 
 ---
 
+## [2026-06-01 17:23] Commit Summary
+
+**Change Type:** Fix
+**Scope:** Frontend / GoalFormWithPrefill (web, GH-92)
+
+**Summary:**
+Fixed a preferences-loading race in `GoalFormWithPrefill`. On cold loads,
+`PreferencesProvider` returns the default `'lbs'` unit until its query resolves.
+The prefetch effect closed over that stale `defaultUnit` on mount and never
+re-ran (empty dep array). Now `GoalsPage` reads `isLoading` from `usePreferences()`
+and gates `GoalFormWithPrefill` behind `!prefsLoading` — the component only mounts
+after `defaultUnit` is the real loaded preference, so the closed-over value is
+always correct. A loading spinner (`aria-label="Loading preferences"`) is shown
+while prefs are in-flight. GoalsPage test updated to make `isLoading` configurable
+in the mock; new test verifies the form is absent while prefs load.
+
+**Rationale:**
+PR review P2: kg-preferring users on cold loads would see a lbs-prefilled form
+because the effect fired once with the default lbs value and GoalForm's own unit
+sync is suppressed when defaultValues are provided. Gating on prefsLoading is the
+minimal fix — no double-fetch, no dep-array churn.
+
+**References:**
+- Issue: GH-92 (PR #108 review finding P2)
+
+---
+
 ## [2026-06-01 17:04] Commit Summary
 
 **Change Type:** Test

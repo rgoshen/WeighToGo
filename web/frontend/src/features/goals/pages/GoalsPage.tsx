@@ -51,7 +51,7 @@ export function GoalsPage() {
   const updateGoal = useUpdateGoal();
   const abandonGoal = useAbandonGoal();
   const goalHistory = useGoals({ history: true });
-  const { preferences } = usePreferences();
+  const { preferences, isLoading: prefsLoading } = usePreferences();
   const preferredUnit = preferences.weightUnit;
 
   const [isEditing, setIsEditing] = useState(false);
@@ -144,12 +144,18 @@ export function GoalsPage() {
             {actionError}
           </Alert>
         )}
-        <GoalFormWithPrefill
-          onSubmit={handleCreate}
-          conflictError={conflictError}
-          isSubmitting={setGoal.isPending}
-          defaultUnit={preferredUnit}
-        />
+        {prefsLoading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+            <CircularProgress size={24} aria-label="Loading preferences" />
+          </Box>
+        ) : (
+          <GoalFormWithPrefill
+            onSubmit={handleCreate}
+            conflictError={conflictError}
+            isSubmitting={setGoal.isPending}
+            defaultUnit={preferredUnit}
+          />
+        )}
         {historySection}
       </Box>
     );

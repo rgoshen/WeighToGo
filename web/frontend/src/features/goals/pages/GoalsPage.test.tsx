@@ -8,7 +8,7 @@ import * as goalClientModule from '../api/goal-client';
 import * as weightClientModule from '../../weight/api/weight-client';
 import { GoalsPage } from './GoalsPage';
 
-const prefs = { current: 'lbs' as 'lbs' | 'kg' };
+const prefs = { current: 'lbs' as 'lbs' | 'kg', loading: false };
 vi.mock('../../../contexts/PreferencesContext', () => ({
   usePreferences: () => ({
     preferences: {
@@ -17,7 +17,7 @@ vi.mock('../../../contexts/PreferencesContext', () => ({
       notifyMilestone: true,
       notifyStreak: true,
     },
-    isLoading: false,
+    isLoading: prefs.loading,
     setPreference: vi.fn(),
   }),
 }));
@@ -67,6 +67,7 @@ const MOCK_ACTIVE_GOAL: goalClientModule.GoalRecord = {
 
 beforeEach(() => {
   prefs.current = 'lbs';
+  prefs.loading = false;
   vi.spyOn(weightClientModule.weightClient, 'list').mockResolvedValue({
     items: [],
     next_cursor: null,
@@ -77,6 +78,22 @@ beforeEach(() => {
 });
 
 describe('GoalsPage', () => {
+  it('does not mount the goal form while preferences are still loading', async () => {
+    prefs.loading = true;
+    vi.spyOn(goalClientModule.goalClient, 'getActive').mockResolvedValue({
+      goal: null,
+      progress_percent: null,
+      current_value: null,
+    });
+    render(<GoalsPage />, { wrapper: Wrapper });
+    // Wait for the goals query to resolve (heading appears) — this proves the
+    // active-goal loading spinner is gone and only the prefs gate can suppress
+    // the form. The prefill effect would capture the default 'lbs' unit if
+    // GoalFormWithPrefill were allowed to mount before preferences load.
+    await screen.findByRole('heading', { name: /^goals$/i });
+    expect(screen.queryByRole('button', { name: /set goal/i })).not.toBeInTheDocument();
+  });
+
   it('shows goal creation form when no active goal', async () => {
     vi.spyOn(goalClientModule.goalClient, 'getActive').mockResolvedValue({
       goal: null,
