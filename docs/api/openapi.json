@@ -649,7 +649,7 @@
           "achievements"
         ],
         "summary": "List achievements for the current user (FR-Ach-4)",
-        "description": "Return the most recent achievements for the authenticated user.\n\nArgs:\n    session: The active database session.\n    current_user_id: The authenticated user's ID.\n\nReturns:\n    List of up to 50 achievements, newest first.",
+        "description": "Return the most recent achievements for the authenticated user.\n\nRate-limited to 30 requests/minute to match the goals list endpoint, so both\nauthenticated listing endpoints share a rate-limit posture (defense-in-depth).\n\nArgs:\n    request: The incoming HTTP request (required by slowapi).\n    session: The active database session.\n    current_user_id: The authenticated user's ID.\n\nReturns:\n    List of up to 50 achievements, newest first.",
         "operationId": "list_achievements_api_v1_achievements_get",
         "responses": {
           "200": {
@@ -888,7 +888,7 @@
           "earned_at"
         ],
         "title": "AchievementResponse",
-        "description": "Response body for a single achievement.\n\nAttributes:\n    achievement_id: The surrogate primary key.\n    goal_id: The goal this achievement belongs to.\n    achievement_type: ``'goal_reached'`` or ``'milestone'``.\n    threshold: The lb threshold crossed (milestones only); ``None`` for\n        ``goal_reached`` achievements.\n    earned_at: UTC timestamp when the achievement was recorded."
+        "description": "Response body for a single achievement.\n\nAttributes:\n    achievement_id: The surrogate primary key.\n    goal_id: The goal this achievement belongs to.\n    achievement_type: ``'goal_reached'``, ``'milestone'``, or\n        ``'streak'``.\n    threshold: The lb threshold crossed for milestones or the day count\n        for streaks; ``None`` for ``goal_reached`` achievements.\n    earned_at: UTC timestamp when the achievement was recorded."
       },
       "ActiveGoalResponse": {
         "properties": {
@@ -987,8 +987,8 @@
             "anyOf": [
               {
                 "type": "number",
-                "maximum": 1500,
-                "exclusiveMinimum": 0
+                "maximum": 1500.0,
+                "exclusiveMinimum": 0.0
               },
               {
                 "type": "string",
@@ -1009,8 +1009,8 @@
             "anyOf": [
               {
                 "type": "number",
-                "maximum": 1500,
-                "exclusiveMinimum": 0
+                "maximum": 1500.0,
+                "exclusiveMinimum": 0.0
               },
               {
                 "type": "string",
@@ -1160,8 +1160,8 @@
             "anyOf": [
               {
                 "type": "number",
-                "maximum": 1500,
-                "exclusiveMinimum": 0
+                "maximum": 1500.0,
+                "exclusiveMinimum": 0.0
               },
               {
                 "type": "string",
@@ -1494,8 +1494,8 @@
             "anyOf": [
               {
                 "type": "number",
-                "maximum": 1500,
-                "exclusiveMinimum": 0
+                "maximum": 1500.0,
+                "exclusiveMinimum": 0.0
               },
               {
                 "type": "string",

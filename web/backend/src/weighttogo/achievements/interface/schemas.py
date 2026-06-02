@@ -14,9 +14,10 @@ class AchievementResponse(BaseModel):
     Attributes:
         achievement_id: The surrogate primary key.
         goal_id: The goal this achievement belongs to.
-        achievement_type: ``'goal_reached'`` or ``'milestone'``.
-        threshold: The lb threshold crossed (milestones only); ``None`` for
-            ``goal_reached`` achievements.
+        achievement_type: ``'goal_reached'``, ``'milestone'``, or
+            ``'streak'``.
+        threshold: The lb threshold crossed for milestones or the day count
+            for streaks; ``None`` for ``goal_reached`` achievements.
         earned_at: UTC timestamp when the achievement was recorded.
     """
 
