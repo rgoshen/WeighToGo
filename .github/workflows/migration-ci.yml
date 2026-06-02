@@ -57,8 +57,10 @@ jobs:
       - name: Install dependencies
         run: uv sync
 
-      - name: Migration round-trip tests
+      - name: Migration tests (round-trip + structure)
         env:
           WEIGHTTOGO_TEST_POSTGRES_DSN: postgresql+psycopg://weighttogo:weighttogo@localhost:5432/weighttogo_test
           SECRET_KEY: ci-test-secret-key-at-least-32-bytes-long
-        run: uv run pytest -m postgres tests/integration/migrations/ -v
+        run: |
+          uv run pytest -m postgres tests/integration/migrations/ -v
+          uv run pytest tests/ -k "test_migration_0" -v

@@ -39,6 +39,59 @@ _DOMAIN_TABLES: frozenset[str] = frozenset(
 )
 
 
+def _seed_representative_data(engine: Engine) -> None:
+    """Insert rows that exercise widened constraints to prove data-bearing rollback is safe.
+
+    The critical row is achievement_type='streak', which exercises the migration 0008
+    widened CHECK on downgrade.  When downgrade base runs, migration 0008's downgrade
+    must DELETE streak rows before recreating the narrow CHECK; without that cleanup,
+    PostgreSQL raises a constraint violation on any existing streak row.
+
+    All other rows anchor the representative-data set and confirm the full downgrade
+    chain handles real data without errors.
+    """
+    with engine.begin() as conn:
+        user_id = conn.execute(
+            text(
+                "INSERT INTO users (email, password_hash, display_name) "
+                "VALUES ('rollback-test@example.com', 'x', 'Rollback Test') "
+                "RETURNING user_id"
+            )
+        ).scalar_one()
+        conn.execute(
+            text(
+                "INSERT INTO weight_entries "
+                "(user_id, weight_value, weight_unit, observation_date, is_deleted) "
+                "VALUES (:uid, 180.0, 'lbs', '2024-01-01', FALSE)"
+            ),
+            {"uid": user_id},
+        )
+        # 'lose' goal: target_value < start_value satisfies the direction invariant (0004)
+        conn.execute(
+            text(
+                "INSERT INTO goals "
+                "(user_id, target_value, target_unit, start_value, goal_type, target_date) "
+                "VALUES (:uid, 160.0, 'lbs', 180.0, 'lose', '2025-12-31')"
+            ),
+            {"uid": user_id},
+        )
+        # 'streak' is the value widened by migration 0008; downgrade must delete it first
+        conn.execute(
+            text(
+                "INSERT INTO achievements (user_id, achievement_type, earned_at) "
+                "VALUES (:uid, 'streak', NOW())"
+            ),
+            {"uid": user_id},
+        )
+        conn.execute(
+            text(
+                "INSERT INTO user_preferences (user_id, pref_key, pref_value) "
+                "VALUES (:uid, 'weight_unit', 'lbs')"
+            ),
+            {"uid": user_id},
+        )
+
+
 @pytest.fixture(scope="module")
 def pg_migration_engine() -> Iterator[Engine]:
     """Apply all migrations to a fresh Postgres DB, yield the engine, then tear down."""
@@ -70,16 +123,27 @@ def pg_migration_engine() -> Iterator[Engine]:
 
 
 def test_from_scratch_apply_reaches_head(pg_migration_engine: Engine) -> None:
-    """upgrade head from an empty DB lands at revision 0010 (AC: from-scratch apply)."""
+    """upgrade head from an empty DB lands at revision 0010 (AC: from-scratch apply).
+
+    Seeds representative data after the version check so that
+    test_downgrade_base_removes_all_domain_tables exercises data-bearing rollback,
+    not just empty-schema rollback.
+    """
     with pg_migration_engine.connect() as conn:
         row = conn.execute(text("SELECT version_num FROM alembic_version")).scalar_one()
     assert row == "0010"  # update when migration 0011 is added
+    _seed_representative_data(pg_migration_engine)
 
 
 def test_downgrade_base_removes_all_domain_tables(pg_migration_engine: Engine) -> None:
-    """downgrade base removes all seven SRS domain tables (AC: chain is reversible).
+    """downgrade base removes all seven SRS domain tables with representative data present.
 
-    Depends on test_from_scratch_apply_reaches_head running first (DB must be at head).
+    AC: chain is reversible.
+
+    Depends on test_from_scratch_apply_reaches_head running first (DB at head with seeded data).
+    The seeded data includes achievement_type='streak'; migration 0008's downgrade deletes
+    these rows before narrowing the CHECK so this test catches constraint-violation hazards
+    that an empty-schema rollback would miss.
     Tests run in file-definition order by default; do not add pytest-randomly without
     adding explicit ordering enforcement.
     """

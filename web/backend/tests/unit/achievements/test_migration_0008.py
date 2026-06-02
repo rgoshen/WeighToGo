@@ -43,3 +43,11 @@ def test_migration_0008_new_constraint_includes_streak() -> None:
     mod = _load_migration()
     assert "streak" in mod._NEW
     assert "streak" not in mod._OLD
+
+
+def test_migration_0008_downgrade_deletes_streak_rows_before_narrowing() -> None:
+    # Downgrade must DELETE streak achievements before recreating the narrow CHECK;
+    # PostgreSQL validates existing rows on create_check_constraint, so any streak
+    # row present during downgrade would raise a constraint violation without this.
+    src = _PATH.read_text()
+    assert "DELETE FROM achievements WHERE achievement_type = 'streak'" in src
