@@ -6,12 +6,14 @@ on:
     paths:
       - 'web/backend/alembic/**'
       - 'web/backend/tests/integration/migrations/**'
+      - 'web/backend/tests/**/test_migration_*.py'
       - '.github/workflows/migration-ci.yml'
   pull_request:
     branches: [main, develop]
     paths:
       - 'web/backend/alembic/**'
       - 'web/backend/tests/integration/migrations/**'
+      - 'web/backend/tests/**/test_migration_*.py'
       - '.github/workflows/migration-ci.yml'
   workflow_dispatch:
 

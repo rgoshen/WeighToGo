@@ -77,7 +77,12 @@ def test_from_scratch_apply_reaches_head(pg_migration_engine: Engine) -> None:
 
 
 def test_downgrade_base_removes_all_domain_tables(pg_migration_engine: Engine) -> None:
-    """downgrade base removes all seven SRS domain tables (AC: chain is reversible)."""
+    """downgrade base removes all seven SRS domain tables (AC: chain is reversible).
+
+    Depends on test_from_scratch_apply_reaches_head running first (DB must be at head).
+    Tests run in file-definition order by default; do not add pytest-randomly without
+    adding explicit ordering enforcement.
+    """
     cfg = Config("alembic.ini")
     command.downgrade(cfg, "base")
     table_names = set(inspect(pg_migration_engine).get_table_names())
@@ -88,7 +93,12 @@ def test_downgrade_base_removes_all_domain_tables(pg_migration_engine: Engine) -
 
 
 def test_upgrade_head_after_downgrade_restores_schema(pg_migration_engine: Engine) -> None:
-    """upgrade head after downgrade base restores all domain tables (AC: chain round-trips)."""
+    """upgrade head after downgrade base restores all domain tables (AC: chain round-trips).
+
+    Depends on test_downgrade_base_removes_all_domain_tables running first (DB must be at base).
+    Tests run in file-definition order by default; do not add pytest-randomly without
+    adding explicit ordering enforcement.
+    """
     cfg = Config("alembic.ini")
     command.upgrade(cfg, "head")
     table_names = set(inspect(pg_migration_engine).get_table_names())
