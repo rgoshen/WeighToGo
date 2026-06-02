@@ -7,7 +7,28 @@ issues were resolved.
 
 ---
 
-## [2026-06-02 00:01] Commit Summary
+## [2026-06-02 14:01] Commit Summary
+
+**Change Type:** Docs
+**Scope:** ADR-0024 / SUMMARY
+
+**Summary:**
+Fixed remaining formatting issues in ADR-0024: removed four `---` horizontal rule
+separators between sections (none appear in peer ADRs 0022–0023); swapped
+`## Alternatives Considered` and `## Consequences` to restore the canonical
+Context → Decision → Rationale → Consequences → Alternatives Considered order.
+Corrected SUMMARY.md timestamps on the two preceding entries from 00:00/00:01 to
+13:59/14:00 to maintain newest-first ordering relative to the existing 07:18 entry.
+
+**Rationale:**
+Structural and timestamp consistency with project ADR conventions.
+
+**References:**
+- Issue: GH-97
+
+---
+
+## [2026-06-02 14:00] Commit Summary
 
 **Change Type:** Docs
 **Scope:** ADR-0024 / ADR README / SUMMARY
@@ -33,7 +54,7 @@ scannable.
 
 ---
 
-## [2026-06-02 00:00] Commit Summary
+## [2026-06-02 13:59] Commit Summary
 
 **Change Type:** Docs
 **Scope:** ADR / Architecture Decision Records

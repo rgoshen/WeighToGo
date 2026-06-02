@@ -3,13 +3,9 @@
 - **Date**: 2026-06-02
 - **Status**: Accepted
 
----
-
 ## Context
 
 SRS §8.2.7 deferred the `audit_log` schema to M4. The table must record authentication outcomes and data mutations for security/compliance review, retain entries past actor deletion, and store no unmasked PII or secrets (NFR-Priv-1). It is the seventh and final table in the schema.
-
----
 
 ## Decision
 
@@ -37,8 +33,6 @@ Administrative actions are absent: SRS §1.3 defines no admin role, so no admini
 
 - `idx_audit_log_user_created (user_id, created_at DESC)` — user-scoped audit queries ordered newest-first.
 - `idx_audit_log_event_type_created (event_type, created_at DESC)` — event-type filtering ordered newest-first.
-
----
 
 ## Rationale
 
@@ -75,7 +69,12 @@ Audit writes are injected at the interface/composition-root layer (the same patt
 
 This event type is reserved in the CHECK constraint taxonomy but is not currently wired at the composition root. The `RefreshSession` use case raises `InvalidCredentialsError` for both "token not found" and "replay detected" scenarios with no distinguishing exception type. The value is reserved for a future enhancement when a distinct exception is introduced.
 
----
+## Consequences
+
+- Every in-scope operation writes exactly one audit row.
+- User deletion does not destroy the audit trail.
+- No unmasked PII is stored; failed logins carry a masked email in `metadata` via `mask_pii()`.
+- The `audit` domain is never imported by other domain packages (enforced by import-linter, verified in `test_import_contracts.py`).
 
 ## Alternatives Considered
 
@@ -85,12 +84,3 @@ This event type is reserved in the CHECK constraint taxonomy but is not currentl
 | CASCADE on user delete | Destroys audit evidence; ON DELETE SET NULL preserves it |
 | Post-response middleware for all audit writes | Loses session atomicity for data mutations; resource context not available |
 | Fail-closed for auth events | Auth hiccup would block valid logins; best-effort telemetry is sufficient for auth events |
-
----
-
-## Consequences
-
-- Every in-scope operation writes exactly one audit row.
-- User deletion does not destroy the audit trail.
-- No unmasked PII is stored; failed logins carry a masked email in `metadata` via `mask_pii()`.
-- The `audit` domain is never imported by other domain packages (enforced by import-linter, verified in `test_import_contracts.py`).
