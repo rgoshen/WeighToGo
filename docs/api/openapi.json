@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Weigh to Go! API",
-    "version": "0.2.1"
+    "version": "0.3.0"
   },
   "paths": {
     "/api/v1/auth/register": {
@@ -987,8 +987,8 @@
             "anyOf": [
               {
                 "type": "number",
-                "maximum": 1500.0,
-                "exclusiveMinimum": 0.0
+                "maximum": 1500,
+                "exclusiveMinimum": 0
               },
               {
                 "type": "string",
@@ -1009,8 +1009,8 @@
             "anyOf": [
               {
                 "type": "number",
-                "maximum": 1500.0,
-                "exclusiveMinimum": 0.0
+                "maximum": 1500,
+                "exclusiveMinimum": 0
               },
               {
                 "type": "string",
@@ -1160,8 +1160,8 @@
             "anyOf": [
               {
                 "type": "number",
-                "maximum": 1500.0,
-                "exclusiveMinimum": 0.0
+                "maximum": 1500,
+                "exclusiveMinimum": 0
               },
               {
                 "type": "string",
@@ -1494,8 +1494,8 @@
             "anyOf": [
               {
                 "type": "number",
-                "maximum": 1500.0,
-                "exclusiveMinimum": 0.0
+                "maximum": 1500,
+                "exclusiveMinimum": 0
               },
               {
                 "type": "string",
