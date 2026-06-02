@@ -30,6 +30,12 @@ from weighttogo.achievements.infrastructure.repositories import SqlAlchemyAchiev
 from weighttogo.achievements.interface.schemas import (
     AchievementResponse as AchievementResponseSchema,
 )
+from weighttogo.audit.application.record_audit_event import (
+    RecordAuditEvent,
+    RecordAuditEventCommand,
+)
+from weighttogo.audit.domain.entities import AuditEventType, ResourceType
+from weighttogo.audit.infrastructure.repositories import SqlAlchemyAuditRepository
 from weighttogo.auth.interface.router import get_current_user_id, limiter
 from weighttogo.dashboard.interface.router import invalidate_dashboard_cache
 from weighttogo.goals.infrastructure.repositories import SqlAlchemyGoalRepository
@@ -143,6 +149,17 @@ def create_weight_entry(
         ) from exc
 
     logger.info("weight_entry_created", entry_id=entry.entry_id, user_id=current_user_id)
+
+    RecordAuditEvent(SqlAlchemyAuditRepository(session)).execute(
+        RecordAuditEventCommand(
+            event_type=AuditEventType.WEIGHT_ENTRY_CREATED,
+            user_id=current_user_id,
+            resource_type=ResourceType.WEIGHT_ENTRY,
+            resource_id=entry.entry_id,
+            request_id=request.headers.get("x-request-id"),
+            ip_address=str(request.client.host) if request.client else None,
+        )
+    )
 
     # Invalidate the cached dashboard summary so the next read recomputes with
     # this new entry (NFR-P-5 invalidation trigger, ADR-0023).
@@ -384,6 +401,17 @@ def update_weight_entry(
 
     logger.info("weight_entry_updated", entry_id=entry.entry_id, user_id=current_user_id)
 
+    RecordAuditEvent(SqlAlchemyAuditRepository(session)).execute(
+        RecordAuditEventCommand(
+            event_type=AuditEventType.WEIGHT_ENTRY_UPDATED,
+            user_id=current_user_id,
+            resource_type=ResourceType.WEIGHT_ENTRY,
+            resource_id=entry_id,
+            request_id=request.headers.get("x-request-id"),
+            ip_address=str(request.client.host) if request.client else None,
+        )
+    )
+
     # Invalidate the cached dashboard summary so the next read recomputes with
     # this edit (NFR-P-5 invalidation trigger, ADR-0023).
     invalidate_dashboard_cache(current_user_id)
@@ -438,6 +466,17 @@ def delete_weight_entry(
         ) from exc
 
     logger.info("weight_entry_deleted", entry_id=entry_id, user_id=current_user_id)
+
+    RecordAuditEvent(SqlAlchemyAuditRepository(session)).execute(
+        RecordAuditEventCommand(
+            event_type=AuditEventType.WEIGHT_ENTRY_DELETED,
+            user_id=current_user_id,
+            resource_type=ResourceType.WEIGHT_ENTRY,
+            resource_id=entry_id,
+            request_id=request.headers.get("x-request-id"),
+            ip_address=str(request.client.host) if request.client else None,
+        )
+    )
 
     # Invalidate the cached dashboard summary so the next read recomputes without
     # this deleted entry (NFR-P-5 invalidation trigger, ADR-0023).

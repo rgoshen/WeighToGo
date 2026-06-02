@@ -7,6 +7,24 @@ issues were resolved.
 
 ---
 
+## [2026-06-02 14:08] Task 8 — Weight tracking router audit wiring
+
+**Change Type:** Feature
+**Scope:** weight_tracking/interface/router.py
+
+**Summary:**
+Wire weight_entry.created, weight_entry.updated, weight_entry.deleted audit events
+at the weight_tracking composition root. All writes are fail-closed (same session).
+
+**Rationale:**
+Data mutations need atomicity with the operation — if the audit write fails, the
+whole operation should roll back (ADR-0024).
+
+**References:**
+- Issue: GH-97
+
+---
+
 ## [2026-06-02 14:07] Task 7 — Auth router audit wiring
 
 **Change Type:** Feature
