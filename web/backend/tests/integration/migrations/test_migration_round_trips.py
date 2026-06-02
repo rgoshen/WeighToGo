@@ -67,21 +67,22 @@ def _seed_representative_data(engine: Engine) -> None:
             {"uid": user_id},
         )
         # 'lose' goal: target_value < start_value satisfies the direction invariant (0004)
-        conn.execute(
+        goal_id = conn.execute(
             text(
                 "INSERT INTO goals "
                 "(user_id, target_value, target_unit, start_value, goal_type, target_date) "
-                "VALUES (:uid, 160.0, 'lbs', 180.0, 'lose', '2025-12-31')"
+                "VALUES (:uid, 160.0, 'lbs', 180.0, 'lose', '2025-12-31') "
+                "RETURNING goal_id"
             ),
             {"uid": user_id},
-        )
+        ).scalar_one()
         # 'streak' is the value widened by migration 0008; downgrade must delete it first
         conn.execute(
             text(
-                "INSERT INTO achievements (user_id, achievement_type, earned_at) "
-                "VALUES (:uid, 'streak', NOW())"
+                "INSERT INTO achievements (user_id, goal_id, achievement_type, earned_at) "
+                "VALUES (:uid, :gid, 'streak', NOW())"
             ),
-            {"uid": user_id},
+            {"uid": user_id, "gid": goal_id},
         )
         conn.execute(
             text(
