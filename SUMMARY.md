@@ -10,6 +10,24 @@ issues were resolved.
 ## [2026-06-02] Commit Summary
 
 **Change Type:** Refactor
+**Scope:** preferences/infrastructure/models
+
+**Summary:**
+Backfill UserPreferenceModel.__table_args__ with user_preferences_key_valid and
+user_preferences_value_valid CHECKs already present in migration 0006; add rejection tests.
+
+**Rationale:**
+Migration 0006 declared both checks but the model lacked __table_args__ for them.
+SQLite integration tests were running without key/value domain enforcement.
+
+**References:**
+- Issue: GH-98
+
+---
+
+## [2026-06-02] Commit Summary
+
+**Change Type:** Refactor
 **Scope:** achievements/infrastructure/models
 
 **Summary:**

@@ -8,7 +8,15 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from sqlalchemy import BigInteger, DateTime, ForeignKey, Integer, String, UniqueConstraint
+from sqlalchemy import (
+    BigInteger,
+    CheckConstraint,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from weighttogo.auth.infrastructure.models import Base
@@ -23,7 +31,19 @@ class UserPreferenceModel(Base):
     # Mirror the UNIQUE(user_id, pref_key) constraint from migration 0006 so
     # that Base.metadata.create_all() and ON CONFLICT index_elements both see
     # the same constraint (important for SQLite-backed unit tests).
-    __table_args__ = (UniqueConstraint("user_id", "pref_key", name="user_preferences_unique_key"),)
+    __table_args__ = (
+        UniqueConstraint("user_id", "pref_key", name="user_preferences_unique_key"),
+        # Backfill: both CHECKs already enforced in migration 0006.
+        CheckConstraint(
+            "pref_key IN ('weight_unit','notify_achievement','notify_milestone','notify_streak')",
+            name="user_preferences_key_valid",
+        ),
+        CheckConstraint(
+            "(pref_key = 'weight_unit' AND pref_value IN ('lbs','kg'))"
+            " OR (pref_key LIKE 'notify_%' AND pref_value IN ('true','false'))",
+            name="user_preferences_value_valid",
+        ),
+    )
 
     id: Mapped[int] = mapped_column(_BigInt, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(
