@@ -7,6 +7,25 @@ issues were resolved.
 
 ---
 
+## [2026-06-02 14:05] Task 5 — Migration 0009_audit_log
+
+**Change Type:** Feature
+**Scope:** alembic/versions
+
+**Summary:**
+Add Alembic migration 0009_audit_log creating the audit_log table with two CHECK
+constraints, FK with ON DELETE SET NULL, and two composite indexes. Structure test
+verifies constraint names, index names, revision chain, and downgrade function.
+
+**Rationale:**
+Migration is self-contained (hardcoded strings, no app imports) per Alembic convention.
+Model __table_args__ enforces the same constraints on SQLite via create_all (ADR-0024).
+
+**References:**
+- Issue: GH-97
+
+---
+
 ## [2026-06-02 14:04] Task 4 — AuditLogModel and SqlAlchemyAuditRepository
 
 **Change Type:** Feature
