@@ -12,7 +12,7 @@ CI — see `.github/workflows/migration-ci.yml`).
 | Migration | Purpose | Milestone | Key objects |
 |-----------|---------|-----------|-------------|
 | `0001` | Initial users + auth (CITEXT email, refresh tokens) | M2 | `users`, `refresh_tokens` |
-| `0002` | Weight entries + composite performance index | M2 | `weight_entries`, `idx_weight_entries_user_obs_date` |
+| `0002` | Weight entries + composite performance indexes | M2 | `weight_entries`, `idx_weight_entries_user_date_active`, `idx_weight_entries_user_observation_desc` |
 | `0003` | Goals table | M2 | `goals` |
 | `0004` | Goals direction-invariant CHECK constraint | M2 | `goals_direction_invariant` |
 | `0005` | Achievements table + indexes | M3 | `achievements` |

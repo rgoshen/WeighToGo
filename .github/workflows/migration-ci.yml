@@ -60,4 +60,5 @@ jobs:
       - name: Migration round-trip tests
         env:
           WEIGHTTOGO_TEST_POSTGRES_DSN: postgresql+psycopg://weighttogo:weighttogo@localhost:5432/weighttogo_test
+          SECRET_KEY: ci-test-secret-key-at-least-32-bytes-long
         run: uv run pytest -m postgres tests/integration/migrations/ -v
