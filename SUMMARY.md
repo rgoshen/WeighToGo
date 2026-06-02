@@ -7,6 +7,28 @@ issues were resolved.
 
 ---
 
+## [2026-06-01 17:04] Commit Summary
+
+**Change Type:** Test
+**Scope:** Frontend E2E / achievement-notification.spec.ts (web, GH-92)
+
+**Summary:**
+Updated `e2e/achievement-notification.spec.ts` assertions at lines 43 and 54
+from `/5 lb milestone/i` to `/5\.0 lbs milestone/i` to match the new formatted
+copy. Also renamed the second test title to reflect the new format. Confirmed
+`preferences.spec.ts` suppression test does not positively assert milestone copy
+and requires no change. Full FE suite (vitest, lint, typecheck) passes with
+94.23% statement coverage.
+
+**Rationale:**
+E2E specs assert observable UI copy; they must reflect the updated formatted
+milestone string. The default E2E user has the lbs preference.
+
+**References:**
+- Issue: GH-92 (M3 remediation finding #4, E2E [G2] step)
+
+---
+
 ## [2026-06-01 17:03] Commit Summary
 
 **Change Type:** Docs
