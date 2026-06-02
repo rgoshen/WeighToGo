@@ -1,10 +1,25 @@
 import { describe, expect, it } from 'vitest';
 
-import { MILESTONE_THRESHOLD_UNIT, parseThreshold } from './achievement';
+import { MILESTONE_THRESHOLD_UNIT, formatMilestoneWeight, parseThreshold } from './achievement';
 
 describe('MILESTONE_THRESHOLD_UNIT', () => {
   it('is the canonical pounds unit used by the backend weight-entry create handler', () => {
     expect(MILESTONE_THRESHOLD_UNIT).toBe('lbs');
+  });
+});
+
+describe('formatMilestoneWeight', () => {
+  it('returns null for a null threshold so callers own their fallback copy', () => {
+    expect(formatMilestoneWeight(null, 'lbs')).toBeNull();
+  });
+
+  it('returns the formatted weight fragment in lbs for a numeric threshold', () => {
+    expect(formatMilestoneWeight(5, 'lbs')).toBe('5.0 lbs');
+  });
+
+  it('converts the canonical lbs threshold to kg when preferred unit is kg', () => {
+    // 5 lbs * 0.45359237 ≈ 2.3 kg
+    expect(formatMilestoneWeight(5, 'kg')).toBe('2.3 kg');
   });
 });
 

@@ -7,6 +7,49 @@ issues were resolved.
 
 ---
 
+## [2026-06-01 18:01] Commit Summary
+
+**Change Type:** Fix
+**Scope:** Frontend / PR #108 review findings (web, GH-92)
+
+**Summary:**
+Addressed 9 confirmed PR review findings across docs, types, and code:
+
+Docs (#6, #7): Fixed DDR-0009 Related section — ADR-0019 → ADR-0020 (Preferences
+Storage Data Structure); SRS line 661 → 687 (FR-P-1, not FR-Ach-2 body).
+
+Type safety (#5): Changed `MILESTONE_THRESHOLD_UNIT: WeightUnit = 'lbs'` to
+`= 'lbs' satisfies WeightUnit` — preserves the `'lbs'` literal type instead of
+widening to the union; a rename to an invalid value is caught at compile time.
+
+Spinner reuse (#8): Extended `LoadingSpinner` with optional `size` and `py` props;
+replaced all three hand-rolled `Box + CircularProgress` spinners in `GoalsPage`
+with `<LoadingSpinner>`.
+
+Prefill effect (#1 #2 #3 #4): Rewrote the `GoalFormWithPrefill` `useEffect`:
+- Skip 1-dp rounding when `entryUnit === defaultUnit` (same-unit case was silently
+  quantizing 2-dp stored values)
+- Guard unknown units at the data boundary (`!== 'lbs' && !== 'kg'`) before calling
+  `convertWeight`; `.catch` now handles only network errors, not conversion panics
+- Added `[defaultUnit]` to deps array (resolves `react-hooks/exhaustive-deps`); added
+  `key={preferredUnit}` on the `GoalFormWithPrefill` call site so a preference refetch
+  remounts the component rather than triggering a synchronous setState in the effect
+
+`formatMilestoneWeight` helper (#9): Extracted the `parseThreshold + null-guard +
+formatWeightInPreferredUnit` pattern shared by `AchievementsPage.achievementLabel` and
+`AchievementNotification.toastMessage` into a tested function in `achievement.ts`.
+
+**Rationale:**
+Addresses all confirmed PR review findings. Items pushed back: parallel prefs+weight
+fetch (valid optimization, scope-expanding refactor, separate issue); `<WeightValue>`
+component (premature abstraction, pattern just landed); wrong-unit flash on
+AchievementsPage (self-correcting, reviewer-confirmed cosmetic).
+
+**References:**
+- Issue: GH-92 (PR #108 review)
+
+---
+
 ## [2026-06-01 17:23] Commit Summary
 
 **Change Type:** Fix

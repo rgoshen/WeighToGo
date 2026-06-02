@@ -86,8 +86,8 @@ migration would add complexity with no information gain.
 ## Related
 
 - DDR-0007 — Achievement Notification UI (milestone copy superseded by this DDR)
-- ADR-0019 — Preferences EAV storage
+- ADR-0020 — Preferences Storage Data Structure
 - ADR-0026 — Achievement write-flow contract (create-only, permanent)
-- SRS FR-P-1 (`WeighToGo_Web_SRS_v2.md:661`)
+- SRS FR-P-1 (`WeighToGo_Web_SRS_v2.md:687`)
 - SRS FR-Ach-2 (`WeighToGo_Web_SRS_v2.md`) — `"pounds"` is correct for detection
 - M3 quality review finding #4 (`docs/standards/M3_WEB_APP_QUALITY.md:89-101`)

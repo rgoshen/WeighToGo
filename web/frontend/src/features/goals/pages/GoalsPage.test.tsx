@@ -321,6 +321,58 @@ describe('GoalsPage', () => {
     expect(screen.getByRole('combobox', { name: /weight unit/i })).toHaveTextContent(/kg/i);
   });
 
+  it('does not round the prefill start_value when entry unit equals preferred unit', async () => {
+    // Same-unit case: convertWeight is a no-op; rounding 180.45 → 180.5 is wrong
+    vi.spyOn(goalClientModule.goalClient, 'getActive').mockResolvedValue({
+      goal: null,
+      progress_percent: null,
+      current_value: null,
+    });
+    vi.spyOn(weightClientModule.weightClient, 'list').mockResolvedValue({
+      items: [
+        {
+          entry_id: 1,
+          weight_value: 180.45,
+          weight_unit: 'lbs',
+          observation_date: '2026-05-28',
+          notes: null,
+          created_at: '2026-05-28T00:00:00Z',
+          updated_at: '2026-05-28T00:00:00Z',
+        },
+      ],
+      next_cursor: null,
+    });
+    render(<GoalsPage />, { wrapper: Wrapper });
+    const startInput = await screen.findByLabelText(/starting weight/i);
+    expect(startInput).toHaveValue(180.45);
+  });
+
+  it('renders the form with empty defaults when latest entry has an unknown unit', async () => {
+    vi.spyOn(goalClientModule.goalClient, 'getActive').mockResolvedValue({
+      goal: null,
+      progress_percent: null,
+      current_value: null,
+    });
+    vi.spyOn(weightClientModule.weightClient, 'list').mockResolvedValue({
+      items: [
+        {
+          entry_id: 1,
+          weight_value: 14,
+          weight_unit: 'stone', // unexpected unit — must not crash
+          observation_date: '2026-05-28',
+          notes: null,
+          created_at: '2026-05-28T00:00:00Z',
+          updated_at: '2026-05-28T00:00:00Z',
+        },
+      ],
+      next_cursor: null,
+    });
+    render(<GoalsPage />, { wrapper: Wrapper });
+    // Form must appear (no crash) with an empty starting-weight input
+    const startInput = await screen.findByLabelText(/starting weight/i);
+    expect(startInput).toHaveValue(null);
+  });
+
   it('renders past goals in a history section', async () => {
     vi.spyOn(goalClientModule.goalClient, 'getActive').mockResolvedValue({
       goal: null,

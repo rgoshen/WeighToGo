@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { formatWeightInPreferredUnit } from '../../../lib/format';
 import type { WeightUnit } from '../../../lib/unit-conversion';
 
 /**
@@ -6,7 +7,20 @@ import type { WeightUnit } from '../../../lib/unit-conversion';
  * create handler normalizes to lbs before detection (FR-Ach-2 basis).
  * Convert from this unit for display only.
  */
-export const MILESTONE_THRESHOLD_UNIT: WeightUnit = 'lbs';
+export const MILESTONE_THRESHOLD_UNIT = 'lbs' satisfies WeightUnit;
+
+/**
+ * Format a milestone threshold (canonical pounds) as a display weight in the
+ * user's preferred unit. Returns `null` for a null threshold so each call site
+ * can own its own fallback copy ("Milestone" vs "Milestone reached!").
+ */
+export function formatMilestoneWeight(
+  threshold: number | null,
+  preferredUnit: WeightUnit,
+): string | null {
+  if (threshold === null) return null;
+  return formatWeightInPreferredUnit(threshold, MILESTONE_THRESHOLD_UNIT, preferredUnit);
+}
 
 export const achievementSchema = z.object({
   achievement_id: z.number(),

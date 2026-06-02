@@ -15,11 +15,10 @@ import {
 } from '@mui/material';
 
 import { usePreferences } from '../../../contexts/PreferencesContext';
-import { formatWeightInPreferredUnit } from '../../../lib/format';
 import type { WeightUnit } from '../../../lib/unit-conversion';
 import { useAchievements } from '../hooks/useAchievements';
 import {
-  MILESTONE_THRESHOLD_UNIT,
+  formatMilestoneWeight,
   parseThreshold,
   type AchievementRecord,
 } from '../schemas/achievement';
@@ -32,11 +31,9 @@ function achievementLabel(ach: AchievementRecord, preferredUnit: WeightUnit): st
   if (ach.achievement_type === 'streak') {
     return value === null ? 'Streak' : `${value}-day Streak`;
   }
-  // Milestone thresholds are stored in pounds (MILESTONE_THRESHOLD_UNIT);
-  // convert to preferred unit for display (FR-P-1).
-  return value === null
-    ? 'Milestone'
-    : `${formatWeightInPreferredUnit(value, MILESTONE_THRESHOLD_UNIT, preferredUnit)} Milestone`;
+  // Milestone thresholds are canonical pounds; convert to preferred unit for display (FR-P-1).
+  const weight = formatMilestoneWeight(value, preferredUnit);
+  return weight === null ? 'Milestone' : `${weight} Milestone`;
 }
 
 function achievementDate(ach: AchievementRecord): string {

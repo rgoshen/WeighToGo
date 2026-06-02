@@ -13,10 +13,9 @@
 import { Alert, Snackbar } from '@mui/material';
 import { useCallback } from 'react';
 
-import { formatWeightInPreferredUnit } from '../../../lib/format';
 import type { WeightUnit } from '../../../lib/unit-conversion';
 import {
-  MILESTONE_THRESHOLD_UNIT,
+  formatMilestoneWeight,
   parseThreshold,
   type AchievementRecord,
 } from '../schemas/achievement';
@@ -42,11 +41,9 @@ function toastMessage(ach: AchievementRecord, preferredUnit: WeightUnit): string
       ? 'Logging streak! Keep it up.'
       : `${value}-day logging streak! Keep it up.`;
   }
-  // Milestone thresholds are stored in pounds (MILESTONE_THRESHOLD_UNIT);
-  // convert to preferred unit for display (FR-P-1).
-  return value === null
-    ? 'Milestone reached!'
-    : `${formatWeightInPreferredUnit(value, MILESTONE_THRESHOLD_UNIT, preferredUnit)} milestone reached!`;
+  // Milestone thresholds are canonical pounds; convert to preferred unit for display (FR-P-1).
+  const weight = formatMilestoneWeight(value, preferredUnit);
+  return weight === null ? 'Milestone reached!' : `${weight} milestone reached!`;
 }
 
 export function AchievementNotification({ achievements, onDismissOne, preferredUnit }: Props) {
