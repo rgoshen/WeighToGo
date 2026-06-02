@@ -7,6 +7,24 @@ issues were resolved.
 
 ---
 
+## [2026-06-02 14:06] Task 6 — Import-linter contracts for audit domain
+
+**Change Type:** Chore
+**Scope:** pyproject.toml
+
+**Summary:**
+Add import-linter layer-ordering and framework-exclusion contracts for the audit
+bounded context. Audit has no interface layer (backend-only), so layers are
+infrastructure → application → domain only.
+
+**Rationale:**
+Enforces Clean Architecture dependency rule for the new domain (SRS §4.2).
+
+**References:**
+- Issue: GH-97
+
+---
+
 ## [2026-06-02 14:05] Task 5 — Migration 0009_audit_log
 
 **Change Type:** Feature

@@ -210,3 +210,18 @@ forbidden_modules = [
     "weighttogo.achievements",
     "weighttogo.preferences",
 ]
+
+[[tool.importlinter.contracts]]
+name = "audit: Clean Architecture layer ordering"
+type = "layers"
+containers = ["weighttogo.audit"]
+layers = ["infrastructure", "application", "domain"]
+
+[[tool.importlinter.contracts]]
+name = "audit: domain and application must not import frameworks"
+type = "forbidden"
+source_modules = [
+    "weighttogo.audit.domain",
+    "weighttogo.audit.application",
+]
+forbidden_modules = ["fastapi", "sqlalchemy", "pydantic", "alembic", "starlette"]
