@@ -10,6 +10,25 @@ issues were resolved.
 ## [2026-06-02] Commit Summary
 
 **Change Type:** Refactor
+**Scope:** goals/infrastructure/models
+
+**Summary:**
+Backfill GoalModel.__table_args__ with goals_direction_invariant CHECK (migration 0004);
+add goals_target_date_epoch CHECK (new, will be in migration 0010); add rejection tests.
+
+**Rationale:**
+Direction invariant existed in the DB but not the model. Target-date epoch is a genuine
+new constraint guarding against obviously incorrect historical dates. Both now enforced
+on SQLite via create_all.
+
+**References:**
+- Issue: GH-98
+
+---
+
+## [2026-06-02] Commit Summary
+
+**Change Type:** Refactor
 **Scope:** weight_tracking/infrastructure/models
 
 **Summary:**

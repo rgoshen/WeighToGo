@@ -17,6 +17,7 @@ from decimal import Decimal
 from sqlalchemy import (
     BigInteger,
     Boolean,
+    CheckConstraint,
     Date,
     DateTime,
     ForeignKey,
@@ -49,6 +50,17 @@ class GoalModel(Base):
             unique=True,
             postgresql_where=text("is_active = TRUE"),
             sqlite_where=text("is_active = 1"),
+        ),
+        # Backfill: direction invariant already enforced in migration 0004.
+        CheckConstraint(
+            "(goal_type = 'lose' AND target_value < start_value)"
+            " OR (goal_type = 'gain' AND target_value > start_value)",
+            name="goals_direction_invariant",
+        ),
+        # New (migration 0010): reject clearly impossible historical target dates.
+        CheckConstraint(
+            "target_date IS NULL OR target_date >= '2020-01-01'",
+            name="goals_target_date_epoch",
         ),
     )
 
