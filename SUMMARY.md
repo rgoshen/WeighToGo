@@ -7,7 +7,33 @@ issues were resolved.
 
 ---
 
-## [2026-06-02] Commit Summary
+## [2026-06-02 00:01] Commit Summary
+
+**Change Type:** Docs
+**Scope:** ADR-0024 / ADR README / SUMMARY
+
+**Summary:**
+Fixed formatting issues in Task 1 deliverables to match project conventions:
+ADR-0024 header converted from bold-inline to dash-list format; `Deciders` field
+removed. ADR-0024 restructured to add a dedicated `## Rationale` section, moving
+the seven "why" sub-sections out of `## Decision` to match the
+Context → Decision → Rationale → Consequences → Alternatives Considered order
+used by all peer ADRs. `docs/adr/README.md` 0025 placeholder row updated with
+the reserved title and Pending status. `SUMMARY.md` timestamp corrected to
+include HH:MM per the required format.
+
+**Rationale:**
+Consistency with the project's ADR convention (0009–0023) is required for
+maintainability and peer review. The structural separation of factual decisions
+from their rationale matches the template and makes each section independently
+scannable.
+
+**References:**
+- Issue: GH-97
+
+---
+
+## [2026-06-02 00:00] Commit Summary
 
 **Change Type:** Docs
 **Scope:** ADR / Architecture Decision Records

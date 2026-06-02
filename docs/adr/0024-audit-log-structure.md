@@ -1,8 +1,7 @@
 # ADR-0024: Audit Log Structure
 
-**Status:** Accepted  
-**Date:** 2026-06-02  
-**Deciders:** Richard Goshen
+- **Date**: 2026-06-02
+- **Status**: Accepted
 
 ---
 
@@ -38,6 +37,10 @@ Administrative actions are absent: SRS §1.3 defines no admin role, so no admini
 
 - `idx_audit_log_user_created (user_id, created_at DESC)` — user-scoped audit queries ordered newest-first.
 - `idx_audit_log_event_type_created (event_type, created_at DESC)` — event-type filtering ordered newest-first.
+
+---
+
+## Rationale
 
 ### Failure handling asymmetry
 
