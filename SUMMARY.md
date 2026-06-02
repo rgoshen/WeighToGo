@@ -9,6 +9,23 @@ issues were resolved.
 
 ## [2026-06-02] Commit Summary
 
+**Change Type:** Test
+**Scope:** tests/unit
+
+**Summary:**
+Add db_session fixture to tests/unit/conftest.py for model-level constraint rejection tests.
+
+**Rationale:**
+Unit-level constraint tests need an in-memory SQLite session but not the full FastAPI app
+wiring from the integration conftest. This minimal fixture parallels the integration one.
+
+**References:**
+- Issue: GH-98
+
+---
+
+## [2026-06-02] Commit Summary
+
 **Change Type:** Docs
 **Scope:** docs/adr
 
