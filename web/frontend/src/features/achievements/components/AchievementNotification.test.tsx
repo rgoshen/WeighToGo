@@ -31,48 +31,100 @@ const streak7: AchievementRecord = {
 describe('AchievementNotification', () => {
   it('renders nothing when achievements array is empty', () => {
     const { container } = render(
-      <AchievementNotification achievements={[]} onDismissOne={() => undefined} />,
+      <AchievementNotification
+        achievements={[]}
+        onDismissOne={() => undefined}
+        preferredUnit="lbs"
+      />,
     );
     expect(container).toBeEmptyDOMElement();
   });
 
-  it('shows milestone toast copy when first achievement is a milestone', () => {
-    render(<AchievementNotification achievements={[milestone5]} onDismissOne={() => undefined} />);
-    expect(screen.getByText(/5 lb milestone/i)).toBeInTheDocument();
+  it('shows milestone toast copy in lbs when preferredUnit is lbs', () => {
+    render(
+      <AchievementNotification
+        achievements={[milestone5]}
+        onDismissOne={() => undefined}
+        preferredUnit="lbs"
+      />,
+    );
+    expect(screen.getByText(/5\.0 lbs milestone/i)).toBeInTheDocument();
+  });
+
+  it('converts milestone toast to kg when preferredUnit is kg', () => {
+    render(
+      <AchievementNotification
+        achievements={[milestone5]}
+        onDismissOne={() => undefined}
+        preferredUnit="kg"
+      />,
+    );
+    // 5 lbs * 0.45359237 ≈ 2.3 kg
+    expect(screen.getByText(/2\.3 kg milestone/i)).toBeInTheDocument();
   });
 
   it('shows goal reached copy for goal_reached achievement', () => {
-    render(<AchievementNotification achievements={[goalReached]} onDismissOne={() => undefined} />);
+    render(
+      <AchievementNotification
+        achievements={[goalReached]}
+        onDismissOne={() => undefined}
+        preferredUnit="lbs"
+      />,
+    );
     expect(screen.getByText(/goal reached/i)).toBeInTheDocument();
   });
 
   it('shows streak toast copy for a streak achievement', () => {
-    render(<AchievementNotification achievements={[streak7]} onDismissOne={() => undefined} />);
+    render(
+      <AchievementNotification
+        achievements={[streak7]}
+        onDismissOne={() => undefined}
+        preferredUnit="lbs"
+      />,
+    );
     expect(screen.getByText(/7-day logging streak/i)).toBeInTheDocument();
   });
 
   it('falls back to plain streak copy when threshold is null (no NaN)', () => {
     const nullStreak: AchievementRecord = { ...streak7, achievement_id: 5, threshold: null };
-    render(<AchievementNotification achievements={[nullStreak]} onDismissOne={() => undefined} />);
+    render(
+      <AchievementNotification
+        achievements={[nullStreak]}
+        onDismissOne={() => undefined}
+        preferredUnit="lbs"
+      />,
+    );
     expect(screen.getByText('Logging streak! Keep it up.')).toBeInTheDocument();
   });
 
   it('falls back to plain milestone copy when threshold is null (no NaN)', () => {
     const nullMilestone: AchievementRecord = { ...milestone5, achievement_id: 6, threshold: null };
     render(
-      <AchievementNotification achievements={[nullMilestone]} onDismissOne={() => undefined} />,
+      <AchievementNotification
+        achievements={[nullMilestone]}
+        onDismissOne={() => undefined}
+        preferredUnit="lbs"
+      />,
     );
     expect(screen.getByText('Milestone reached!')).toBeInTheDocument();
   });
 
   it('has role status for ARIA live region (NFR-A-3)', () => {
-    render(<AchievementNotification achievements={[milestone5]} onDismissOne={() => undefined} />);
+    render(
+      <AchievementNotification
+        achievements={[milestone5]}
+        onDismissOne={() => undefined}
+        preferredUnit="lbs"
+      />,
+    );
     expect(screen.getByRole('status')).toBeInTheDocument();
   });
 
   it('does not call onDismissOne when there are no achievements', () => {
     const onDismissOne = vi.fn();
-    render(<AchievementNotification achievements={[]} onDismissOne={onDismissOne} />);
+    render(
+      <AchievementNotification achievements={[]} onDismissOne={onDismissOne} preferredUnit="lbs" />,
+    );
     expect(onDismissOne).not.toHaveBeenCalled();
   });
 });

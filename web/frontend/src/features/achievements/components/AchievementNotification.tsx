@@ -13,16 +13,24 @@
 import { Alert, Snackbar } from '@mui/material';
 import { useCallback } from 'react';
 
-import { parseThreshold, type AchievementRecord } from '../schemas/achievement';
+import { formatWeightInPreferredUnit } from '../../../lib/format';
+import type { WeightUnit } from '../../../lib/unit-conversion';
+import {
+  MILESTONE_THRESHOLD_UNIT,
+  parseThreshold,
+  type AchievementRecord,
+} from '../schemas/achievement';
 
 interface Props {
   /** Achievements queue — the first element is the one currently displayed. */
   achievements: AchievementRecord[];
   /** Called when the current (first) toast is dismissed. */
   onDismissOne: () => void;
+  /** The unit to display milestone weights in (FR-P-1). */
+  preferredUnit: WeightUnit;
 }
 
-function toastMessage(ach: AchievementRecord): string {
+function toastMessage(ach: AchievementRecord, preferredUnit: WeightUnit): string {
   if (ach.achievement_type === 'goal_reached') {
     return 'Goal reached! You hit your target weight.';
   }
@@ -34,10 +42,14 @@ function toastMessage(ach: AchievementRecord): string {
       ? 'Logging streak! Keep it up.'
       : `${value}-day logging streak! Keep it up.`;
   }
-  return value === null ? 'Milestone reached!' : `${value} lb milestone reached!`;
+  // Milestone thresholds are stored in pounds (MILESTONE_THRESHOLD_UNIT);
+  // convert to preferred unit for display (FR-P-1).
+  return value === null
+    ? 'Milestone reached!'
+    : `${formatWeightInPreferredUnit(value, MILESTONE_THRESHOLD_UNIT, preferredUnit)} milestone reached!`;
 }
 
-export function AchievementNotification({ achievements, onDismissOne }: Props) {
+export function AchievementNotification({ achievements, onDismissOne, preferredUnit }: Props) {
   const handleClose = useCallback(() => onDismissOne(), [onDismissOne]);
 
   const current = achievements[0];
@@ -52,7 +64,7 @@ export function AchievementNotification({ achievements, onDismissOne }: Props) {
       anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
     >
       <Alert role="status" severity="success" onClose={handleClose} sx={{ width: '100%' }}>
-        {toastMessage(current)}
+        {toastMessage(current, preferredUnit)}
       </Alert>
     </Snackbar>
   );

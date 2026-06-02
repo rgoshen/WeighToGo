@@ -7,6 +7,29 @@ issues were resolved.
 
 ---
 
+## [2026-06-01 17:02] Commit Summary
+
+**Change Type:** Feat
+**Scope:** Frontend / AchievementNotification + WeightEntryFormPage (web, GH-92)
+
+**Summary:**
+Added `preferredUnit: WeightUnit` required prop to `AchievementNotification`.
+`toastMessage` now accepts the unit and uses `formatWeightInPreferredUnit` with
+`MILESTONE_THRESHOLD_UNIT` to convert the milestone threshold for display.
+`WeightEntryFormPage` wires `preferences.weightUnit` from `usePreferences()` to
+the notification's `preferredUnit` prop. All 9 notification tests updated to pass
+the prop; new test covers kg toast conversion.
+
+**Rationale:**
+FR-P-1: milestone toast must honor the user's preferred unit. Keeping the prop on
+the component (not calling `usePreferences()` inside it) preserves the
+presentational-only contract.
+
+**References:**
+- Issue: GH-92 (M3 remediation finding #4, slice ③b)
+
+---
+
 ## [2026-06-01 17:00] Commit Summary
 
 **Change Type:** Feat
