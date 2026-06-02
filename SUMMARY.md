@@ -7,6 +7,25 @@ issues were resolved.
 
 ---
 
+## [2026-06-02 14:07] Task 7 — Auth router audit wiring
+
+**Change Type:** Feature
+**Scope:** auth/interface/router.py
+
+**Summary:**
+Wire audit events at the auth composition root: auth.register, auth.login_succeeded,
+auth.login_failed (masked email in metadata), auth.account_locked, auth.logout,
+auth.token_refreshed. All writes are fail-open (try/except + logger.warning).
+
+**Rationale:**
+Auth events are best-effort telemetry — an audit hiccup must never block a valid
+login or logout. Fail-open per ADR-0024.
+
+**References:**
+- Issue: GH-97
+
+---
+
 ## [2026-06-02 14:06] Task 6 — Import-linter contracts for audit domain
 
 **Change Type:** Chore
