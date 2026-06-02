@@ -7,6 +7,83 @@ issues were resolved.
 
 ---
 
+## [2026-06-01 18:45] Commit Summary
+
+**Change Type:** Chore
+**Scope:** web/frontend — features/placeholders
+
+**Summary:**
+Removed the three retired Milestone 2 "Coming in Milestone 3" placeholder
+artifacts (AchievementsPlaceholderPage.tsx, SettingsPlaceholderPage.tsx,
+PlaceholderPages.test.tsx) from web/frontend/src/features/placeholders/, and
+the now-empty placeholders/ directory.
+
+**Rationale:**
+The real Milestone 3 Achievements and Settings pages are wired in App.tsx via
+lazy-loaded imports from features/achievements/pages/ and
+features/settings/pages/. The placeholder components were unrouted and
+referenced only by their own colocated test, leaving dead code and test drift
+in a released M3 codebase. A tree-wide search across web/frontend (src, e2e,
+config) confirmed no production import, route, or lazy-load referenced them;
+the only remaining mentions are two accurate historical doc-comments in the
+real pages, left intact as out of scope. Removal (rather than relocation to
+docs) was chosen because git history preserves the artifacts as portfolio
+evidence and a non-compiling .tsx in docs would only add maintenance surface.
+Full frontend suite verified green (lint, format, typecheck, 388 tests) with
+no coverage loss for live behavior — the deleted test exercised only the
+deleted components.
+
+**References:**
+- Issue: GH-93
+
+## [2026-06-01] Commit Summary
+
+**Change Type:** Docs
+**Scope:** SRS v2 §10 frontend route table
+
+**Summary:**
+Reconciled the SRS §10.1.2 protected-route table to name the delivered M3 page
+components (`GoalsPage`, `AchievementsPage`, `SettingsPage`) instead of the
+Milestone 2 placeholder names (`GoalsPlaceholderPage`,
+`AchievementsPlaceholderPage`, `SettingsPlaceholderPage`). Reworded §10.1.3 to
+frame the placeholder pages as Milestone 2 history that Milestone 3 replaced with
+the real components, so the section no longer contradicts the corrected table.
+
+**Rationale:**
+The route table is the authoritative routing contract; naming components that no
+longer back those routes is documentation drift versus the delivered M3 frontend
+(App.tsx wires the real pages). The M2 placeholder history is preserved, not
+deleted, to keep the milestone record accurate.
+
+**References:**
+- Issue: GH-94
+
+## [2026-06-01] Commit Summary
+
+**Change Type:** Docs
+**Scope:** OpenAPI snapshot / achievements response schema
+
+**Summary:**
+Corrected the `AchievementResponse` Pydantic docstring in
+`web/backend/.../achievements/interface/schemas.py` so `achievement_type` lists
+all three delivered types (`goal_reached`, `milestone`, `streak`) and `threshold`
+notes that streaks carry a day-count threshold (not milestones only). Regenerated
+`docs/api/openapi.json` from the live `app.openapi()` so the published contract
+matches the source. The regeneration also picked up two pre-existing snapshot
+drifts unrelated to streak: the list-achievements endpoint description now
+includes its rate-limit note and `request` argument (present in the router source
+but missing from the stale snapshot), and numeric goal bounds serialize as
+`1500.0`/`0.0` floats per the current Pydantic output.
+
+**Rationale:**
+The OpenAPI snapshot is generated from the FastAPI app, with no generation script
+or guard test. Fixing the source docstring and regenerating keeps source and
+snapshot in sync and prevents the drift from reappearing on the next regeneration,
+rather than hand-patching only the snapshot string.
+
+**References:**
+- Issue: GH-94
+
 ## [2026-06-01 18:01] Commit Summary
 
 **Change Type:** Fix
@@ -4252,51 +4329,3 @@ paper over real failures (they still fail after the retry).
 
 **References:**
 - Issue: GH-89
-
-## [2026-06-01] Commit Summary
-
-**Change Type:** Docs
-**Scope:** OpenAPI snapshot / achievements response schema
-
-**Summary:**
-Corrected the `AchievementResponse` Pydantic docstring in
-`web/backend/.../achievements/interface/schemas.py` so `achievement_type` lists
-all three delivered types (`goal_reached`, `milestone`, `streak`) and `threshold`
-notes that streaks carry a day-count threshold (not milestones only). Regenerated
-`docs/api/openapi.json` from the live `app.openapi()` so the published contract
-matches the source. The regeneration also picked up two pre-existing snapshot
-drifts unrelated to streak: the list-achievements endpoint description now
-includes its rate-limit note and `request` argument (present in the router source
-but missing from the stale snapshot), and numeric goal bounds serialize as
-`1500.0`/`0.0` floats per the current Pydantic output.
-
-**Rationale:**
-The OpenAPI snapshot is generated from the FastAPI app, with no generation script
-or guard test. Fixing the source docstring and regenerating keeps source and
-snapshot in sync and prevents the drift from reappearing on the next regeneration,
-rather than hand-patching only the snapshot string.
-
-**References:**
-- Issue: GH-94
-
-## [2026-06-01] Commit Summary
-
-**Change Type:** Docs
-**Scope:** SRS v2 §10 frontend route table
-
-**Summary:**
-Reconciled the SRS §10.1.2 protected-route table to name the delivered M3 page
-components (`GoalsPage`, `AchievementsPage`, `SettingsPage`) instead of the
-Milestone 2 placeholder names (`GoalsPlaceholderPage`,
-`AchievementsPlaceholderPage`, `SettingsPlaceholderPage`). Reworded §10.1.3 to
-frame the placeholder pages as Milestone 2 history that Milestone 3 replaced with
-the real components, so the section no longer contradicts the corrected table.
-
-**Rationale:**
-The route table is the authoritative routing contract; naming components that no
-longer back those routes is documentation drift versus the delivered M3 frontend
-(App.tsx wires the real pages). The M2 placeholder history is preserved, not
-deleted, to keep the milestone record accurate.
-
-**References:**
-- Issue: GH-94
