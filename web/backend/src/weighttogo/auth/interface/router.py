@@ -210,18 +210,22 @@ def _audit(
 ) -> None:
     """Write an auth audit event fail-open (ADR-0024).
 
-    Wraps the write in try/except so an audit hiccup never causes a 500.
+    Uses a nested transaction (SAVEPOINT) so the flush is isolated: if the
+    INSERT is rejected by PostgreSQL the savepoint rolls back, the main
+    session is unaffected, and no 500 escapes to the caller.
     """
     try:
-        RecordAuditEvent(SqlAlchemyAuditRepository(session)).execute(
-            RecordAuditEventCommand(
-                event_type=event_type,
-                user_id=user_id,
-                request_id=request.headers.get("x-request-id"),
-                ip_address=str(request.client.host) if request.client else None,
-                metadata=metadata,
+        with session.begin_nested():
+            RecordAuditEvent(SqlAlchemyAuditRepository(session)).execute(
+                RecordAuditEventCommand(
+                    event_type=event_type,
+                    user_id=user_id,
+                    request_id=request.headers.get("x-request-id"),
+                    ip_address=str(request.client.host) if request.client else None,
+                    metadata=metadata,
+                )
             )
-        )
+            session.flush()
     except Exception:
         logger.warning("audit_write_failed", event_type=str(event_type))
 

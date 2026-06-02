@@ -30,7 +30,7 @@ class SqlAlchemyAuditRepository:
             event_type=str(event.event_type),
             resource_type=str(event.resource_type) if event.resource_type else None,
             resource_id=event.resource_id,
-            request_id=event.request_id,
+            request_id=event.request_id[:64] if event.request_id else None,
             ip_address=event.ip_address,
             event_metadata=event.metadata,
             created_at=event.created_at,

@@ -7,6 +7,28 @@ issues were resolved.
 
 ---
 
+## [2026-06-02 14:15] Fix — Three P2 PR review issues in audit log
+
+**Change Type:** Fix
+**Scope:** auth/interface/router.py; audit/infrastructure/repositories.py; tests/integration/audit/test_index_usage_audit_postgres.py
+
+**Summary:**
+(1) Auth _audit helper now uses session.begin_nested()+flush() so the INSERT is
+isolated in a SAVEPOINT and DB errors are caught before escaping as 500s.
+(2) request_id truncated to 64 chars in SqlAlchemyAuditRepository to match
+VARCHAR(64) constraint and prevent client-controlled header from failing mutations.
+(3) Postgres index tests rewritten: Alembic migrations, 150 seeded rows, ANALYZE,
+SET enable_seqscan=off — matching the weight index test pattern.
+
+**Rationale:**
+PR review P2 findings. Fail-open was incomplete; request_id unbounded; index
+tests too fragile with 1 row.
+
+**References:**
+- Issue: GH-97
+
+---
+
 ## [2026-06-02 14:14] Fix — Migration 0009 index ordering to match ADR-0024 DESC spec
 
 **Change Type:** Fix
