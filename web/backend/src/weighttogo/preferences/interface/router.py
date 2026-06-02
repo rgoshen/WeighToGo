@@ -15,6 +15,12 @@ from fastapi import APIRouter, Depends, Request, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
+from weighttogo.audit.application.record_audit_event import (
+    RecordAuditEvent,
+    RecordAuditEventCommand,
+)
+from weighttogo.audit.domain.entities import AuditEventType, ResourceType
+from weighttogo.audit.infrastructure.repositories import SqlAlchemyAuditRepository
 from weighttogo.auth.interface.router import get_current_user_id, limiter
 from weighttogo.preferences.application.get_preferences import GetPreferences, GetPreferencesCommand
 from weighttogo.preferences.application.set_preference import SetPreference, SetPreferenceCommand
@@ -115,5 +121,14 @@ def update_preference(
             ),
         )
 
+    RecordAuditEvent(SqlAlchemyAuditRepository(session)).execute(
+        RecordAuditEventCommand(
+            event_type=AuditEventType.PREFERENCE_UPDATED,
+            user_id=current_user_id,
+            resource_type=ResourceType.PREFERENCE,
+            request_id=request.headers.get("x-request-id"),
+            ip_address=str(request.client.host) if request.client else None,
+        )
+    )
     logger.info("preference_updated", key=key, user_id=current_user_id)
     return preferences_response_from_dict(resolved)

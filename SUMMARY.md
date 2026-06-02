@@ -7,6 +7,24 @@ issues were resolved.
 
 ---
 
+## [2026-06-02 14:11] Task 10 — Preferences router audit wiring
+
+**Change Type:** Feature
+**Scope:** preferences/interface/router.py
+
+**Summary:**
+Wire preference.updated audit event at the preferences composition root.
+Write is fail-closed (same session). No resource_id (preferences keyed by user+key).
+
+**Rationale:**
+Preference changes must be auditable (ADR-0024). No resource_id needed since
+preferences are identified by (user_id, preference_key), not a surrogate PK.
+
+**References:**
+- Issue: GH-97
+
+---
+
 ## [2026-06-02 14:10] Task 9 — Goals router audit wiring
 
 **Change Type:** Feature
