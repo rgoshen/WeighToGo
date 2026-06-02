@@ -6,6 +6,20 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import * as achClientModule from '../api/achievement-client';
 import { AchievementsPage } from './AchievementsPage';
 
+const prefs = { current: 'lbs' as 'lbs' | 'kg' };
+vi.mock('../../../contexts/PreferencesContext', () => ({
+  usePreferences: () => ({
+    preferences: {
+      weightUnit: prefs.current,
+      notifyAchievement: true,
+      notifyMilestone: true,
+      notifyStreak: true,
+    },
+    isLoading: false,
+    setPreference: vi.fn(),
+  }),
+}));
+
 function wrapper({ children }: { children: ReactNode }) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return <QueryClientProvider client={qc}>{children}</QueryClientProvider>;
@@ -14,6 +28,7 @@ function wrapper({ children }: { children: ReactNode }) {
 describe('AchievementsPage', () => {
   afterEach(() => {
     vi.restoreAllMocks();
+    prefs.current = 'lbs';
   });
 
   it('renders the page heading', async () => {
@@ -30,7 +45,7 @@ describe('AchievementsPage', () => {
     await waitFor(() => expect(screen.getByText(/no achievements yet/i)).toBeInTheDocument());
   });
 
-  it('renders an earned milestone achievement', async () => {
+  it('renders an earned milestone achievement in lbs when preferred unit is lbs', async () => {
     vi.spyOn(achClientModule.achievementClient, 'list').mockResolvedValue({
       items: [
         {
@@ -43,7 +58,25 @@ describe('AchievementsPage', () => {
       ],
     });
     render(<AchievementsPage />, { wrapper });
-    await waitFor(() => expect(screen.getByText(/5 lb milestone/i)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/5\.0 lbs milestone/i)).toBeInTheDocument());
+  });
+
+  it('converts milestone threshold to kg when preferred unit is kg', async () => {
+    prefs.current = 'kg';
+    vi.spyOn(achClientModule.achievementClient, 'list').mockResolvedValue({
+      items: [
+        {
+          achievement_id: 1,
+          goal_id: 7,
+          achievement_type: 'milestone',
+          threshold: 5,
+          earned_at: '2026-01-01T00:00:00Z',
+        },
+      ],
+    });
+    render(<AchievementsPage />, { wrapper });
+    // 5 lbs * 0.45359237 ≈ 2.3 kg (1 dp)
+    await waitFor(() => expect(screen.getByText(/2\.3 kg milestone/i)).toBeInTheDocument());
   });
 
   it('renders a streak achievement with day-count label', async () => {

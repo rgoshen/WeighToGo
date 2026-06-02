@@ -7,6 +7,29 @@ issues were resolved.
 
 ---
 
+## [2026-06-01 17:00] Commit Summary
+
+**Change Type:** Feat
+**Scope:** Frontend / AchievementsPage (web, GH-92)
+
+**Summary:**
+Updated `AchievementsPage` to read `usePreferences()` and convert milestone
+labels from canonical lbs to the user's preferred unit. `achievementLabel`
+now accepts a `preferredUnit` parameter and uses `formatWeightInPreferredUnit`
+with `MILESTONE_THRESHOLD_UNIT` as the source unit. Updated tests: added
+`usePreferences` mock, reset prefs in afterEach, renamed existing test,
+updated lbs assertion to formatted form (`5.0 lbs`), and added kg conversion
+test (`2.3 kg Milestone`).
+
+**Rationale:**
+FR-P-1: milestone labels must display in the user's preferred unit. The
+`MILESTONE_THRESHOLD_UNIT` constant makes the source-unit contract explicit.
+
+**References:**
+- Issue: GH-92 (M3 remediation finding #4, slice ③a)
+
+---
+
 ## [2026-06-01 16:59] Commit Summary
 
 **Change Type:** Feat
