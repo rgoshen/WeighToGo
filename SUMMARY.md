@@ -7,6 +7,23 @@ issues were resolved.
 
 ---
 
+## [2026-06-02 14:02] Task 2 — Audit domain entities and port
+
+**Change Type:** Feature
+**Scope:** audit/domain
+
+**Summary:**
+Add AuditEventType StrEnum (14 taxonomy values), ResourceType StrEnum, AuditEvent
+dataclass, and IAuditRepository Protocol to the new audit bounded context.
+
+**Rationale:**
+Framework-free domain layer per Clean Architecture (SRS §4.2 / ADR-0024).
+
+**References:**
+- Issue: GH-97
+
+---
+
 ## [2026-06-02 14:01] Commit Summary
 
 **Change Type:** Docs
