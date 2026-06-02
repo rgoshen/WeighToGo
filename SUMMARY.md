@@ -7,6 +7,163 @@ issues were resolved.
 
 ---
 
+## [2026-06-02] Commit Summary
+
+**Change Type:** Fix
+**Scope:** goals/achievements/models, tests/unit, docs/adr
+
+**Summary:**
+Address PR #120 review comments: add 7 missing GoalModel CHECKs from migration 0003,
+add 3 missing AchievementModel indexes from migration 0005, consolidate _make_user
+into a shared make_user fixture in tests/unit/conftest.py, update ADR-0025 to
+include migration 0003 in the backfill scope.
+
+**Rationale:**
+Goals model was missing all value-domain CHECKs from 0003 (only 0004 backfilled).
+Achievement idempotency indexes were omitted, leaving the dedup contract untestable
+on SQLite. _make_user was duplicated across 4 test files. ADR-0025 claimed full
+0002-0006 coverage but omitted 0003's goals constraints.
+
+**References:**
+- Issue: GH-98
+- PR: #120
+
+---
+
+## [2026-06-02] Commit Summary
+
+**Change Type:** Feature
+**Scope:** alembic/versions, tests/integration/goals
+
+**Summary:**
+Add migration 0010_constraint_hardening with achievements_threshold_positive and
+goals_target_date_epoch CHECK constraints, plus idx_goals_user_created composite index.
+Add migration structure test (test_migration_0010.py).
+
+**Rationale:**
+Two genuine constraint gaps identified in the M4 Phase 2 audit: zero/negative thresholds
+break milestone-detection math; pre-2020 target dates are clearly erroneous. The goals
+listing index closes a missing read-path coverage gap (the existing partial index covers
+only active goals). Pattern follows 0004/0005/0008 (op.create_check_constraint, no batch).
+
+**References:**
+- Issue: GH-98
+- ADR: 0025
+
+---
+
+## [2026-06-02] Commit Summary
+
+**Change Type:** Refactor
+**Scope:** preferences/infrastructure/models
+
+**Summary:**
+Backfill UserPreferenceModel.__table_args__ with user_preferences_key_valid and
+user_preferences_value_valid CHECKs already present in migration 0006; add rejection tests.
+
+**Rationale:**
+Migration 0006 declared both checks but the model lacked __table_args__ for them.
+SQLite integration tests were running without key/value domain enforcement.
+
+**References:**
+- Issue: GH-98
+
+---
+
+## [2026-06-02] Commit Summary
+
+**Change Type:** Refactor
+**Scope:** achievements/infrastructure/models
+
+**Summary:**
+Backfill AchievementModel.__table_args__ with achievements_type_valid CHECK (migrations
+0005/0008); add achievements_threshold_positive CHECK (new, will be in migration 0010);
+add rejection tests.
+
+**Rationale:**
+Type-valid CHECK existed in the DB but not the model. Threshold-positive is a new guard
+preventing zero/negative thresholds that would break milestone-detection math.
+
+**References:**
+- Issue: GH-98
+
+---
+
+## [2026-06-02] Commit Summary
+
+**Change Type:** Refactor
+**Scope:** goals/infrastructure/models
+
+**Summary:**
+Backfill GoalModel.__table_args__ with goals_direction_invariant CHECK (migration 0004);
+add goals_target_date_epoch CHECK (new, will be in migration 0010); add rejection tests.
+
+**Rationale:**
+Direction invariant existed in the DB but not the model. Target-date epoch is a genuine
+new constraint guarding against obviously incorrect historical dates. Both now enforced
+on SQLite via create_all.
+
+**References:**
+- Issue: GH-98
+
+---
+
+## [2026-06-02] Commit Summary
+
+**Change Type:** Refactor
+**Scope:** weight_tracking/infrastructure/models
+
+**Summary:**
+Backfill WeightEntryModel.__table_args__ with 5 CHECK constraints already present in
+migration 0002; add rejection tests proving SQLite now enforces them.
+
+**Rationale:**
+Migration 0002 declared weight_entries_value_positive, weight_entries_value_max,
+weight_entries_unit_valid, weight_entries_observation_not_future, and
+weight_entries_deletion_consistency but the ORM model had no __table_args__. SQLite
+integration tests built via create_all were running without these guards. Backfill
+closes the fidelity gap without a new migration (constraints already exist in DB).
+
+**References:**
+- Issue: GH-98
+
+---
+
+## [2026-06-02] Commit Summary
+
+**Change Type:** Test
+**Scope:** tests/unit
+
+**Summary:**
+Add db_session fixture to tests/unit/conftest.py for model-level constraint rejection tests.
+
+**Rationale:**
+Unit-level constraint tests need an in-memory SQLite session but not the full FastAPI app
+wiring from the integration conftest. This minimal fixture parallels the integration one.
+
+**References:**
+- Issue: GH-98
+
+---
+
+## [2026-06-02] Commit Summary
+
+**Change Type:** Docs
+**Scope:** docs/adr
+
+**Summary:**
+Add ADR-0025 documenting the constraint hardening strategy for M4 Phase 2 (GH-98).
+
+**Rationale:**
+ADR written before implementation code per project convention. Documents the dual-declaration
+pattern, defense-in-depth policy, audit methodology, and rationale for the target_date
+lower-bound epoch choice over a cross-column constraint.
+
+**References:**
+- Issue: GH-98
+
+---
+
 ## [2026-06-02 14:16] Fix — Address 8 PR review comments on audit log
 
 **Change Type:** Fix

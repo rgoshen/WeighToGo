@@ -13,7 +13,17 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from decimal import Decimal
 
-from sqlalchemy import BigInteger, DateTime, ForeignKey, Integer, Numeric, String
+from sqlalchemy import (
+    BigInteger,
+    CheckConstraint,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    Numeric,
+    String,
+    text,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from weighttogo.auth.infrastructure.models import Base
@@ -27,6 +37,41 @@ class AchievementModel(Base):
     """ORM model for the ``achievements`` table (Issue #54 design spec)."""
 
     __tablename__ = "achievements"
+    __table_args__ = (
+        # Backfill: type constraint already enforced in migrations 0005/0008.
+        CheckConstraint(
+            "achievement_type IN ('goal_reached', 'milestone', 'streak')",
+            name="achievements_type_valid",
+        ),
+        # New (migration 0010): threshold must be positive or null.
+        CheckConstraint(
+            "threshold IS NULL OR threshold > 0",
+            name="achievements_threshold_positive",
+        ),
+        # Backfill: idempotency indexes from migration 0005.
+        Index(
+            "idx_achievements_unique_milestone",
+            "goal_id",
+            "achievement_type",
+            "threshold",
+            unique=True,
+            postgresql_where=text("threshold IS NOT NULL"),
+            sqlite_where=text("threshold IS NOT NULL"),
+        ),
+        Index(
+            "idx_achievements_unique_goal_reached",
+            "goal_id",
+            "achievement_type",
+            unique=True,
+            postgresql_where=text("threshold IS NULL"),
+            sqlite_where=text("threshold IS NULL"),
+        ),
+        Index(
+            "idx_achievements_user_earned",
+            "user_id",
+            "earned_at",
+        ),
+    )
 
     id: Mapped[int] = mapped_column(_BigInt, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(
