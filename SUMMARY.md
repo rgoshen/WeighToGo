@@ -7,6 +7,27 @@ issues were resolved.
 
 ---
 
+## [2026-06-02] Commit Summary
+
+**Change Type:** Docs
+**Scope:** ADR / Architecture Decision Records
+
+**Summary:**
+Created ADR-0024 documenting the audit log structure for the M4 Phase 1 vertical
+slice. Added the corresponding index row to `docs/adr/README.md`.
+
+**Rationale:**
+SRS §8.2.7 deferred the `audit_log` schema to M4. ADR-0024 captures all design
+decisions before any implementation begins: schema columns, event taxonomy, failure
+handling asymmetry (fail-closed for data mutations, fail-open for auth events),
+append-only invariant, ON DELETE SET NULL vs CASCADE, VARCHAR CHECK vs ENUM, and
+composition-root wiring strategy.
+
+**References:**
+- Issue: GH-97
+
+---
+
 ## [2026-06-02 07:18] Commit Summary
 
 **Change Type:** Chore
