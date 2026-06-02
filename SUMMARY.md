@@ -7,6 +7,23 @@ issues were resolved.
 
 ---
 
+## [2026-06-02 14:03] Task 3 — RecordAuditEvent use case
+
+**Change Type:** Feature
+**Scope:** audit/application
+
+**Summary:**
+Add RecordAuditEventCommand (frozen dataclass) and RecordAuditEvent use case. Returns
+None — the audit row is a side-effect. Tested with FakeAuditRepository.
+
+**Rationale:**
+Application layer per Clean Architecture. No framework imports.
+
+**References:**
+- Issue: GH-97
+
+---
+
 ## [2026-06-02] Fix — Audit domain quality: runtime_checkable + StrEnum assertions
 
 **Change Type:** Fix
