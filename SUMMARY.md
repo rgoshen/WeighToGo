@@ -7,6 +7,24 @@ issues were resolved.
 
 ---
 
+## [2026-06-02 14:12] Task 11 — PostgreSQL index-plan assertions for audit_log
+
+**Change Type:** Test
+**Scope:** tests/integration/audit
+
+**Summary:**
+Add @pytest.mark.postgres index-plan assertions for idx_audit_log_user_created and
+idx_audit_log_event_type_created. Tests skip locally without DSN; CI perf-postgres
+job picks them up automatically.
+
+**Rationale:**
+NFR-P-3 requires proven index usage on the production engine (ADR-0024).
+
+**References:**
+- Issue: GH-97
+
+---
+
 ## [2026-06-02 14:11] Task 10 — Preferences router audit wiring
 
 **Change Type:** Feature
