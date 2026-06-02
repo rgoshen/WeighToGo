@@ -21,6 +21,12 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response,
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
+from weighttogo.audit.application.record_audit_event import (
+    RecordAuditEvent,
+    RecordAuditEventCommand,
+)
+from weighttogo.audit.domain.entities import AuditEventType, ResourceType
+from weighttogo.audit.infrastructure.repositories import SqlAlchemyAuditRepository
 from weighttogo.auth.interface.router import get_current_user_id, limiter
 from weighttogo.dashboard.interface.router import invalidate_dashboard_cache
 from weighttogo.goals.application.abandon_goal import AbandonGoal, AbandonGoalCommand
@@ -113,6 +119,17 @@ def create_goal(
         ) from exc
 
     logger.info("goal_created", goal_id=goal.goal_id, user_id=current_user_id)
+
+    RecordAuditEvent(SqlAlchemyAuditRepository(session)).execute(
+        RecordAuditEventCommand(
+            event_type=AuditEventType.GOAL_CREATED,
+            user_id=current_user_id,
+            resource_type=ResourceType.GOAL,
+            resource_id=goal.goal_id,
+            request_id=request.headers.get("x-request-id"),
+            ip_address=str(request.client.host) if request.client else None,
+        )
+    )
 
     # The cached dashboard summary embeds active-goal progress, so a new goal
     # must bust it or the next read serves a stale (goal-less) summary
@@ -273,6 +290,17 @@ def update_goal(
 
     logger.info("goal_updated", goal_id=goal.goal_id, user_id=current_user_id)
 
+    RecordAuditEvent(SqlAlchemyAuditRepository(session)).execute(
+        RecordAuditEventCommand(
+            event_type=AuditEventType.GOAL_UPDATED,
+            user_id=current_user_id,
+            resource_type=ResourceType.GOAL,
+            resource_id=goal_id,
+            request_id=request.headers.get("x-request-id"),
+            ip_address=str(request.client.host) if request.client else None,
+        )
+    )
+
     # Target/date changes alter the cached dashboard's goal progress; invalidate
     # so the next read recomputes (NFR-P-5 invalidation trigger, ADR-0023).
     invalidate_dashboard_cache(current_user_id)
@@ -322,6 +350,17 @@ def abandon_goal(
         ) from exc
 
     logger.info("goal_abandoned", goal_id=goal_id, user_id=current_user_id)
+
+    RecordAuditEvent(SqlAlchemyAuditRepository(session)).execute(
+        RecordAuditEventCommand(
+            event_type=AuditEventType.GOAL_ABANDONED,
+            user_id=current_user_id,
+            resource_type=ResourceType.GOAL,
+            resource_id=goal_id,
+            request_id=request.headers.get("x-request-id"),
+            ip_address=str(request.client.host) if request.client else None,
+        )
+    )
 
     # Abandoning removes the active goal the cached dashboard shows; invalidate
     # so the next read reflects the deactivation (NFR-P-5 trigger, ADR-0023).

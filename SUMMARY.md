@@ -7,6 +7,23 @@ issues were resolved.
 
 ---
 
+## [2026-06-02 14:10] Task 9 — Goals router audit wiring
+
+**Change Type:** Feature
+**Scope:** goals/interface/router.py
+
+**Summary:**
+Wire goal.created, goal.updated, goal.abandoned audit events at the goals
+composition root. All writes are fail-closed (same session).
+
+**Rationale:**
+Goal mutations need atomicity — unaudited goal changes are a compliance gap (ADR-0024).
+
+**References:**
+- Issue: GH-97
+
+---
+
 ## [2026-06-02 14:09] Fix — Remove unused request param from list_weight_entries
 
 **Change Type:** Fix
