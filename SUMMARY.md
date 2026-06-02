@@ -9,6 +9,28 @@ issues were resolved.
 
 ## [2026-06-02] Commit Summary
 
+**Change Type:** Feature
+**Scope:** alembic/versions, tests/integration/goals
+
+**Summary:**
+Add migration 0010_constraint_hardening with achievements_threshold_positive and
+goals_target_date_epoch CHECK constraints, plus idx_goals_user_created composite index.
+Add migration structure test (test_migration_0010.py).
+
+**Rationale:**
+Two genuine constraint gaps identified in the M4 Phase 2 audit: zero/negative thresholds
+break milestone-detection math; pre-2020 target dates are clearly erroneous. The goals
+listing index closes a missing read-path coverage gap (the existing partial index covers
+only active goals). Pattern follows 0004/0005/0008 (op.create_check_constraint, no batch).
+
+**References:**
+- Issue: GH-98
+- ADR: 0025
+
+---
+
+## [2026-06-02] Commit Summary
+
 **Change Type:** Refactor
 **Scope:** preferences/infrastructure/models
 
