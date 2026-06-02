@@ -4279,3 +4279,24 @@ helper was introduced because the input/output generics are schema-specific at t
 
 **References:**
 - Issue: GH-95
+
+## [2026-06-01 18:45] Commit Summary
+
+**Change Type:** Refactor
+**Scope:** features/goals — GoalForm + goal-schemas
+
+**Summary:**
+Replaced the `zodResolver(goalFormSchema) as any` cast and its
+`eslint-disable @typescript-eslint/no-explicit-any` with the typed three-generic
+`useForm<GoalFormInput, unknown, GoalFormValues>` form, and added a
+`GoalFormInput` (`z.input`) export to the schema. Mirrors the WeightEntryForm
+resolver fix.
+
+**Rationale:**
+`goalFormSchema` coerces `target_value` and `start_value` with
+`z.coerce.number()`, so the schema input type differs from its `z.infer` output
+type; the separate input/output `useForm` generics type the resolver soundly
+without a cast. No `useWatch` change here — GoalForm never used `watch()`.
+
+**References:**
+- Issue: GH-95

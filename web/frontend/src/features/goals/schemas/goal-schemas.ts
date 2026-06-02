@@ -36,6 +36,13 @@ export const goalFormSchema = z
     }
   });
 
+/**
+ * Pre-transform field type for React Hook Form's `TFieldValues` generic.
+ * Differs from {@link GoalFormValues} because `target_value` and `start_value`
+ * use `z.coerce.number()`, so the form's raw input type and validated output
+ * type are not identical.
+ */
+export type GoalFormInput = z.input<typeof goalFormSchema>;
 export type GoalFormValues = z.infer<typeof goalFormSchema>;
 
 export const goalUpdateSchema = z.object({
