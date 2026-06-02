@@ -134,6 +134,7 @@ def test_user_query_uses_index_not_seqscan(seeded_engine: tuple[Engine, int]) ->
         conn.execute(text("SET enable_seqscan = off"))
         plan = "\n".join(row[0] for row in conn.execute(text(sql), {"uid": user_id}))
     assert "Seq Scan" not in plan, f"Expected Index Scan, got:\n{plan}"
+    assert "idx_audit_log_user_created" in plan, f"Expected index name in plan, got:\n{plan}"
 
 
 def test_event_type_query_uses_index_not_seqscan(seeded_engine: tuple[Engine, int]) -> None:
@@ -147,3 +148,4 @@ def test_event_type_query_uses_index_not_seqscan(seeded_engine: tuple[Engine, in
         conn.execute(text("SET enable_seqscan = off"))
         plan = "\n".join(row[0] for row in conn.execute(text(sql)))
     assert "Seq Scan" not in plan, f"Expected Index Scan, got:\n{plan}"
+    assert "idx_audit_log_event_type_created" in plan, f"Expected index name in plan, got:\n{plan}"

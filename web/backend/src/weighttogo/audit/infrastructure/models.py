@@ -10,6 +10,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import Any
 
+import sqlalchemy as sa
 from sqlalchemy import (
     JSON,
     BigInteger,
@@ -65,5 +66,8 @@ class AuditLogModel(Base):
     # event_metadata as the Python name and map it to the "metadata" column.
     event_metadata: Mapped[dict[str, Any] | None] = mapped_column("metadata", JSON(), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC)
+        DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(UTC),
+        server_default=sa.func.now(),
     )

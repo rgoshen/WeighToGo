@@ -360,7 +360,12 @@ def login(
             AuthenticateUserCommand(email=str(payload.email), password=payload.password)
         )
     except AccountLockedError as exc:
-        _audit(session, AuditEventType.AUTH_ACCOUNT_LOCKED, request)
+        _audit(
+            session,
+            AuditEventType.AUTH_ACCOUNT_LOCKED,
+            request,
+            metadata={"email": mask_pii(str(payload.email))},
+        )
         logger.warning("account_locked", locked_until=str(exc.locked_until))
         raise HTTPException(
             status_code=status.HTTP_423_LOCKED,

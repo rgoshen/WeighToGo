@@ -88,6 +88,32 @@ _DEFAULT_PAGE_SIZE = 20
 _MAX_PAGE_SIZE = 100
 
 
+def _record_mutation_audit(
+    session: Session,
+    request: Request,
+    *,
+    event_type: AuditEventType,
+    user_id: int,
+    resource_type: ResourceType,
+    resource_id: int | None = None,
+) -> None:
+    """Write a data-mutation audit event fail-closed (ADR-0024).
+
+    Shares the request-scoped session: if the INSERT fails the
+    whole operation rolls back atomically.
+    """
+    RecordAuditEvent(SqlAlchemyAuditRepository(session)).execute(
+        RecordAuditEventCommand(
+            event_type=event_type,
+            user_id=user_id,
+            resource_type=resource_type,
+            resource_id=resource_id,
+            request_id=request.headers.get("x-request-id"),
+            ip_address=str(request.client.host) if request.client else None,
+        )
+    )
+
+
 def _weight_repo(session: Session) -> SqlAlchemyWeightEntryRepository:
     """Construct the repository for the current request."""
     return SqlAlchemyWeightEntryRepository(session)
@@ -150,15 +176,13 @@ def create_weight_entry(
 
     logger.info("weight_entry_created", entry_id=entry.entry_id, user_id=current_user_id)
 
-    RecordAuditEvent(SqlAlchemyAuditRepository(session)).execute(
-        RecordAuditEventCommand(
-            event_type=AuditEventType.WEIGHT_ENTRY_CREATED,
-            user_id=current_user_id,
-            resource_type=ResourceType.WEIGHT_ENTRY,
-            resource_id=entry.entry_id,
-            request_id=request.headers.get("x-request-id"),
-            ip_address=str(request.client.host) if request.client else None,
-        )
+    _record_mutation_audit(
+        session,
+        request,
+        event_type=AuditEventType.WEIGHT_ENTRY_CREATED,
+        user_id=current_user_id,
+        resource_type=ResourceType.WEIGHT_ENTRY,
+        resource_id=entry.entry_id,
     )
 
     # Invalidate the cached dashboard summary so the next read recomputes with
@@ -399,15 +423,13 @@ def update_weight_entry(
 
     logger.info("weight_entry_updated", entry_id=entry.entry_id, user_id=current_user_id)
 
-    RecordAuditEvent(SqlAlchemyAuditRepository(session)).execute(
-        RecordAuditEventCommand(
-            event_type=AuditEventType.WEIGHT_ENTRY_UPDATED,
-            user_id=current_user_id,
-            resource_type=ResourceType.WEIGHT_ENTRY,
-            resource_id=entry_id,
-            request_id=request.headers.get("x-request-id"),
-            ip_address=str(request.client.host) if request.client else None,
-        )
+    _record_mutation_audit(
+        session,
+        request,
+        event_type=AuditEventType.WEIGHT_ENTRY_UPDATED,
+        user_id=current_user_id,
+        resource_type=ResourceType.WEIGHT_ENTRY,
+        resource_id=entry_id,
     )
 
     # Invalidate the cached dashboard summary so the next read recomputes with
@@ -465,15 +487,13 @@ def delete_weight_entry(
 
     logger.info("weight_entry_deleted", entry_id=entry_id, user_id=current_user_id)
 
-    RecordAuditEvent(SqlAlchemyAuditRepository(session)).execute(
-        RecordAuditEventCommand(
-            event_type=AuditEventType.WEIGHT_ENTRY_DELETED,
-            user_id=current_user_id,
-            resource_type=ResourceType.WEIGHT_ENTRY,
-            resource_id=entry_id,
-            request_id=request.headers.get("x-request-id"),
-            ip_address=str(request.client.host) if request.client else None,
-        )
+    _record_mutation_audit(
+        session,
+        request,
+        event_type=AuditEventType.WEIGHT_ENTRY_DELETED,
+        user_id=current_user_id,
+        resource_type=ResourceType.WEIGHT_ENTRY,
+        resource_id=entry_id,
     )
 
     # Invalidate the cached dashboard summary so the next read recomputes without

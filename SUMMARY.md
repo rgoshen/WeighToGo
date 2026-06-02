@@ -7,6 +7,33 @@ issues were resolved.
 
 ---
 
+## [2026-06-02 14:16] Fix — Address 8 PR review comments on audit log
+
+**Change Type:** Fix
+**Scope:** audit/; auth/interface/router.py; weight_tracking,goals,preferences routers
+
+**Summary:**
+(1) models.py created_at: add server_default=func.now() to match migration.
+(2) Postgres index tests: assert index name appears in EXPLAIN plan.
+(3) request_id truncation: add test for >64-char truncation.
+(4) account_locked event: add masked email metadata for parity with login_failed.
+(5) ON DELETE SET NULL: add behavioral integration test (delete user, audit survives).
+(6) Migration test: assert created_at DESC ordering.
+(7) Mutation routers: extract _record_mutation_audit helper (DRY).
+(8) ip_address: truncate to VARCHAR(45) for consistency with request_id.
+
+**Rationale:**
+Addressed all 8 review comments on the audit log PR. The _record_mutation_audit
+helper eliminates 7 repetitive inline audit blocks across weight_tracking, goals,
+and preferences routers. The server_default addition ensures the DB applies the
+timestamp even when the ORM skips the Python-side default. The new tests close
+gaps in truncation coverage and FK behavioral verification.
+
+**References:**
+- Issue: GH-97
+
+---
+
 ## [2026-06-02 14:15] Fix — Three P2 PR review issues in audit log
 
 **Change Type:** Fix

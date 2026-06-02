@@ -56,3 +56,8 @@ def test_migration_has_downgrade_function() -> None:
     src = _src()
     assert "def downgrade" in src
     assert "drop_table" in src
+
+
+def test_migration_indexes_use_desc_ordering() -> None:
+    # Commit 3e830e8 fixed the indexes from ASC to DESC; guard against regression
+    assert "created_at DESC" in _src()
