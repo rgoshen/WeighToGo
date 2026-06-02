@@ -7,6 +7,28 @@ issues were resolved.
 
 ---
 
+## [2026-06-01 17:03] Commit Summary
+
+**Change Type:** Docs
+**Scope:** DDR-0009, DDR-0007, DDR README (web, GH-92)
+
+**Summary:**
+Created `docs/ddr/0009-milestone-display-unit.md` documenting the decision to
+convert milestone thresholds from canonical pounds to the user's preferred unit
+at display time. Added the index row to `docs/ddr/README.md`. Added a one-line
+pointer note to DDR-0007's milestone-copy bullet noting the unit display is
+superseded by DDR-0009.
+
+**Rationale:**
+AC #3 requires the milestone unit semantics to be "documented and intentional."
+DDR-0009 documents the canonical-pounds invariant, the detection asymmetry, the
+copy standardization side effect, and the alternatives considered.
+
+**References:**
+- Issue: GH-92 (M3 remediation finding #4, docs step)
+
+---
+
 ## [2026-06-01 17:02] Commit Summary
 
 **Change Type:** Feat
