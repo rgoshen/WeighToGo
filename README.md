@@ -210,7 +210,9 @@ is the authoritative source for its architecture, requirements, API, and quality
 gates. Milestone 2 (auth + weight-entry vertical slice + dashboard) is complete
 and tagged `v0.1.0`; Milestone 3 (goals, achievements with milestone and streak
 detection, preferences, dashboard aggregation, and trend analytics) is complete
-and released as `v0.2.0`. Milestone 4 adds database enhancements, with the full
+and released as `v0.2.0`. Milestone 4 adds the database enhancements — a
+security/compliance audit trail, database-level constraint hardening, the final
+web database-architecture document, and a backup/restore runbook — with the full
 web rebuild reaching `v1.0.0` at final capstone submission.
 
 | Layer | Technology | Version |
@@ -228,7 +230,7 @@ web rebuild reaching `v1.0.0` at final capstone submission.
 | Backend migrations | Alembic | latest |
 | Database | PostgreSQL | 16 (via Docker) |
 
-**What's working (Milestones 2–3):**
+**What's working (Milestones 2–4):**
 
 - Full user authentication (register, login, logout, token refresh, account lockout)
 - Weight entry CRUD: create, list (paginated), get, update, soft-delete
@@ -240,8 +242,16 @@ web rebuild reaching `v1.0.0` at final capstone submission.
   weight-trend chart; preference-driven unit conversion for display
 - Performance: composite indexes for weight-history reads and a TTL cache for
   the dashboard summary
+- Security/compliance **audit trail**: an append-only `audit_log` recording
+  authentication outcomes and data mutations, retained past actor deletion, with
+  no unmasked PII
+- **Hardened database constraints** across all seven tables (CHECK / foreign-key
+  / unique), enforced at the database rather than only in the application
+- The final **web database-architecture document** (per-constraint and per-index
+  rationale, ERD) and a documented **backup/restore** procedure with thin
+  `pg_dump`/`pg_restore` scripts
 - Cookie-based session auth, rate limiting, RFC 7807 error responses, WCAG 2.1 AA
-- 592 backend tests (pytest) · 377 frontend test cases (Vitest) · 19 E2E specs (Playwright)
+- 672 backend tests (pytest) · 388 frontend test cases (Vitest) · 19 E2E specs (Playwright)
 
 See the [Software Requirements Specification](docs/specs/WeighToGo_Web_SRS_v2.md)
 for the full milestone roadmap.
@@ -314,10 +324,14 @@ Then open <http://localhost:5173>.
 
 ### Web Database Schema
 
-The web rebuild uses PostgreSQL. The authoritative schema documentation is the
-SRS §8 — see [`docs/specs/WeighToGo_Web_SRS_v2.md`](docs/specs/WeighToGo_Web_SRS_v2.md).
-Migrations live under `web/backend/alembic/versions/` and are applied with
-`uv run alembic upgrade head`.
+The web rebuild uses PostgreSQL with **seven tables** — `users`,
+`refresh_tokens`, `weight_entries`, `goals`, `achievements`, `user_preferences`,
+and the Milestone 4 `audit_log`. The authoritative schema documentation is the
+SRS §8 — see [`docs/specs/WeighToGo_Web_SRS_v2.md`](docs/specs/WeighToGo_Web_SRS_v2.md);
+the final design, with per-constraint and per-index rationale and an ERD, is in
+[`docs/architecture/WeighToGo_Web_Database_Architecture.md`](docs/architecture/WeighToGo_Web_Database_Architecture.md).
+Migrations live under `web/backend/alembic/versions/` (`0001`–`0010`) and are
+applied with `uv run alembic upgrade head`.
 
 ### Git Hooks
 
@@ -346,7 +360,10 @@ is now preserved in maintenance-only status.
   management, milestone and streak detection, user preferences, dashboard
   aggregation with rate-of-change and a weight-trend chart, composite indexes,
   and TTL caching (`v0.2.0`).
-- **Milestone 4** — database enhancements.
+- **Milestone 4** — database enhancements: an append-only audit trail,
+  constraint and index hardening across all seven tables, a migration-discipline
+  review (round-trip rollback plus a from-scratch CI apply), the final web
+  database-architecture document, and a backup/restore runbook (`v0.3.0`).
 
 See the [SRS](docs/specs/WeighToGo_Web_SRS_v2.md) for the full milestone roadmap
 and the complete set of functional and non-functional requirements.

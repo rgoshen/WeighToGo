@@ -7,6 +7,29 @@ issues were resolved.
 
 ---
 
+## [2026-06-02] GH-101 — Phase 5: README M4 enrichment
+
+**Change Type:** Docs
+**Scope:** README
+
+**Summary:**
+Refreshed the root README for Milestone 4: named the M4 feature set in the web
+"in progress" paragraph and the roadmap; added "What's working" bullets for the
+audit trail, hardened constraints, the final database-architecture document, and
+the backup/restore runbook; noted the seven-table schema (incl. `audit_log`) in
+the Web Database Schema section. Updated the test counts from measured runs —
+672 backend (pytest), 388 frontend (Vitest), 19 E2E (Playwright) — replacing the
+stale 592/377/19.
+
+**Rationale:**
+The README is the external reader's entry point; it should reflect the delivered
+M4 capabilities and accurate counts, not the M3 snapshot.
+
+**References:**
+- Issue: GH-101
+
+---
+
 ## [2026-06-02] GH-101 — Phase 5: arch-doc migration labels
 
 **Change Type:** Docs
