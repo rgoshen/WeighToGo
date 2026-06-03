@@ -7,6 +7,23 @@ issues were resolved.
 
 ---
 
+## [2026-06-02] GH-101 — Phase 5: shellcheck as a dev dependency
+
+**Change Type:** CI
+**Scope:** web/backend, .github/workflows, pre-commit
+
+**Summary:**
+Added `shellcheck-py` to the backend `uv` dev dependencies so the backup/restore
+scripts are linted via `uv run shellcheck` — reproducible for every contributor
+and in CI with no global install. Wired it into the backend-ci `quality` job and
+a matching `backend-shellcheck` pre-commit hook (the config mirrors CI exactly).
+Both scripts lint clean.
+
+**References:**
+- Issue: GH-101
+
+---
+
 ## [2026-06-02] GH-101 — Phase 5: closeout corrections
 
 **Change Type:** Refactor

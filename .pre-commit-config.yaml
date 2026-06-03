@@ -3,7 +3,7 @@
 # Mirrors the CI quality gates exactly so failures are caught locally
 # before they reach GitHub Actions:
 #
-#   Backend  : ruff (lint + format), mypy, pytest
+#   Backend  : ruff (lint + format), mypy, shellcheck, pytest
 #   Frontend : eslint, prettier, tsc (type-check), vitest
 #
 # Activate locally once with: pre-commit install
@@ -30,6 +30,13 @@ repos:
         entry: bash -c 'cd web/backend && uv run mypy'
         language: system
         files: ^web/backend/.*\.py$
+        pass_filenames: false
+
+      - id: backend-shellcheck
+        name: shellcheck (backup/restore scripts)
+        entry: bash -c 'cd web/backend && uv run shellcheck scripts/*.sh'
+        language: system
+        files: ^web/backend/scripts/.*\.sh$
         pass_filenames: false
 
       - id: backend-pytest
