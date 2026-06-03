@@ -7,6 +7,27 @@ issues were resolved.
 
 ---
 
+## [2026-06-02] GH-100 — Phase 4: Web Database-Architecture Document (Sections 4–5)
+
+**Change Type:** Docs
+**Scope:** docs/architecture
+
+**Summary:**
+Added Sections 4 (Constraints Catalogue, 21 named constraints across 5 tables) and 5
+(Index Catalogue, 10 named indexes across 4 tables) to
+WeighToGo_Web_Database_Architecture.md. Each row includes the constraint/index name,
+rule, rationale one-liner, and ADR link.
+
+**Rationale:**
+Cross-cutting catalogues allow all constraints and indexes to be audited in aggregate
+rather than hunting per-table. ADR links provide full traceability from schema decisions
+to recorded rationale (ADR-0019 through ADR-0026).
+
+**References:**
+- Issue: GH-100
+
+---
+
 ## [2026-06-02] GH-100 — Phase 4: Web Database-Architecture Document (Section 3)
 
 **Change Type:** Docs

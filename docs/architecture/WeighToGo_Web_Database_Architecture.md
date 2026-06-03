@@ -297,3 +297,78 @@ No outbound foreign keys. Root of all CASCADE chains.
 
 **Foreign keys:**
 - `user_id` → `users(user_id)` ON DELETE SET NULL — critical: preserves the audit trail when an actor's account is deleted
+
+---
+
+## 4. Constraints Catalogue
+
+All named CHECK and UNIQUE constraints across all tables. Format: constraint name |
+table | rule | rationale | ADR. Adding a new constraint requires a migration; adding
+a new value to a closed enum also requires a migration.
+
+### `weight_entries` (5 constraints)
+
+| Constraint | Rule | Rationale | ADR |
+|------------|------|-----------|-----|
+| `weight_entries_value_positive` | `weight_value > 0` | Prevents physically impossible zero or negative weights | ADR-0025 |
+| `weight_entries_value_max` | `weight_value <= 1500` | Upper-bounds to realistic human range in lbs | ADR-0025 |
+| `weight_entries_unit_valid` | `weight_unit IN ('lbs', 'kg')` | Closes the unit enum at the DB level; rejects any unknown unit string | ADR-0025 |
+| `weight_entries_observation_not_future` | `observation_date <= CURRENT_DATE` | No future-dated entries; a weight must have been observed before it is recorded | ADR-0025 |
+| `weight_entries_deletion_consistency` | `(is_deleted = FALSE AND deleted_at IS NULL) OR (is_deleted = TRUE AND deleted_at IS NOT NULL)` | Keeps the soft-delete pair in sync; prevents half-deleted rows | ADR-0025 |
+
+### `goals` (9 constraints)
+
+| Constraint | Rule | Rationale | ADR |
+|------------|------|-----------|-----|
+| `goals_goal_type_valid` | `goal_type IN ('lose', 'gain')` | Closes the goal-type enum at the DB level | ADR-0025 |
+| `goals_target_value_positive` | `target_value > 0` | Target weight must be positive | ADR-0025 |
+| `goals_target_value_max` | `target_value <= 1500` | Upper-bounds target to realistic human range | ADR-0025 |
+| `goals_start_value_positive` | `start_value > 0` | Baseline weight must be positive | ADR-0025 |
+| `goals_start_value_max` | `start_value <= 1500` | Upper-bounds baseline to realistic range | ADR-0025 |
+| `goals_target_unit_valid` | `target_unit IN ('lbs', 'kg')` | Prevents unknown unit strings entering goal rows | ADR-0025 |
+| `goals_achieved_consistency` | `(is_achieved = FALSE AND achieved_at IS NULL) OR (is_achieved = TRUE AND achieved_at IS NOT NULL)` | Keeps the achievement pair in sync; parallels the `deletion_consistency` pattern | ADR-0025 |
+| `goals_direction_invariant` | `(goal_type = 'lose' AND target_value < start_value) OR (goal_type = 'gain' AND target_value > start_value)` | Makes the direction of a goal self-proving; rejects contradictory configurations at the DB level (migration 0004) | ADR-0025 |
+| `goals_target_date_epoch` | `target_date IS NULL OR target_date >= '2020-01-01'` | Rejects clearly impossible historical deadlines using a dialect-portable epoch; cross-column comparison rejected for SQLite portability (migration 0010) | ADR-0025 |
+
+### `achievements` (2 constraints)
+
+| Constraint | Rule | Rationale | ADR |
+|------------|------|-----------|-----|
+| `achievements_type_valid` | `achievement_type IN ('goal_reached', 'milestone', 'streak')` | Closes the type enum; widened from 2 → 3 values in migration 0008 to add `streak` | ADR-0025 |
+| `achievements_threshold_positive` | `threshold IS NULL OR threshold > 0` | NULL is reserved for `goal_reached` rows; milestone and streak thresholds must be positive (migration 0010) | ADR-0025 |
+
+### `user_preferences` (3 constraints)
+
+| Constraint | Rule | Rationale | ADR |
+|------------|------|-----------|-----|
+| `user_preferences_unique_key` | UNIQUE (`user_id`, `pref_key`) | One row per preference per user; this is the upsert conflict target for preference writes | ADR-0020 |
+| `user_preferences_key_valid` | `pref_key IN ('weight_unit', 'notify_achievement', 'notify_milestone', 'notify_streak')` | Closes the preference key set at the DB level; adding a new key requires a migration | ADR-0020 |
+| `user_preferences_value_valid` | `(pref_key = 'weight_unit' AND pref_value IN ('lbs', 'kg')) OR (pref_key LIKE 'notify_%' AND pref_value IN ('true', 'false'))` | Validates value domain per key type; prevents invalid key/value combinations | ADR-0020 |
+
+### `audit_log` (2 constraints)
+
+| Constraint | Rule | Rationale | ADR |
+|------------|------|-----------|-----|
+| `audit_log_event_type_valid` | `event_type IN ('auth.register', 'auth.login_succeeded', 'auth.login_failed', 'auth.logout', 'auth.token_refreshed', 'auth.token_reuse_detected', 'auth.account_locked', 'weight_entry.created', 'weight_entry.updated', 'weight_entry.deleted', 'goal.created', 'goal.updated', 'goal.abandoned', 'preference.updated')` | Closes the 14-value event taxonomy derived from `AuditEventType(StrEnum)`; adding a new event type requires a migration | ADR-0024 |
+| `audit_log_resource_consistency` | `resource_id IS NULL OR resource_type IS NOT NULL` | Prevents orphaned `resource_id` without a `resource_type`; the nullable FK requires explicit pairing | ADR-0024 |
+
+---
+
+## 5. Index Catalogue
+
+All named indexes across all tables. Format: index name | table | columns | type |
+query served | ADR. "Partial" means a `WHERE` predicate restricts the indexed rows.
+"Partial UNIQUE" enforces uniqueness only within that predicate.
+
+| Index | Table | Columns | Type | Query served | ADR |
+|-------|-------|---------|------|--------------|-----|
+| `idx_weight_entries_user_date_active` | `weight_entries` | `(user_id, observation_date)` WHERE `is_deleted = FALSE` | Partial UNIQUE | Prevents duplicate entries per (user, date); drives upsert conflict target | ADR-0021 |
+| `idx_weight_entries_user_observation_desc` | `weight_entries` | `(user_id, observation_date DESC)` WHERE `is_deleted = FALSE` | Partial composite | Paginated entry list ordered most-recent-first for the authenticated user | ADR-0021 |
+| `idx_weight_entries_user_created_at` | `weight_entries` | `(user_id, created_at DESC)` WHERE `is_deleted = FALSE` | Partial composite | NFR-P-3: dashboard load must retrieve 30 entries in < 100 ms; partial predicate excludes soft-delete tombstones (migration 0007) | ADR-0021 |
+| `idx_goals_one_active_per_user` | `goals` | `(user_id)` WHERE `is_active = TRUE` | Partial UNIQUE | Enforces at most one active goal per user; drives the active-goal lookup | migration 0003 (no ADR) |
+| `idx_goals_user_created` | `goals` | `(user_id, created_at DESC)` | Composite | Full goal history listing; `idx_goals_one_active_per_user` is partial and misses inactive goals (migration 0010) | ADR-0025 |
+| `idx_achievements_unique_milestone` | `achievements` | `(goal_id, achievement_type, threshold)` WHERE `threshold IS NOT NULL` | Partial UNIQUE | Idempotency: at most one milestone/streak row per (goal, type, threshold) tuple | ADR-0019 |
+| `idx_achievements_unique_goal_reached` | `achievements` | `(goal_id, achievement_type)` WHERE `threshold IS NULL` | Partial UNIQUE | Idempotency: at most one `goal_reached` row per goal | ADR-0019 |
+| `idx_achievements_user_earned` | `achievements` | `(user_id, earned_at)` | Composite | Achievement history listing per user ordered by `earned_at` | ADR-0026 |
+| `idx_audit_log_user_created` | `audit_log` | `(user_id, created_at DESC)` | Composite | Per-user audit trail lookup for security review queries | ADR-0024 |
+| `idx_audit_log_event_type_created` | `audit_log` | `(event_type, created_at DESC)` | Composite | Per-event-type audit queries (e.g. all failed logins within a time window) | ADR-0024 |
