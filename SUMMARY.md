@@ -7,6 +7,31 @@ issues were resolved.
 
 ---
 
+## [2026-06-02] GH-101 — Phase 5: tested backup/restore scripts
+
+**Change Type:** Feature
+**Scope:** web/backend/scripts
+
+**Summary:**
+Added thin `backup.sh`/`restore.sh` wrappers around `pg_dump`/`pg_restore`
+(custom format, `--no-owner --no-privileges`, with the SQLAlchemy
+`postgresql+psycopg://` → `postgresql://` DSN strip). Built test-first with
+`bats`: 10 tests covering `--help`/usage, the `DATABASE_URL` guard, restore
+dump-file existence, the success-path invocation, and a failing-underlying-tool
+guard (the script aborts via `set -euo pipefail` and prints no success line).
+Linted with `shellcheck`. No live database is needed — the suite stubs the pg
+tools on `PATH`.
+
+**Rationale:**
+Backup/restore is "documented, not automated" (SRS §13.3.1 #6). Thin Bash keeps
+the procedure transparent, while `bats` proves the guard logic the code-review
+checklist cares about (input validity, file existence) without a real database.
+
+**References:**
+- Issue: GH-101
+
+---
+
 ## [2026-06-02] GH-100 — Phase 4: Android doc superseded pointer
 
 **Change Type:** Docs

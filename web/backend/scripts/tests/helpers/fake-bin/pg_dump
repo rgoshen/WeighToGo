@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Test stub: records the call and creates any --file target so the
+# real script's post-conditions hold without a live database.
+for arg in "$@"; do
+  case "$arg" in
+    --file=*) : >"${arg#--file=}" ;;
+  esac
+done
+echo "FAKE pg_dump $*"
