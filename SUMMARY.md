@@ -7,6 +7,28 @@ issues were resolved.
 
 ---
 
+## [2026-06-02] GH-101 — Phase 5: arch-doc migration labels
+
+**Change Type:** Docs
+**Scope:** docs/architecture
+
+**Summary:**
+Corrected the §7 Migration History table in the web database-architecture doc:
+migrations `0003` (goals) and `0004` (goals direction CHECK) were labeled M2 but
+were authored 2026-05-28, inside the M3 window — relabeled M3. This keeps the
+arch doc consistent with the SRS §8.3 reconciliation and SRS §8.2.4 (which
+labels `goals` "Milestone 3").
+
+**Issues / resolution:**
+The mislabel was introduced by the Phase 4 doc (#124). Verified the correct
+milestone from the release-tag dates (v0.1.0 = 2026-05-23) before changing it,
+rather than trusting either document.
+
+**References:**
+- Issue: GH-101
+
+---
+
 ## [2026-06-02] GH-101 — Phase 5: SRS v2 reconciliation
 
 **Change Type:** Docs
