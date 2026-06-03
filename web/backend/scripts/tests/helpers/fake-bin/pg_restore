@@ -1,3 +1,0 @@
-#!/usr/bin/env bash
-# Test stub: records the call; no side effects needed.
-echo "FAKE pg_restore $*"

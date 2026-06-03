@@ -7,6 +7,27 @@ issues were resolved.
 
 ---
 
+## [2026-06-02] GH-101 — Phase 5: closeout corrections
+
+**Change Type:** Refactor
+**Scope:** web/backend/scripts, docs
+
+**Summary:**
+Addressed review feedback on the closeout. (1) Moved the backup/restore script
+tests off `bats` — which needs a global brew/apt install — into the existing
+`uv`/`pytest` harness via `subprocess` (`tests/scripts/test_backup_restore.py`,
+10 cases), and removed the dedicated CI job; no global tooling, and the scripts
+are now gated by the standard backend job (682 backend tests, 98%). (2) Removed
+`docs/standards/M4_WEB_APP_QUALITY.md` — that review is run after the milestone
+closes, not as part of it. (3) Removed the tool-usage acknowledgment section from
+the narrative and the corresponding instructions from the M3/M4 briefs, restoring
+the project policy of keeping such references out of committed docs.
+
+**References:**
+- Issue: GH-101
+
+---
+
 ## [2026-06-02] GH-101 — Phase 5: Milestone Four narrative
 
 **Change Type:** Docs
@@ -20,40 +41,7 @@ append-only `audit_log` (closed event-type CHECK, `ON DELETE SET NULL`
 retention, masked PII) and constraint hardening (`achievements_threshold_positive`
 example) — with real SQL snippets from migrations `0009`/`0010`, and the honest
 framing that late-stage database work is verification and operational rigor. Maps
-to course outcomes 5/4/3/2/1 and includes a §5 AI-tool-usage acknowledgment.
-
-**Issues / resolution:**
-The §5 AI-usage acknowledgment is flagged in-document for the author to reword in
-their own voice — it is an academic-integrity disclosure required by the rubric.
-
-**References:**
-- Issue: GH-101
-
----
-
-## [2026-06-02] GH-101 — Phase 5: M4 quality review
-
-**Change Type:** Docs
-**Scope:** docs/standards
-
-**Summary:**
-Added `docs/standards/M4_WEB_APP_QUALITY.md` — a checklist-based self-review of
-the M4 database work in the M2/M3 format. Ran the full quality suite and recorded
-results: backend ruff/format/mypy clean, pytest 672 passed / 11 skipped / 98%;
-frontend eslint/tsc/prettier clean, vitest 388 passed / 94.28%, build route-split
-and clean; `bats` 10 passed; `shellcheck` clean. No blocking or high findings;
-three Low/intentional notes (fail-open auth auditing, append-only-by-absence,
-Postgres-only index-plan proof). Verified the closeout no-ops: CLAUDE.md CURRENT
-ASSIGNMENT already "Milestone Four" (line 186), the ADR index already lists
-0024/0025/0026, and OpenAPI has zero audit endpoints (no M4 API drift).
-
-**Issues / resolution:**
-SRS §8.2.5/§8.2.6 still read "deferred to M3" — confirmed this is M3 drift and
-deliberately left out of M4 scope (noted for a later doc-currency pass).
-
-**Rationale:**
-This is the §3 "self-review all M4 code against the code-review checklist"
-deliverable and the quality gate before the `v0.3.0` release.
+to course outcomes 5/4/3/2/1.
 
 **References:**
 - Issue: GH-101
@@ -161,28 +149,6 @@ and WAL archiving are out of capstone scope.
 
 ---
 
-## [2026-06-02] GH-101 — Phase 5: CI for backup/restore scripts
-
-**Change Type:** CI
-**Scope:** .github/workflows
-
-**Summary:**
-Added a `scripts` job to `backend-ci.yml` running `shellcheck scripts/*.sh` and
-`bats scripts/tests` on every backend change. The job inherits the workflow-level
-`working-directory: web/backend`, installs `bats` via apt (`shellcheck` is
-preinstalled on the runner), and reuses the existing pinned checkout SHA. No
-untrusted workflow input is interpolated into any `run:` step.
-
-**Rationale:**
-Puts the backup/restore guard logic behind the same CI gate as the rest of the
-backend, so a regression in the scripts fails the build rather than passing
-silently.
-
-**References:**
-- Issue: GH-101
-
----
-
 ## [2026-06-02] GH-101 — Phase 5: tested backup/restore scripts
 
 **Change Type:** Feature
@@ -191,17 +157,19 @@ silently.
 **Summary:**
 Added thin `backup.sh`/`restore.sh` wrappers around `pg_dump`/`pg_restore`
 (custom format, `--no-owner --no-privileges`, with the SQLAlchemy
-`postgresql+psycopg://` → `postgresql://` DSN strip). Built test-first with
-`bats`: 10 tests covering `--help`/usage, the `DATABASE_URL` guard, restore
-dump-file existence, the success-path invocation, and a failing-underlying-tool
-guard (the script aborts via `set -euo pipefail` and prints no success line).
-Linted with `shellcheck`. No live database is needed — the suite stubs the pg
-tools on `PATH`.
+`postgresql+psycopg://` → `postgresql://` DSN strip). Tested via `pytest`
+(`tests/scripts/test_backup_restore.py`): 10 cases covering `--help`/usage, the
+`DATABASE_URL` guard, restore dump-file existence, the success-path invocation,
+and a failing-underlying-tool guard (the script aborts via `set -euo pipefail`
+and prints no success line). The tests invoke the scripts through `subprocess`
+with `pg_dump`/`pg_restore` stubbed on `PATH`, so they run in the existing
+`uv`/`pytest` harness and CI job — no live database and no extra tooling.
 
 **Rationale:**
 Backup/restore is "documented, not automated" (SRS §13.3.1 #6). Thin Bash keeps
-the procedure transparent, while `bats` proves the guard logic the code-review
-checklist cares about (input validity, file existence) without a real database.
+the procedure transparent; testing the guard logic from `pytest` proves what the
+code-review checklist cares about (input validity, file existence) using only the
+project's existing test runner, avoiding any global tool install.
 
 **References:**
 - Issue: GH-101

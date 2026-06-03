@@ -251,7 +251,7 @@ web rebuild reaching `v1.0.0` at final capstone submission.
   rationale, ERD) and a documented **backup/restore** procedure with thin
   `pg_dump`/`pg_restore` scripts
 - Cookie-based session auth, rate limiting, RFC 7807 error responses, WCAG 2.1 AA
-- 672 backend tests (pytest) · 388 frontend test cases (Vitest) · 19 E2E specs (Playwright)
+- 682 backend tests (pytest) · 388 frontend test cases (Vitest) · 19 E2E specs (Playwright)
 
 See the [Software Requirements Specification](docs/specs/WeighToGo_Web_SRS_v2.md)
 for the full milestone roadmap.

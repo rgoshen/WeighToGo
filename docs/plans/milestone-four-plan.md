@@ -155,7 +155,7 @@ Verification, documentation, and reconciliation. ADRs are authored during their 
 - Produce `docs/standards/M4_WEB_APP_QUALITY.md` — a checklist-based review in the M2/M3 format (verification commands run, strengths, findings by severity, assumptions challenged, section-by-section checklist, remediation order, conclusion).
 - Update the project `CLAUDE.md` CURRENT ASSIGNMENT block from Milestone Two to Milestone Four.
 - Self-review all M4 code against `/docs/standards/cs499_code_review_checklist.md`; record findings as PR comments and resolve before merge.
-- Draft the M4 narrative addressing the four rubric prompts, emphasizing the database-security indicator (the audit trail and constraint hardening) and the honest framing that late-stage database work is verification and operational rigor; acknowledge AI-tool usage per the rubric's AI Usage section and the Shapiro Library citation guide.
+- Draft the M4 narrative addressing the four rubric prompts, emphasizing the database-security indicator (the audit trail and constraint hardening) and the honest framing that late-stage database work is verification and operational rigor.
 - Tag the repository `v0.3.0`.
 
 **Note on ADR timing:** records must be written at the time of the decision — on the feature branch, before the first line of implementation code that depends on the decision. Step 5 is a verification step, not the authorship step. A record committed after the code it documents is a retrospective note, not a decision document.
@@ -192,7 +192,6 @@ M4-specific additions:
 - **Security thread (rubric indicator).** The audit trail is the milestone's security showcase: it records authentication outcomes and data mutations for review, retains entries past actor deletion (`ON DELETE SET NULL`), and stores no unmasked PII or secrets. Constraint hardening closes the structural-integrity class of flaw (bad data can never persist). Both are given explicit narrative treatment.
 - Constraint-adding migrations follow the `0004`/`0005`/`0008` pattern: the CHECK lives in the model `__table_args__` (enforced on SQLite via `create_all`) and in the migration via `op.create_check_constraint` (PostgreSQL path); the migration test asserts text. No `batch_alter_table`.
 - Both ADRs are written before the code they govern, not after, and before the `v0.3.0` tag is applied.
-- The narrative must acknowledge AI-tool usage per the rubric's AI Usage section.
 
 ---
 
@@ -213,7 +212,7 @@ Adapted from SRS §14 for Milestone Four:
 - [ ] `M4_WEB_APP_QUALITY.md` produced against the code-review checklist
 - [ ] Root `README.md` updated with the M4 feature set; project `CLAUDE.md` CURRENT ASSIGNMENT updated to M4
 - [ ] All existing M2/M3 tests still pass against the tightened schema
-- [ ] The M4 narrative document is drafted and reviewed against the rubric, with the database-security indicator emphasized and AI usage acknowledged
+- [ ] The M4 narrative document is drafted and reviewed against the rubric, with the database-security indicator emphasized
 - [ ] The repository is tagged `v0.3.0`
 
 ---

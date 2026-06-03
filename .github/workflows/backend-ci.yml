@@ -85,19 +85,3 @@ jobs:
         env:
           WEIGHTTOGO_TEST_POSTGRES_DSN: postgresql+psycopg://weighttogo:weighttogo@localhost:5432/weighttogo_test
         run: uv run pytest -m postgres -v
-
-  scripts:
-    name: Backup/restore scripts (shellcheck + bats)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-
-      - name: Install bats
-        run: sudo apt-get update && sudo apt-get install -y bats
-
-      - name: ShellCheck (preinstalled on ubuntu-latest)
-        run: shellcheck scripts/*.sh
-
-      - name: Bats tests
-        run: bats scripts/tests

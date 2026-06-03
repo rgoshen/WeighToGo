@@ -119,8 +119,8 @@ The schema went from one that *assumed* its data was valid to one that
 *guarantees* it: contradictory rows can no longer be written, the security
 history is durable and tamper-resistant by construction, and the operational
 gap (how do you recover this database?) is now documented and scripted. The
-backend carries 672 tests at 98% coverage; the new shell scripts are themselves
-covered by `bats` and linted with `shellcheck`. None of this is visible on the
+backend carries 682 tests at 98% coverage; the new shell scripts are themselves
+covered by the backend's `pytest` suite. None of this is visible on the
 screen — and that is the point of the database category.
 
 ---
@@ -220,25 +220,6 @@ the habit I most want to carry into that final pass.
 
 ---
 
-## 5. AI tool usage acknowledgment
-
-> **Author note:** review and reword this section in your own voice before
-> submission — it is your academic-integrity disclosure and should describe your
-> actual process. Drafted here per the Milestone Four rubric's *AI Usage* section
-> and the Shapiro Library citation guidance.
-
-In producing this milestone I used a generative-AI coding assistant to support —
-not replace — my own engineering judgment. I used it for drafting and reviewing
-code and documentation, for surfacing edge cases in the test design, and for
-auditing my own plans and documents for gaps and drift before implementation.
-Every design decision, constraint, and trade-off recorded in the ADRs and this
-narrative reflects choices I made and can defend; the AI assistance accelerated
-the mechanical work and acted as a second reviewer. I followed the SNHU
-generative-AI guidelines and the Shapiro Library guidance on acknowledging AI
-tools in coursework.
-
----
-
 ## Appendix A: Verifiable references
 
 - Repository: <https://github.com/rgoshen-snhu/WeighToGo>
@@ -252,7 +233,6 @@ tools in coursework.
 - Composite index strategy (referenced for the indexing decision): [`/docs/adr/0021-composite-index-strategy.md`](../adr/0021-composite-index-strategy.md)
 - Web database-architecture document: [`/docs/architecture/WeighToGo_Web_Database_Architecture.md`](../architecture/WeighToGo_Web_Database_Architecture.md)
 - Backup/restore runbook: [`/docs/runbooks/backup-restore.md`](../runbooks/backup-restore.md)
-- M4 web app quality review: [`/docs/standards/M4_WEB_APP_QUALITY.md`](../standards/M4_WEB_APP_QUALITY.md)
 - Migrations (`0001`–`0010`): [`/web/backend/alembic/versions/`](../../web/backend/alembic/versions/)
 - Engineering log: [`/SUMMARY.md`](../../SUMMARY.md)
 - Milestone Four implementation brief: [`/docs/plans/milestone-four-plan.md`](../plans/milestone-four-plan.md)
