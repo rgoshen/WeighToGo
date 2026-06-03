@@ -36,9 +36,9 @@ visible and enforceable.
 
 | Pattern | Concern | Where it shows up |
 | --- | --- | --- |
-| **Screaming Architecture** | Folder structure that "screams" the domain | Top-level packages named after bounded contexts (`auth/`, `weight_tracking/`, `goals/`, `users/`) rather than after frameworks |
+| **Screaming Architecture** | Folder structure that "screams" the domain | Top-level packages named after bounded contexts (`auth/`, `weight_tracking/`, `goals/`, `achievements/`, `audit/`) rather than after frameworks |
 | **Clean Architecture** | Dependency rule — outer layers depend on inner | `domain/` has zero framework imports; `application/` depends on `domain/`; `infrastructure/` depends on both |
-| **Hexagonal Architecture** | Ports and adapters | Domain defines a `Port` (interface); infrastructure provides an `Adapter` (concrete impl wrapping FastAPI / SQLAlchemy / Argon2) |
+| **Hexagonal Architecture** | Ports and adapters | Domain defines a `Port` (interface); infrastructure provides an `Adapter` (concrete impl wrapping FastAPI / SQLAlchemy / bcrypt) |
 
 The dependency rule is enforced in CI by `import-linter` — domain code that
 imports a framework breaks the build.

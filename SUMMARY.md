@@ -7,6 +7,40 @@ issues were resolved.
 
 ---
 
+## [2026-06-02] GH-101 — Phase 5: documentation currency review
+
+**Change Type:** Docs
+**Scope:** docs, READMEs, ARCHITECTURE, CONTRIBUTING
+
+**Summary:**
+End-of-refactor documentation review (parallel review of the SRS, narratives and
+plans, ADRs/DDRs/architecture/standards, plus the entry docs). Fixes applied:
+- **SRS v2** — backfilled §8.2.5 (achievements) and §8.2.6 (user_preferences) DDL
+  (both still read "deferred to Milestone 3"); added the §8.2.4 goals CHECK
+  constraints; dropped five stale "(planned)" ADR tags; bumped front-matter to
+  v2.1 / Accepted / 2026-06-02 and removed "(pending restructure)".
+- **Architecture** — corrected `migration_table.md` rows `0003`/`0004` M2→M3
+  (matching the web DB doc §7); fixed a broken "ADR-0024 §Deferred decisions"
+  cross-reference in the web DB doc; added a top-of-file "superseded for the web
+  rebuild" banner to the Android DB doc.
+- **Entry docs** — `docs/README` active plan M3→M4; `web/backend` README
+  592/97%→682/98% plus the shellcheck gate; `web/frontend` README 377→388;
+  `web/README` M4 "(upcoming)"→delivered (`v0.3.0`); `ARCHITECTURE` Argon2→bcrypt
+  and corrected the bounded-context example; `CONTRIBUTING` integration-test note
+  (in-memory SQLite default, real PostgreSQL for the index tests).
+
+**Issues / resolution:**
+SRS v1 (frozen pre-M2 baseline), the M2/M3 narratives and M3 quality doc, the
+original CS 360 requirements, and the M4-plan references to the M3 plan were
+verified correct-in-context and left unchanged. The M4 narrative asserts the
+`v0.3.0` tag as fact per the milestone-narrative convention — confirm the tag is
+cut before submission.
+
+**References:**
+- Issue: GH-101
+
+---
+
 ## [2026-06-02] GH-101 — Phase 5: shellcheck as a dev dependency
 
 **Change Type:** CI

@@ -36,12 +36,13 @@ Quality gates (also run by pre-commit and CI):
 uv run ruff check .
 uv run ruff format --check .
 uv run mypy
+uv run shellcheck scripts/*.sh
 uv run pytest --cov=weighttogo
 ```
 
 ## Tests
 
-592 pytest tests at 97% coverage. Coverage thresholds are enforced in CI.
+682 pytest tests at 98% coverage. Coverage thresholds are enforced in CI.
 
 ## Documentation
 

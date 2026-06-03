@@ -270,7 +270,8 @@ git checkout -b fix/<bug-description>
 **Backend (pytest):** test-driven development is the default. Tests live under
 `web/backend/tests/` mirroring the source tree. Unit tests target domain and
 application layers (no framework imports allowed); integration tests target
-infrastructure adapters with a real PostgreSQL via the `conftest.py` fixtures.
+infrastructure adapters against an in-memory SQLite (with a real PostgreSQL
+service for the NFR-P-3 index-plan tests) via the `conftest.py` fixtures.
 Coverage threshold is enforced in CI per SRS §11.
 
 ```python

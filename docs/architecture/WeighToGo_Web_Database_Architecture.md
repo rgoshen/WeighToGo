@@ -418,8 +418,9 @@ database trigger. `metadata` uses `JSON` (not `JSONB`) and `ip_address` uses
 ### Retention policy
 
 No automated purge mechanism is implemented within this milestone scope. Rows
-accumulate indefinitely. Production retention strategy (e.g. time-based partitioning
-or scheduled DELETE) is explicitly deferred — see ADR-0024 §Deferred decisions.
+accumulate indefinitely. A production retention strategy (e.g. time-based
+partitioning or scheduled DELETE) is out of capstone scope and intentionally
+left for future work.
 
 ---
 

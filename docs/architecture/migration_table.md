@@ -13,8 +13,8 @@ CI — see `.github/workflows/migration-ci.yml`).
 |-----------|---------|-----------|-------------|
 | `0001` | Initial users + auth (CITEXT email, refresh tokens) | M2 | `users`, `refresh_tokens` |
 | `0002` | Weight entries + composite performance indexes | M2 | `weight_entries`, `idx_weight_entries_user_date_active`, `idx_weight_entries_user_observation_desc` |
-| `0003` | Goals table | M2 | `goals` |
-| `0004` | Goals direction-invariant CHECK constraint | M2 | `goals_direction_invariant` |
+| `0003` | Goals table | M3 | `goals` |
+| `0004` | Goals direction-invariant CHECK constraint | M3 | `goals_direction_invariant` |
 | `0005` | Achievements table + indexes | M3 | `achievements` |
 | `0006` | User preferences table (EAV storage, ADR-0020) | M3 | `user_preferences` |
 | `0007` | Composite `created_at` index for NFR-P-3 (ADR-0021) | M3 | `idx_weight_entries_user_created_at` |

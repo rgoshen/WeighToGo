@@ -10,9 +10,9 @@ When two documents disagree, use this order of precedence:
 
 1. **`specs/WeighToGo_Web_SRS_v2.md`** — authoritative system spec for the web
    rebuild. Wins over every other web-related doc.
-2. **`plans/milestone-three-plan.md`** — the active CS 499 Milestone Three
+2. **`plans/milestone-four-plan.md`** — the active CS 499 Milestone Four
    implementation brief. References sections of the SRS that are in scope for
-   M3.
+   M4.
 3. **`adr/` and `ddr/`** — point-in-time decisions; superseded entries are
    marked in their own status field, not deleted.
 4. **`architecture/`** — Android-era technical docs. Historical reference only
@@ -21,7 +21,7 @@ When two documents disagree, use this order of precedence:
 ## Quick links
 
 - **System spec (web):** [`specs/WeighToGo_Web_SRS_v2.md`](specs/WeighToGo_Web_SRS_v2.md)
-- **Active milestone plan:** [`plans/milestone-three-plan.md`](plans/milestone-three-plan.md)
+- **Active milestone plan:** [`plans/milestone-four-plan.md`](plans/milestone-four-plan.md)
 - **Code review checklist:** [`standards/cs499_code_review_checklist.md`](standards/cs499_code_review_checklist.md)
 - **ADR index:** [`adr/README.md`](adr/README.md)
 - **DDR index:** [`ddr/README.md`](ddr/README.md)

@@ -22,13 +22,13 @@
 | Field | Value |
 | --- | --- |
 | Document Title | Weigh to Go! Web Application, Software Requirements Specification |
-| Document Version | 1.0 |
-| Status | Draft |
-| Last Updated | 2026-05-22 |
+| Document Version | 2.1 |
+| Status | Accepted |
+| Last Updated | 2026-06-02 |
 | Author | Rick Goshen |
 | Course | CS 499, Computer Science Capstone |
 | Institution | Southern New Hampshire University |
-| Artifact Repository | github.com/rgoshen-snhu/WeighToGo (pending restructure) |
+| Artifact Repository | github.com/rgoshen-snhu/WeighToGo |
 | Predecessor Artifact | Weigh to Go! (Android, CS 360, November 2025) |
 
 ---
@@ -231,7 +231,7 @@ A use case in `application/` accepts a repository interface from `domain/`. The 
 
 Framework integrations live at the edges. The FastAPI router is an adapter for the HTTP port. The SQLAlchemy repository is an adapter for the persistence port. The bcrypt utility is an adapter for the password-hashing port. The domain knows about ports (interfaces) and never about adapters (implementations).
 
-This blend is documented in `[ADR-0012]` (planned). The decision builds on the existing six ADRs in the Android repository.
+This blend is documented in `[ADR-0012]`. The decision builds on the existing six ADRs in the Android repository.
 
 ### 4.3 Technology Stack
 
@@ -489,7 +489,7 @@ The system shall allow new users to create an account by providing a valid email
 - Successful registration returns 201 Created with a session cookie
 - Duplicate email returns 409 Conflict with a generic error message that does not confirm whether the email is already registered (see FR-A-9)
 
-`[ADR-0009]` Email as primary identifier (planned).
+`[ADR-0009]` Email as primary identifier.
 
 #### FR-A-2: User Login `[MUST]` `[M2]`
 
@@ -555,7 +555,7 @@ The system shall return generic error messages for authentication failures that 
 
 This requirement directly addresses the username enumeration finding in the Android code review where `UserDAO` line 59 exposed the attempted username in its exception message.
 
-`[ADR-0010]` Generic authentication error policy (planned).
+`[ADR-0010]` Generic authentication error policy.
 
 #### FR-A-10: PII-Aware Logging `[MUST]` `[M2]`
 
@@ -563,7 +563,7 @@ The system shall log authentication events without exposing personally identifia
 
 This requirement directly addresses the PII logging findings in the Android code review where `SessionManager` lines 139, 190, and 229 logged usernames in plain text, and `UserDAO` line 329 logged phone numbers.
 
-`[ADR-0011]` PII masking strategy in logs (planned).
+`[ADR-0011]` PII masking strategy in logs.
 
 ### 6.2 Weight Tracking (FR-W)
 
@@ -1001,7 +1001,7 @@ CREATE INDEX idx_refresh_tokens_user_active
 CREATE INDEX idx_refresh_tokens_family ON refresh_tokens(family_id);
 ```
 
-The `family_id` enables family-level revocation when token reuse is detected, which is a recognized refresh-token rotation security pattern. The full rotation policy is documented in `[ADR-0013]` (planned).
+The `family_id` enables family-level revocation when token reuse is detected, which is a recognized refresh-token rotation security pattern. The full rotation policy is documented in `[ADR-0013]`.
 
 #### 8.2.3 `weight_entries` (Milestone 2)
 
@@ -1041,7 +1041,7 @@ The database-level CHECK constraints close the defensive-programming finding fro
 #### 8.2.4 `goals` (Milestone 3)
 
 ```sql
--- Schema defined in Milestone 3, summarized here for completeness
+-- Delivered in Milestone 3 (migration 0003); summarized here for completeness
 CREATE TABLE goals (
     goal_id         BIGSERIAL PRIMARY KEY,
     user_id         BIGINT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
@@ -1055,17 +1055,70 @@ CREATE TABLE goals (
     achieved_at     TIMESTAMPTZ,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    -- CHECK constraints to be defined in Milestone 3
+
+    CONSTRAINT goals_direction_invariant
+        CHECK ((goal_type = 'lose' AND target_value < start_value)
+            OR (goal_type = 'gain' AND target_value > start_value)),
+    CONSTRAINT goals_target_date_epoch
+        CHECK (target_date IS NULL OR target_date >= '2020-01-01')
 );
 ```
 
 #### 8.2.5 `achievements` (Milestone 3)
 
-Schema deferred to Milestone 3 documentation.
+```sql
+CREATE TABLE achievements (
+    id                  BIGSERIAL PRIMARY KEY,
+    user_id             BIGINT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    goal_id             BIGINT NOT NULL REFERENCES goals(goal_id) ON DELETE CASCADE,
+    achievement_type    VARCHAR(20) NOT NULL,
+    threshold           NUMERIC(6, 2),
+    earned_at           TIMESTAMPTZ NOT NULL,
+
+    CONSTRAINT achievements_type_valid
+        CHECK (achievement_type IN ('goal_reached', 'milestone', 'streak')),
+    CONSTRAINT achievements_threshold_positive
+        CHECK (threshold IS NULL OR threshold > 0)
+);
+
+-- One milestone/streak row per (goal, type, threshold); one goal_reached per goal
+CREATE UNIQUE INDEX idx_achievements_unique_milestone
+    ON achievements(goal_id, achievement_type, threshold)
+    WHERE threshold IS NOT NULL;
+
+CREATE UNIQUE INDEX idx_achievements_unique_goal_reached
+    ON achievements(goal_id, achievement_type)
+    WHERE threshold IS NULL;
+
+CREATE INDEX idx_achievements_user_earned
+    ON achievements(user_id, earned_at);
+```
+
+Delivered in Milestone 3 (migration `0005`; `0008` widened `achievement_type` to add `'streak'`; `0010` added the `threshold > 0` CHECK). The milestone- and streak-detection algorithms are documented in ADR-0019 and ADR-0022.
 
 #### 8.2.6 `user_preferences` (Milestone 3)
 
-Schema deferred to Milestone 3 documentation. Carries forward the key-value design from the Android `user_preferences` table.
+```sql
+CREATE TABLE user_preferences (
+    id              BIGSERIAL PRIMARY KEY,
+    user_id         BIGINT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    pref_key        VARCHAR(40) NOT NULL,
+    pref_value      VARCHAR(40) NOT NULL,
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT user_preferences_unique_key UNIQUE (user_id, pref_key),
+    CONSTRAINT user_preferences_key_valid
+        CHECK (pref_key IN ('weight_unit', 'notify_achievement',
+                            'notify_milestone', 'notify_streak')),
+    CONSTRAINT user_preferences_value_valid
+        CHECK ((pref_key = 'weight_unit' AND pref_value IN ('lbs', 'kg'))
+            OR (pref_key LIKE 'notify_%' AND pref_value IN ('true', 'false')))
+);
+
+CREATE INDEX idx_user_preferences_user ON user_preferences(user_id);
+```
+
+EAV key-value design (ADR-0020), carrying forward the key-value pattern from the Android `user_preferences` table. Delivered in Milestone 3 (migration `0006`).
 
 #### 8.2.7 `audit_log` (Milestone 4)
 
