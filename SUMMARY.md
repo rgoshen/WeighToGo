@@ -7,6 +7,110 @@ issues were resolved.
 
 ---
 
+## [2026-06-02] GH-100 — Phase 4: Android doc superseded pointer
+
+**Change Type:** Docs
+**Scope:** docs/architecture
+
+**Summary:**
+Appended a "Web Rebuild Note" section to WeighToGo_Database_Architecture.md
+(the Android architecture doc) with a cross-link to the new web architecture
+document. The Android doc is retained as historical reference.
+
+**Rationale:**
+Prevents readers from treating the Android SQLite schema as authoritative for
+the web rebuild. The SRS issue requirement (GH-100, tasks item 3) specifies
+a "superseded for web" pointer in the Android doc.
+
+**References:**
+- Issue: GH-100
+
+---
+
+## [2026-06-02] GH-100 — Phase 4: Web Database-Architecture Document (Sections 6–9)
+
+**Change Type:** Docs
+**Scope:** docs/architecture
+
+**Summary:**
+Completed WeighToGo_Web_Database_Architecture.md with Sections 6 (Audit Log Design:
+14-event taxonomy, ON DELETE SET NULL rationale, append-only invariant, retention
+policy), 7 (Migration History: 10 migrations with CI round-trip note), 8 (Connection
+and Pooling Policy per SRS §8.4), 9 (Historical Note), and an ADR cross-reference
+table.
+
+**Rationale:**
+Section 6 documents the three design choices that distinguish audit_log from the other
+tables: nullable user_id, append-only port contract, and no automated purge.
+Section 7 provides a single-table view of the 0001–0010 migration chain with CI
+verification status.
+
+**References:**
+- Issue: GH-100
+
+---
+
+## [2026-06-02] GH-100 — Phase 4: Web Database-Architecture Document (Sections 4–5)
+
+**Change Type:** Docs
+**Scope:** docs/architecture
+
+**Summary:**
+Added Sections 4 (Constraints Catalogue, 21 named constraints across 5 tables) and 5
+(Index Catalogue, 10 named indexes across 4 tables) to
+WeighToGo_Web_Database_Architecture.md. Each row includes the constraint/index name,
+rule, rationale one-liner, and ADR link.
+
+**Rationale:**
+Cross-cutting catalogues allow all constraints and indexes to be audited in aggregate
+rather than hunting per-table. ADR links provide full traceability from schema decisions
+to recorded rationale (ADR-0019 through ADR-0026).
+
+**References:**
+- Issue: GH-100
+
+---
+
+## [2026-06-02] GH-100 — Phase 4: Web Database-Architecture Document (Section 3)
+
+**Change Type:** Docs
+**Scope:** docs/architecture
+
+**Summary:**
+Added Section 3 (Schema) to WeighToGo_Web_Database_Architecture.md: one subsection per
+table (§8.2.1–§8.2.7) with full column tables — type, nullability, default, notes — and
+explicit FK ON DELETE policies for all seven tables.
+
+**Rationale:**
+Schema section provides the column-level reference that the Constraints and Index
+catalogues (Sections 4–5) annotate by name. Cross-cutting structure keeps per-table
+column facts in one place and aggregate constraint/index rationale in another.
+
+**References:**
+- Issue: GH-100
+
+---
+
+## [2026-06-02] GH-100 — Phase 4: Web Database-Architecture Document (Sections 1–2)
+
+**Change Type:** Docs
+**Scope:** docs/architecture
+
+**Summary:**
+Created WeighToGo_Web_Database_Architecture.md with the overview summary table and
+a full Mermaid erDiagram ERD covering all seven tables and their foreign-key
+relationships.
+
+**Rationale:**
+SRS §13.3.1 #5 requires an updated database architecture document for the web rebuild.
+Cross-cutting structure (Option 2) was chosen over table-by-table narrative so that
+constraints and indexes can be audited in aggregate.
+
+**References:**
+- Issue: GH-100
+
+---
+
 ## [2026-06-02] GH-99 — Phase 3: Migration-Discipline Review
 
 **Change Type:** Test / Chore
