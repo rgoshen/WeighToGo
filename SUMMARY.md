@@ -7,6 +7,28 @@ issues were resolved.
 
 ---
 
+## [2026-06-02] GH-101 — Phase 5: CI for backup/restore scripts
+
+**Change Type:** CI
+**Scope:** .github/workflows
+
+**Summary:**
+Added a `scripts` job to `backend-ci.yml` running `shellcheck scripts/*.sh` and
+`bats scripts/tests` on every backend change. The job inherits the workflow-level
+`working-directory: web/backend`, installs `bats` via apt (`shellcheck` is
+preinstalled on the runner), and reuses the existing pinned checkout SHA. No
+untrusted workflow input is interpolated into any `run:` step.
+
+**Rationale:**
+Puts the backup/restore guard logic behind the same CI gate as the rest of the
+backend, so a regression in the scripts fails the build rather than passing
+silently.
+
+**References:**
+- Issue: GH-101
+
+---
+
 ## [2026-06-02] GH-101 — Phase 5: tested backup/restore scripts
 
 **Change Type:** Feature
