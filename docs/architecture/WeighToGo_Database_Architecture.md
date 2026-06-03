@@ -2192,3 +2192,13 @@ executor.execute(() -> {
 <p align="center">
   <strong>Weigh to Go!</strong> — You've got this, pound for pound. 🎉
 </p>
+
+---
+
+## Web Rebuild Note
+
+This document describes the original Android SQLite schema (5 tables).
+The CS 499 web rebuild uses a separate PostgreSQL schema with 7 tables,
+documented in
+[WeighToGo_Web_Database_Architecture.md](./WeighToGo_Web_Database_Architecture.md).
+This document is retained as historical reference for the Android implementation.

@@ -7,6 +7,26 @@ issues were resolved.
 
 ---
 
+## [2026-06-02] GH-100 — Phase 4: Android doc superseded pointer
+
+**Change Type:** Docs
+**Scope:** docs/architecture
+
+**Summary:**
+Appended a "Web Rebuild Note" section to WeighToGo_Database_Architecture.md
+(the Android architecture doc) with a cross-link to the new web architecture
+document. The Android doc is retained as historical reference.
+
+**Rationale:**
+Prevents readers from treating the Android SQLite schema as authoritative for
+the web rebuild. The SRS issue requirement (GH-100, tasks item 3) specifies
+a "superseded for web" pointer in the Android doc.
+
+**References:**
+- Issue: GH-100
+
+---
+
 ## [2026-06-02] GH-100 — Phase 4: Web Database-Architecture Document (Sections 6–9)
 
 **Change Type:** Docs
