@@ -7,6 +7,33 @@ issues were resolved.
 
 ---
 
+## [2026-06-03] M4 Web App Quality Review
+
+**Change Type:** Docs
+**Scope:** docs/standards
+
+**Summary:**
+Added `docs/standards/M4_WEB_APP_QUALITY.md`, the post-close quality review of the
+web application at the Milestone Four (Databases) completion state (tag `v0.3.0`),
+following the M2/M3 report format and the CS 499 code-review checklist. The checklist
+was applied across the audit-log slice, the constraint/index hardening migration,
+migration discipline, the web database-architecture document, and the backup/restore
+runbook, with a live render of the running application. Full verification was run from
+the local checkout: backend 682 passed at 98% coverage, the PostgreSQL-marked
+index-plan tests executed against a real PostgreSQL instance (11 passed, closing the
+M3 local-proof gap), frontend 388 passed, and Playwright end-to-end 47 passed. Ten
+findings are recorded; the two High-severity ones are a desktop layout defect where
+the permanent sidebar overlays the main content (the AppLayout drawer root reserves
+no width) and the database-architecture document's constraint and index catalogues
+omitting the auth tables despite an "all tables" claim. Finding 6 and the variables
+note cross-reference existing issues #104 and #110.
+
+**References:**
+- docs/standards/M4_WEB_APP_QUALITY.md
+- Related issues: #104, #110
+
+---
+
 ## [2026-06-02] GH-101 — Phase 5: narrative code snippets + orphan cleanup
 
 **Change Type:** Docs
