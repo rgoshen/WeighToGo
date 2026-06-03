@@ -7,6 +7,30 @@ issues were resolved.
 
 ---
 
+## [2026-06-02] GH-101 — Phase 5: Milestone Four narrative
+
+**Change Type:** Docs
+**Scope:** docs/narratives
+
+**Summary:**
+Added `docs/narratives/milestone-four-narrative.md` mirroring the M2/M3 format
+(markdown source; `.docx` rendered out-of-band and git-ignored). Addresses the
+four rubric prompts, leading with the database-security indicator — the
+append-only `audit_log` (closed event-type CHECK, `ON DELETE SET NULL`
+retention, masked PII) and constraint hardening (`achievements_threshold_positive`
+example) — with real SQL snippets from migrations `0009`/`0010`, and the honest
+framing that late-stage database work is verification and operational rigor. Maps
+to course outcomes 5/4/3/2/1 and includes a §5 AI-tool-usage acknowledgment.
+
+**Issues / resolution:**
+The §5 AI-usage acknowledgment is flagged in-document for the author to reword in
+their own voice — it is an academic-integrity disclosure required by the rubric.
+
+**References:**
+- Issue: GH-101
+
+---
+
 ## [2026-06-02] GH-101 — Phase 5: M4 quality review
 
 **Change Type:** Docs
