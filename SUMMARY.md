@@ -7,6 +7,35 @@ issues were resolved.
 
 ---
 
+## [2026-06-02] GH-101 — Phase 5: M4 quality review
+
+**Change Type:** Docs
+**Scope:** docs/standards
+
+**Summary:**
+Added `docs/standards/M4_WEB_APP_QUALITY.md` — a checklist-based self-review of
+the M4 database work in the M2/M3 format. Ran the full quality suite and recorded
+results: backend ruff/format/mypy clean, pytest 672 passed / 11 skipped / 98%;
+frontend eslint/tsc/prettier clean, vitest 388 passed / 94.28%, build route-split
+and clean; `bats` 10 passed; `shellcheck` clean. No blocking or high findings;
+three Low/intentional notes (fail-open auth auditing, append-only-by-absence,
+Postgres-only index-plan proof). Verified the closeout no-ops: CLAUDE.md CURRENT
+ASSIGNMENT already "Milestone Four" (line 186), the ADR index already lists
+0024/0025/0026, and OpenAPI has zero audit endpoints (no M4 API drift).
+
+**Issues / resolution:**
+SRS §8.2.5/§8.2.6 still read "deferred to M3" — confirmed this is M3 drift and
+deliberately left out of M4 scope (noted for a later doc-currency pass).
+
+**Rationale:**
+This is the §3 "self-review all M4 code against the code-review checklist"
+deliverable and the quality gate before the `v0.3.0` release.
+
+**References:**
+- Issue: GH-101
+
+---
+
 ## [2026-06-02] GH-101 — Phase 5: README M4 enrichment
 
 **Change Type:** Docs
