@@ -7,6 +7,38 @@ issues were resolved.
 
 ---
 
+## [2026-06-02] GH-101 — Phase 5: SRS v2 reconciliation
+
+**Change Type:** Docs
+**Scope:** docs/specs
+
+**Summary:**
+Reconciled SRS v2 with the delivered M4 schema. Backfilled §8.2.7 with the final
+`audit_log` DDL (append-only, `ON DELETE SET NULL`, the 14-value event CHECK,
+and cross-dialect notes). Fully corrected the §8.3 migration table to the ten
+on-disk migrations with verified milestone labels (`0001`–`0002` M2,
+`0003`–`0008` M3, `0009`–`0010` M4) — fixing four rows the table had carried
+incorrectly since M3 and removing the stale `0007_audit_log`/
+`0008_constraint_hardening` predictions. Added ADR-0024/0025/0026 to Appendix A
+§17.2 and retired the "planned M4 ADRs" note. Annotated all seven §13.3.1
+deliverables as delivered with their migration/ADR/file references.
+
+**Issues / resolution:**
+The migration milestone labels were ambiguous between the brief and the
+just-merged arch doc. Resolved by deriving them from the release-tag dates
+(v0.1.0 = 2026-05-23, v0.2.0 = 2026-05-29): migrations authored 2026-05-28 fall
+in the M3 window. §8.2.5/§8.2.6 remain "deferred to M3" — that is M3 drift,
+deliberately left out of M4 scope.
+
+**Rationale:**
+Closeout reconciles documented-vs-implemented drift so the authoritative spec
+matches reality.
+
+**References:**
+- Issue: GH-101
+
+---
+
 ## [2026-06-02] GH-101 — Phase 5: backup/restore runbook
 
 **Change Type:** Docs
