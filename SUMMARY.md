@@ -7,6 +7,26 @@ issues were resolved.
 
 ---
 
+## [2026-06-02] GH-100 — Phase 4: Web Database-Architecture Document (Sections 1–2)
+
+**Change Type:** Docs
+**Scope:** docs/architecture
+
+**Summary:**
+Created WeighToGo_Web_Database_Architecture.md with the overview summary table and
+a full Mermaid erDiagram ERD covering all seven tables and their foreign-key
+relationships.
+
+**Rationale:**
+SRS §13.3.1 #5 requires an updated database architecture document for the web rebuild.
+Cross-cutting structure (Option 2) was chosen over table-by-table narrative so that
+constraints and indexes can be audited in aggregate.
+
+**References:**
+- Issue: GH-100
+
+---
+
 ## [2026-06-02] GH-99 — Phase 3: Migration-Discipline Review
 
 **Change Type:** Test / Chore
