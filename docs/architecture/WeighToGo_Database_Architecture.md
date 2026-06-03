@@ -4,6 +4,11 @@
 
 Complete database design and implementation guide for the Weigh to Go! Android application.
 
+> **Historical — superseded for the web rebuild.** This document describes the
+> original Android SQLite schema (five tables). The authoritative database design
+> for the web application (seven tables, including `audit_log`) is
+> [`WeighToGo_Web_Database_Architecture.md`](WeighToGo_Web_Database_Architecture.md).
+
 ---
 
 ## 📋 Table of Contents

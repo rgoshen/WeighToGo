@@ -35,7 +35,7 @@ The narrative is drafted in parallel with the code work and finalized once imple
 - Migration-discipline review: rollback round-trips verified, from-scratch apply in CI — SRS §13.3.1 #4
 - Web database-architecture document reflecting the final schema with per-constraint and per-index rationale — SRS §13.3.1 #5
 - Backup and restore runbook (documented; thin scripts, not automated/scheduled) — SRS §13.3.1 #6
-- `M4_WEB_APP_QUALITY.md` quality review at closeout (matching the M2/M3 pattern)
+- `M4_WEB_APP_QUALITY.md` quality review — produced **after** milestone close (not an in-milestone deliverable), matching the M2/M3 doc format
 
 **No stretch tier:** unlike M3, every M4 deliverable is committed; there are no optional stretch slices.
 
@@ -152,10 +152,10 @@ Verification, documentation, and reconciliation. ADRs are authored during their 
 - Reconcile SRS v2 drift: backfill §8.2.7 with the final `audit_log` DDL; correct the §8.3 migration table (`0009`/`0010`); update Appendix A §17.2 with ADR-0024/0025; mark §13.3.1 deliverables complete.
 - Update the root `README.md` with the M4 feature set (audit trail, hardened constraints, final schema doc, backup runbook).
 - M4 adds no API endpoints, so the OpenAPI snapshot is unchanged (the achievement-schema `streak` description fix is owned by the separate M3 remediation effort, `milestone-three-plan.md` §9).
-- Produce `docs/standards/M4_WEB_APP_QUALITY.md` — a checklist-based review in the M2/M3 format (verification commands run, strengths, findings by severity, assumptions challenged, section-by-section checklist, remediation order, conclusion).
+- The `docs/standards/M4_WEB_APP_QUALITY.md` quality review is produced **after** the milestone closes (not part of this closeout), in the M2/M3 checklist format.
 - Update the project `CLAUDE.md` CURRENT ASSIGNMENT block from Milestone Two to Milestone Four.
 - Self-review all M4 code against `/docs/standards/cs499_code_review_checklist.md`; record findings as PR comments and resolve before merge.
-- Draft the M4 narrative addressing the four rubric prompts, emphasizing the database-security indicator (the audit trail and constraint hardening) and the honest framing that late-stage database work is verification and operational rigor; acknowledge AI-tool usage per the rubric's AI Usage section and the Shapiro Library citation guide.
+- Draft the M4 narrative addressing the four rubric prompts, emphasizing the database-security indicator (the audit trail and constraint hardening) and the honest framing that late-stage database work is verification and operational rigor.
 - Tag the repository `v0.3.0`.
 
 **Note on ADR timing:** records must be written at the time of the decision — on the feature branch, before the first line of implementation code that depends on the decision. Step 5 is a verification step, not the authorship step. A record committed after the code it documents is a retrospective note, not a decision document.
@@ -192,7 +192,6 @@ M4-specific additions:
 - **Security thread (rubric indicator).** The audit trail is the milestone's security showcase: it records authentication outcomes and data mutations for review, retains entries past actor deletion (`ON DELETE SET NULL`), and stores no unmasked PII or secrets. Constraint hardening closes the structural-integrity class of flaw (bad data can never persist). Both are given explicit narrative treatment.
 - Constraint-adding migrations follow the `0004`/`0005`/`0008` pattern: the CHECK lives in the model `__table_args__` (enforced on SQLite via `create_all`) and in the migration via `op.create_check_constraint` (PostgreSQL path); the migration test asserts text. No `batch_alter_table`.
 - Both ADRs are written before the code they govern, not after, and before the `v0.3.0` tag is applied.
-- The narrative must acknowledge AI-tool usage per the rubric's AI Usage section.
 
 ---
 
@@ -210,10 +209,10 @@ Adapted from SRS §14 for Milestone Four:
 - [ ] ADR-0024 and ADR-0025 written, committed, and indexed in `docs/adr/README.md`
 - [ ] No DDRs required (no UI changes) — recorded explicitly
 - [ ] SRS v2 drift reconciled (§8.2.7 schema, §8.3 migration table, Appendix A numbering, §13.3.1 status)
-- [ ] `M4_WEB_APP_QUALITY.md` produced against the code-review checklist
+- [ ] `M4_WEB_APP_QUALITY.md` quality review — deferred to post-close (not required for milestone completion)
 - [ ] Root `README.md` updated with the M4 feature set; project `CLAUDE.md` CURRENT ASSIGNMENT updated to M4
 - [ ] All existing M2/M3 tests still pass against the tightened schema
-- [ ] The M4 narrative document is drafted and reviewed against the rubric, with the database-security indicator emphasized and AI usage acknowledged
+- [ ] The M4 narrative document is drafted and reviewed against the rubric, with the database-security indicator emphasized
 - [ ] The repository is tagged `v0.3.0`
 
 ---

@@ -34,6 +34,7 @@ dev = [
     "aiosqlite>=0.20",
     "types-passlib>=1.7",
     "types-python-jose>=3.3",
+    "shellcheck-py>=0.11.0.1",
 ]
 
 [build-system]

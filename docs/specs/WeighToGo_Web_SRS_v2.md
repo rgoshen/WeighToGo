@@ -22,13 +22,13 @@
 | Field | Value |
 | --- | --- |
 | Document Title | Weigh to Go! Web Application, Software Requirements Specification |
-| Document Version | 1.0 |
-| Status | Draft |
-| Last Updated | 2026-05-22 |
+| Document Version | 2.1 |
+| Status | Accepted |
+| Last Updated | 2026-06-02 |
 | Author | Rick Goshen |
 | Course | CS 499, Computer Science Capstone |
 | Institution | Southern New Hampshire University |
-| Artifact Repository | github.com/rgoshen-snhu/WeighToGo (pending restructure) |
+| Artifact Repository | github.com/rgoshen-snhu/WeighToGo |
 | Predecessor Artifact | Weigh to Go! (Android, CS 360, November 2025) |
 
 ---
@@ -231,7 +231,7 @@ A use case in `application/` accepts a repository interface from `domain/`. The 
 
 Framework integrations live at the edges. The FastAPI router is an adapter for the HTTP port. The SQLAlchemy repository is an adapter for the persistence port. The bcrypt utility is an adapter for the password-hashing port. The domain knows about ports (interfaces) and never about adapters (implementations).
 
-This blend is documented in `[ADR-0012]` (planned). The decision builds on the existing six ADRs in the Android repository.
+This blend is documented in `[ADR-0012]`. The decision builds on the existing six ADRs in the Android repository.
 
 ### 4.3 Technology Stack
 
@@ -489,7 +489,7 @@ The system shall allow new users to create an account by providing a valid email
 - Successful registration returns 201 Created with a session cookie
 - Duplicate email returns 409 Conflict with a generic error message that does not confirm whether the email is already registered (see FR-A-9)
 
-`[ADR-0009]` Email as primary identifier (planned).
+`[ADR-0009]` Email as primary identifier.
 
 #### FR-A-2: User Login `[MUST]` `[M2]`
 
@@ -555,7 +555,7 @@ The system shall return generic error messages for authentication failures that 
 
 This requirement directly addresses the username enumeration finding in the Android code review where `UserDAO` line 59 exposed the attempted username in its exception message.
 
-`[ADR-0010]` Generic authentication error policy (planned).
+`[ADR-0010]` Generic authentication error policy.
 
 #### FR-A-10: PII-Aware Logging `[MUST]` `[M2]`
 
@@ -563,7 +563,7 @@ The system shall log authentication events without exposing personally identifia
 
 This requirement directly addresses the PII logging findings in the Android code review where `SessionManager` lines 139, 190, and 229 logged usernames in plain text, and `UserDAO` line 329 logged phone numbers.
 
-`[ADR-0011]` PII masking strategy in logs (planned).
+`[ADR-0011]` PII masking strategy in logs.
 
 ### 6.2 Weight Tracking (FR-W)
 
@@ -1001,7 +1001,7 @@ CREATE INDEX idx_refresh_tokens_user_active
 CREATE INDEX idx_refresh_tokens_family ON refresh_tokens(family_id);
 ```
 
-The `family_id` enables family-level revocation when token reuse is detected, which is a recognized refresh-token rotation security pattern. The full rotation policy is documented in `[ADR-0013]` (planned).
+The `family_id` enables family-level revocation when token reuse is detected, which is a recognized refresh-token rotation security pattern. The full rotation policy is documented in `[ADR-0013]`.
 
 #### 8.2.3 `weight_entries` (Milestone 2)
 
@@ -1041,7 +1041,7 @@ The database-level CHECK constraints close the defensive-programming finding fro
 #### 8.2.4 `goals` (Milestone 3)
 
 ```sql
--- Schema defined in Milestone 3, summarized here for completeness
+-- Delivered in Milestone 3 (migration 0003); summarized here for completeness
 CREATE TABLE goals (
     goal_id         BIGSERIAL PRIMARY KEY,
     user_id         BIGINT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
@@ -1055,21 +1055,104 @@ CREATE TABLE goals (
     achieved_at     TIMESTAMPTZ,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    -- CHECK constraints to be defined in Milestone 3
+
+    CONSTRAINT goals_direction_invariant
+        CHECK ((goal_type = 'lose' AND target_value < start_value)
+            OR (goal_type = 'gain' AND target_value > start_value)),
+    CONSTRAINT goals_target_date_epoch
+        CHECK (target_date IS NULL OR target_date >= '2020-01-01')
 );
 ```
 
 #### 8.2.5 `achievements` (Milestone 3)
 
-Schema deferred to Milestone 3 documentation.
+```sql
+CREATE TABLE achievements (
+    id                  BIGSERIAL PRIMARY KEY,
+    user_id             BIGINT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    goal_id             BIGINT NOT NULL REFERENCES goals(goal_id) ON DELETE CASCADE,
+    achievement_type    VARCHAR(20) NOT NULL,
+    threshold           NUMERIC(6, 2),
+    earned_at           TIMESTAMPTZ NOT NULL,
+
+    CONSTRAINT achievements_type_valid
+        CHECK (achievement_type IN ('goal_reached', 'milestone', 'streak')),
+    CONSTRAINT achievements_threshold_positive
+        CHECK (threshold IS NULL OR threshold > 0)
+);
+
+-- One milestone/streak row per (goal, type, threshold); one goal_reached per goal
+CREATE UNIQUE INDEX idx_achievements_unique_milestone
+    ON achievements(goal_id, achievement_type, threshold)
+    WHERE threshold IS NOT NULL;
+
+CREATE UNIQUE INDEX idx_achievements_unique_goal_reached
+    ON achievements(goal_id, achievement_type)
+    WHERE threshold IS NULL;
+
+CREATE INDEX idx_achievements_user_earned
+    ON achievements(user_id, earned_at);
+```
+
+Delivered in Milestone 3 (migration `0005`; `0008` widened `achievement_type` to add `'streak'`; `0010` added the `threshold > 0` CHECK). The milestone- and streak-detection algorithms are documented in ADR-0019 and ADR-0022.
 
 #### 8.2.6 `user_preferences` (Milestone 3)
 
-Schema deferred to Milestone 3 documentation. Carries forward the key-value design from the Android `user_preferences` table.
+```sql
+CREATE TABLE user_preferences (
+    id              BIGSERIAL PRIMARY KEY,
+    user_id         BIGINT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    pref_key        VARCHAR(40) NOT NULL,
+    pref_value      VARCHAR(40) NOT NULL,
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT user_preferences_unique_key UNIQUE (user_id, pref_key),
+    CONSTRAINT user_preferences_key_valid
+        CHECK (pref_key IN ('weight_unit', 'notify_achievement',
+                            'notify_milestone', 'notify_streak')),
+    CONSTRAINT user_preferences_value_valid
+        CHECK ((pref_key = 'weight_unit' AND pref_value IN ('lbs', 'kg'))
+            OR (pref_key LIKE 'notify_%' AND pref_value IN ('true', 'false')))
+);
+
+CREATE INDEX idx_user_preferences_user ON user_preferences(user_id);
+```
+
+EAV key-value design (ADR-0020), carrying forward the key-value pattern from the Android `user_preferences` table. Delivered in Milestone 3 (migration `0006`).
 
 #### 8.2.7 `audit_log` (Milestone 4)
 
-Schema deferred to Milestone 4 documentation. Captures authentication events, sensitive data access, and administrative actions for compliance and security review.
+```sql
+CREATE TABLE audit_log (
+    audit_id        BIGSERIAL PRIMARY KEY,
+    user_id         BIGINT REFERENCES users(user_id) ON DELETE SET NULL,
+    event_type      VARCHAR(50) NOT NULL,
+    resource_type   VARCHAR(30),
+    resource_id     BIGINT,
+    request_id      VARCHAR(64),
+    ip_address      INET,
+    metadata        JSONB,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT audit_log_event_type_valid CHECK (event_type IN (
+        'auth.register', 'auth.login_succeeded', 'auth.login_failed',
+        'auth.logout', 'auth.token_refreshed', 'auth.token_reuse_detected',
+        'auth.account_locked', 'weight_entry.created', 'weight_entry.updated',
+        'weight_entry.deleted', 'goal.created', 'goal.updated',
+        'goal.abandoned', 'preference.updated'
+    )),
+    CONSTRAINT audit_log_resource_consistency
+        CHECK (resource_id IS NULL OR resource_type IS NOT NULL)
+);
+
+CREATE INDEX idx_audit_log_user_created
+    ON audit_log(user_id, created_at DESC);
+
+CREATE INDEX idx_audit_log_event_type_created
+    ON audit_log(event_type, created_at DESC);
+```
+
+The `audit_log` is **append-only**: no UPDATE or DELETE path is exposed in the application (ADR-0024). `user_id` uses `ON DELETE SET NULL` so the trail survives actor deletion. The event taxonomy is a CHECK-constrained `VARCHAR` (not a Postgres `ENUM`) so new event types are ordinary migrations (ADR-0024). The integration suite builds the schema with `Base.metadata.create_all` on SQLite, where `ip_address` maps to `String(45)` and `metadata` to `JSON` for cross-dialect portability; both CHECK constraints are declared in the model `__table_args__` so they are enforced there too. No unmasked PII or secrets are stored — `user_id` plus, for failed logins, a `mask_pii()`-masked email in `metadata` (ADR-0011, ADR-0024). Introduced by migration `0009`. The original SRS note about "administrative actions" maps to no event: there is no admin role (§1.3), recorded in ADR-0024.
 
 ### 8.3 Migration Strategy
 
@@ -1077,14 +1160,16 @@ All schema changes flow through Alembic migrations. Each migration is a single l
 
 | Migration | Purpose | Milestone |
 | --- | --- | --- |
-| `0001_initial_users_and_auth` | Create `users` and `refresh_tokens` tables, install CITEXT extension | M2 |
-| `0002_weight_entries` | Create `weight_entries` table with constraints and indexes | M2 |
+| `0001_initial_users_and_auth` | Create `users` and `refresh_tokens`, install CITEXT extension | M2 |
+| `0002_weight_entries` | Create `weight_entries` with constraints and composite indexes | M2 |
 | `0003_goals` | Create `goals` table | M3 |
-| `0004_achievements` | Create `achievements` table | M3 |
-| `0005_user_preferences` | Create `user_preferences` table | M3 |
-| `0006_performance_indexes` | Add composite and partial indexes for trend queries | M3 |
-| `0007_audit_log` | Create `audit_log` table | M4 |
-| `0008_constraint_hardening` | Add additional CHECK constraints and tighten column types | M4 |
+| `0004_goals_direction_check` | Add the `goals` direction-invariant CHECK constraint | M3 |
+| `0005_achievements` | Create `achievements` table and indexes | M3 |
+| `0006_user_preferences` | Create `user_preferences` table (EAV storage, ADR-0020) | M3 |
+| `0007_performance_indexes` | Add the composite `created_at` index for NFR-P-3 (ADR-0021) | M3 |
+| `0008_streak_achievement_type` | Widen the `achievement_type` CHECK to include `'streak'` | M3 |
+| `0009_audit_log` | Create `audit_log` table and indexes (ADR-0024) | M4 |
+| `0010_constraint_hardening` | Add hardening CHECKs and the goals-listing index (ADR-0025) | M4 |
 
 ### 8.4 Database Connection Policy
 
@@ -1748,13 +1833,13 @@ Milestone 4 enhances the persistence layer with constraints, indexes, and operat
 
 #### 13.3.1 Deliverables
 
-1. **Audit log.** Table and write paths implemented per section 8.2.7.
-2. **Constraint hardening.** Additional CHECK constraints and column-type tightening.
-3. **Performance indexes.** Composite and partial indexes for all read paths.
-4. **Migration discipline review.** All Alembic migrations reviewed and rationalized; rollback paths verified.
-5. **Database documentation.** Updated database architecture document reflecting the final schema and rationale for each constraint and index.
-6. **Backup and restore procedure.** Documented but not necessarily automated (scope-appropriate).
-7. **ADRs covering database engineering decisions.** Constraint strategy, indexing strategy, audit log structure.
+1. **Audit log.** Table and write paths implemented per section 8.2.7. — **Delivered (M4):** migration `0009`, `audit` bounded context, ADR-0024.
+2. **Constraint hardening.** Additional CHECK constraints and column-type tightening. — **Delivered (M4):** migration `0010`, ADR-0025.
+3. **Performance indexes.** Composite and partial indexes for all read paths. — **Delivered:** weight-history composite indexes (`0002`/`0007`, ADR-0021, M3); `audit_log` indexes and the goals-listing index (`0009`/`0010`, M4).
+4. **Migration discipline review.** All Alembic migrations reviewed and rationalized; rollback paths verified. — **Delivered (M4):** round-trip tests + `.github/workflows/migration-ci.yml`.
+5. **Database documentation.** Updated database architecture document reflecting the final schema and rationale for each constraint and index. — **Delivered (M4):** `docs/architecture/WeighToGo_Web_Database_Architecture.md`.
+6. **Backup and restore procedure.** Documented but not necessarily automated (scope-appropriate). — **Delivered (M4):** `docs/runbooks/backup-restore.md` + `web/backend/scripts/backup.sh`/`restore.sh`.
+7. **ADRs covering database engineering decisions.** Constraint strategy, indexing strategy, audit log structure. — **Delivered:** ADR-0025 (constraints), ADR-0021 (indexing), ADR-0024 (audit log).
 
 ### 13.4 Final Polish
 
@@ -1886,8 +1971,11 @@ The following ADRs are written as their decisions are made. They build on the ex
 | ADR-0021 | Composite Index Strategy for Weight-History Reads | M3 |
 | ADR-0022 | Streak Detection Algorithm | M3 |
 | ADR-0023 | TTL-Based Server-Side Caching Strategy | M3 |
+| ADR-0024 | Audit Log Structure | M4 |
+| ADR-0025 | Constraint Hardening Strategy | M4 |
+| ADR-0026 | Achievement Write-Flow Contract | M3 (remediation) |
 
-*Planned M4 ADRs (audit log schema and write strategy, CHECK-constraint and database-level validation policy, indexing strategy) will be numbered ADR-0024 onward as they are written.*
+*The M4 database-engineering ADRs are ADR-0024 (Audit Log Structure) and ADR-0025 (Constraint Hardening Strategy); the indexing-strategy decision is covered by the existing ADR-0021 (Composite Index Strategy). ADR-0026 (Achievement Write-Flow Contract) was added by the M3 remediation effort.*
 
 ---
 

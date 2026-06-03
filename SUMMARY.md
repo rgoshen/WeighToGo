@@ -7,6 +7,246 @@ issues were resolved.
 
 ---
 
+## [2026-06-02] GH-101 — Phase 5: narrative code snippets + orphan cleanup
+
+**Change Type:** Docs
+**Scope:** docs/narratives, docs/architecture
+
+**Summary:**
+Per instructor feedback, polished the M2 and M3 narratives with real, verbatim
+code snippets pulled from the implementation: M2 — the bcrypt timing-side-channel
+defense (`verify_dummy`), the shared RFC 7807 problem-detail builder, and the
+opaque compound-cursor encoder; M3 — the single-pass streak scan, the milestone
+delta/idempotency filter, and the TTL cache's monotonic-clock `pop`-not-`del`
+eviction. Also fixed the M2 narrative's bounded-context example (`users/` →
+`dashboard/`). Deleted the orphaned `docs/architecture/migration_table.md` (an
+unreferenced duplicate of the web DB doc §7, which is now the single source).
+
+**References:**
+- Issue: GH-101
+
+---
+
+## [2026-06-02] GH-101 — Phase 5: documentation currency review
+
+**Change Type:** Docs
+**Scope:** docs, READMEs, ARCHITECTURE, CONTRIBUTING
+
+**Summary:**
+End-of-refactor documentation review (parallel review of the SRS, narratives and
+plans, ADRs/DDRs/architecture/standards, plus the entry docs). Fixes applied:
+- **SRS v2** — backfilled §8.2.5 (achievements) and §8.2.6 (user_preferences) DDL
+  (both still read "deferred to Milestone 3"); added the §8.2.4 goals CHECK
+  constraints; dropped five stale "(planned)" ADR tags; bumped front-matter to
+  v2.1 / Accepted / 2026-06-02 and removed "(pending restructure)".
+- **Architecture** — corrected `migration_table.md` rows `0003`/`0004` M2→M3
+  (matching the web DB doc §7); fixed a broken "ADR-0024 §Deferred decisions"
+  cross-reference in the web DB doc; added a top-of-file "superseded for the web
+  rebuild" banner to the Android DB doc.
+- **Entry docs** — `docs/README` active plan M3→M4; `web/backend` README
+  592/97%→682/98% plus the shellcheck gate; `web/frontend` README 377→388;
+  `web/README` M4 "(upcoming)"→delivered (`v0.3.0`); `ARCHITECTURE` Argon2→bcrypt
+  and corrected the bounded-context example; `CONTRIBUTING` integration-test note
+  (in-memory SQLite default, real PostgreSQL for the index tests).
+
+**Issues / resolution:**
+SRS v1 (frozen pre-M2 baseline), the M2/M3 narratives and M3 quality doc, the
+original CS 360 requirements, and the M4-plan references to the M3 plan were
+verified correct-in-context and left unchanged. The M4 narrative asserts the
+`v0.3.0` tag as fact per the milestone-narrative convention — confirm the tag is
+cut before submission.
+
+**References:**
+- Issue: GH-101
+
+---
+
+## [2026-06-02] GH-101 — Phase 5: shellcheck as a dev dependency
+
+**Change Type:** CI
+**Scope:** web/backend, .github/workflows, pre-commit
+
+**Summary:**
+Added `shellcheck-py` to the backend `uv` dev dependencies so the backup/restore
+scripts are linted via `uv run shellcheck` — reproducible for every contributor
+and in CI with no global install. Wired it into the backend-ci `quality` job and
+a matching `backend-shellcheck` pre-commit hook (the config mirrors CI exactly).
+Both scripts lint clean.
+
+**References:**
+- Issue: GH-101
+
+---
+
+## [2026-06-02] GH-101 — Phase 5: closeout corrections
+
+**Change Type:** Refactor
+**Scope:** web/backend/scripts, docs
+
+**Summary:**
+Addressed review feedback on the closeout. (1) Moved the backup/restore script
+tests off `bats` — which needs a global brew/apt install — into the existing
+`uv`/`pytest` harness via `subprocess` (`tests/scripts/test_backup_restore.py`,
+10 cases), and removed the dedicated CI job; no global tooling, and the scripts
+are now gated by the standard backend job (682 backend tests, 98%). (2) Removed
+`docs/standards/M4_WEB_APP_QUALITY.md` — that review is run after the milestone
+closes, not as part of it. (3) Removed the tool-usage acknowledgment section from
+the narrative and the corresponding instructions from the M3/M4 briefs, restoring
+the project policy of keeping such references out of committed docs.
+
+**References:**
+- Issue: GH-101
+
+---
+
+## [2026-06-02] GH-101 — Phase 5: Milestone Four narrative
+
+**Change Type:** Docs
+**Scope:** docs/narratives
+
+**Summary:**
+Added `docs/narratives/milestone-four-narrative.md` mirroring the M2/M3 format
+(markdown source; `.docx` rendered out-of-band and git-ignored). Addresses the
+four rubric prompts, leading with the database-security indicator — the
+append-only `audit_log` (closed event-type CHECK, `ON DELETE SET NULL`
+retention, masked PII) and constraint hardening (`achievements_threshold_positive`
+example) — with real SQL snippets from migrations `0009`/`0010`, and the honest
+framing that late-stage database work is verification and operational rigor. Maps
+to course outcomes 5/4/3/2/1.
+
+**References:**
+- Issue: GH-101
+
+---
+
+## [2026-06-02] GH-101 — Phase 5: README M4 enrichment
+
+**Change Type:** Docs
+**Scope:** README
+
+**Summary:**
+Refreshed the root README for Milestone 4: named the M4 feature set in the web
+"in progress" paragraph and the roadmap; added "What's working" bullets for the
+audit trail, hardened constraints, the final database-architecture document, and
+the backup/restore runbook; noted the seven-table schema (incl. `audit_log`) in
+the Web Database Schema section. Updated the test counts from measured runs —
+672 backend (pytest), 388 frontend (Vitest), 19 E2E (Playwright) — replacing the
+stale 592/377/19.
+
+**Rationale:**
+The README is the external reader's entry point; it should reflect the delivered
+M4 capabilities and accurate counts, not the M3 snapshot.
+
+**References:**
+- Issue: GH-101
+
+---
+
+## [2026-06-02] GH-101 — Phase 5: arch-doc migration labels
+
+**Change Type:** Docs
+**Scope:** docs/architecture
+
+**Summary:**
+Corrected the §7 Migration History table in the web database-architecture doc:
+migrations `0003` (goals) and `0004` (goals direction CHECK) were labeled M2 but
+were authored 2026-05-28, inside the M3 window — relabeled M3. This keeps the
+arch doc consistent with the SRS §8.3 reconciliation and SRS §8.2.4 (which
+labels `goals` "Milestone 3").
+
+**Issues / resolution:**
+The mislabel was introduced by the Phase 4 doc (#124). Verified the correct
+milestone from the release-tag dates (v0.1.0 = 2026-05-23) before changing it,
+rather than trusting either document.
+
+**References:**
+- Issue: GH-101
+
+---
+
+## [2026-06-02] GH-101 — Phase 5: SRS v2 reconciliation
+
+**Change Type:** Docs
+**Scope:** docs/specs
+
+**Summary:**
+Reconciled SRS v2 with the delivered M4 schema. Backfilled §8.2.7 with the final
+`audit_log` DDL (append-only, `ON DELETE SET NULL`, the 14-value event CHECK,
+and cross-dialect notes). Fully corrected the §8.3 migration table to the ten
+on-disk migrations with verified milestone labels (`0001`–`0002` M2,
+`0003`–`0008` M3, `0009`–`0010` M4) — fixing four rows the table had carried
+incorrectly since M3 and removing the stale `0007_audit_log`/
+`0008_constraint_hardening` predictions. Added ADR-0024/0025/0026 to Appendix A
+§17.2 and retired the "planned M4 ADRs" note. Annotated all seven §13.3.1
+deliverables as delivered with their migration/ADR/file references.
+
+**Issues / resolution:**
+The migration milestone labels were ambiguous between the brief and the
+just-merged arch doc. Resolved by deriving them from the release-tag dates
+(v0.1.0 = 2026-05-23, v0.2.0 = 2026-05-29): migrations authored 2026-05-28 fall
+in the M3 window. §8.2.5/§8.2.6 remain "deferred to M3" — that is M3 drift,
+deliberately left out of M4 scope.
+
+**Rationale:**
+Closeout reconciles documented-vs-implemented drift so the authoritative spec
+matches reality.
+
+**References:**
+- Issue: GH-101
+
+---
+
+## [2026-06-02] GH-101 — Phase 5: backup/restore runbook
+
+**Change Type:** Docs
+**Scope:** docs/runbooks
+
+**Summary:**
+Added `docs/runbooks/backup-restore.md`: a manual `pg_dump`/`pg_restore`
+procedure (prerequisites, what is and isn't captured, backup, destructive
+restore with a scratch-DB warning, post-restore verification via `alembic
+current` + row counts + `/health`, and a PII/credentials security note). Added a
+`backups/` + `*.dump` ignore to `.gitignore` so a PII-bearing dump cannot be
+committed — making the runbook's "never commit a dump" guidance enforced rather
+than merely stated.
+
+**Rationale:**
+SRS §13.3.1 #6 asks for a documented (not automated) backup/restore procedure.
+The runbook pairs with the thin scripts and is explicit that scheduling, PITR,
+and WAL archiving are out of capstone scope.
+
+**References:**
+- Issue: GH-101
+
+---
+
+## [2026-06-02] GH-101 — Phase 5: tested backup/restore scripts
+
+**Change Type:** Feature
+**Scope:** web/backend/scripts
+
+**Summary:**
+Added thin `backup.sh`/`restore.sh` wrappers around `pg_dump`/`pg_restore`
+(custom format, `--no-owner --no-privileges`, with the SQLAlchemy
+`postgresql+psycopg://` → `postgresql://` DSN strip). Tested via `pytest`
+(`tests/scripts/test_backup_restore.py`): 10 cases covering `--help`/usage, the
+`DATABASE_URL` guard, restore dump-file existence, the success-path invocation,
+and a failing-underlying-tool guard (the script aborts via `set -euo pipefail`
+and prints no success line). The tests invoke the scripts through `subprocess`
+with `pg_dump`/`pg_restore` stubbed on `PATH`, so they run in the existing
+`uv`/`pytest` harness and CI job — no live database and no extra tooling.
+
+**Rationale:**
+Backup/restore is "documented, not automated" (SRS §13.3.1 #6). Thin Bash keeps
+the procedure transparent; testing the guard logic from `pytest` proves what the
+code-review checklist cares about (input validity, file existence) using only the
+project's existing test runner, avoiding any global tool install.
+
+**References:**
+- Issue: GH-101
+
+---
+
 ## [2026-06-02] GH-100 — Phase 4: Android doc superseded pointer
 
 **Change Type:** Docs

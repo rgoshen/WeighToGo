@@ -37,5 +37,5 @@ npm run test:e2e           # playwright (requires backend running)
 
 ## Tests
 
-377 Vitest unit/component tests and 19 Playwright E2E specs. Coverage thresholds
+388 Vitest unit/component tests and 19 Playwright E2E specs. Coverage thresholds
 are enforced in CI.

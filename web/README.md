@@ -20,7 +20,10 @@ web/
 - **Milestone 3** — goals, achievements (milestone & streak detection),
   preferences, dashboard aggregation, trend analytics, composite indexes, and
   TTL caching (`v0.2.0`)
-- **Milestone 4** — database enhancements (upcoming)
+- **Milestone 4** — database enhancements: a security/compliance audit trail,
+  constraint and index hardening across all seven tables, a migration-discipline
+  review, the web database-architecture document, and a backup/restore runbook
+  (`v0.3.0`)
 
 ## Running locally
 

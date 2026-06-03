@@ -233,7 +233,7 @@ Verification and reconciliation only — ADRs and DDRs are authored during their
 - Update the root `README.md` with the M3 feature set (goals, achievements, trends, preferences).
 - Regenerate and commit the OpenAPI snapshot to `/docs/api/openapi.json` with the new goal, achievement, and preference routes.
 - Self-review all M3 code against `/docs/standards/cs499_code_review_checklist.md`; record findings as PR comments and resolve before merge.
-- Draft the M3 narrative addressing the four rubric prompts, with explicit emphasis on the algorithms (milestone detection, streak detection, rate-of-change) and their complexity analysis; cite cursor pagination (ADR-0015) as the data-structure exemplar; acknowledge AI-tool usage per the rubric's AI Usage section and the Shapiro Library citation guide.
+- Draft the M3 narrative addressing the four rubric prompts, with explicit emphasis on the algorithms (milestone detection, streak detection, rate-of-change) and their complexity analysis; cite cursor pagination (ADR-0015) as the data-structure exemplar.
 - Confirm any unreached stretch items are recorded as deferred with rationale.
 - Tag the repository `v0.2.0`.
 
@@ -280,7 +280,6 @@ M3-specific additions:
 - Cross-domain coordination (weight entry triggering achievement detection) happens at the interface/composition-root layer; no domain package imports another domain package.
 - **Security thread (rubric indicator).** Every new resource (goals, achievements, preferences) is scoped to the authenticated user. Cross-user access returns 404 Not Found — never 403 and never another user's data — closing the insecure-direct-object-reference (IDOR) class of logical/structural flaw, mirroring the M2 weight-entry pattern. All new endpoints validate inputs with Pydantic at the boundary (NFR-S-4); the preferences endpoint rejects unknown keys with 422. This is the security flaw the M3 rubric looks for and is given explicit narrative treatment.
 - All four ADRs and four DDRs that are reached must be written before the code they govern, not after, and before the `v0.2.0` tag is applied.
-- The narrative must acknowledge AI-tool usage per the rubric's AI Usage section.
 
 ---
 
@@ -300,7 +299,7 @@ Adapted from SRS §14 for Milestone Three:
 - [ ] Root `README.md` updated with the M3 feature set
 - [ ] All new resources are user-scoped; cross-user access returns 404 (IDOR prevention), verified by tests
 - [ ] All existing M2 tests (including cursor pagination, FR-W-2) still pass
-- [ ] The M3 narrative document is drafted and reviewed against the rubric, with algorithm complexity emphasized and AI usage acknowledged
+- [ ] The M3 narrative document is drafted and reviewed against the rubric, with algorithm complexity emphasized
 - [ ] The repository is tagged `v0.2.0`
 
 ---

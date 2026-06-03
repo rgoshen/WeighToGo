@@ -49,6 +49,9 @@ jobs:
       - name: Type check (mypy)
         run: uv run mypy
 
+      - name: ShellCheck (scripts)
+        run: uv run shellcheck scripts/*.sh
+
       - name: Tests (pytest)
         run: uv run pytest
 

@@ -63,10 +63,42 @@ the SRS, and can be checked against the commits and tests that implement it.
   membership structure (O(1) "did the user log on day D?") backs the scan rather
   than repeated list traversal.
 
+  ```python
+  def _longest_consecutive_run(observation_dates: frozenset[date], today: date) -> int:
+      days = sorted(d for d in observation_dates if d <= today)
+      if not days:
+          return 0
+      longest = 1
+      current = 1
+      one_day = timedelta(days=1)
+      for prev, curr in zip(days, days[1:], strict=False):
+          if curr == prev + one_day:
+              current += 1
+              longest = max(longest, current)
+          else:
+              current = 1
+      return longest
+  ```
+
 - **Milestone-detection algorithm (ADR-0019).** Goal-progress milestones are
   detected on every weight entry. The ADR captures the detection rule, the
   data the algorithm reads, and the complexity of running it inline on the write
-  path rather than batch-recomputing history.
+  path rather than batch-recomputing history. The `already_recorded` frozenset
+  is the in-memory idempotency guard; the database partial unique indexes are the
+  race-condition backstop:
+
+  ```python
+  def detect_milestones(
+      goal: GoalSnapshot,
+      current_weight: Decimal,
+      already_recorded: frozenset[Decimal],
+  ) -> list[Decimal]:
+      if goal.goal_type == "lose":
+          delta = goal.start_value - current_weight
+      else:
+          delta = current_weight - goal.start_value
+      return [t for t in THRESHOLDS if delta >= t and t not in already_recorded]
+  ```
 
 - **Composite-index strategy (ADR-0021).** The weekly rate-of-change (FR-D-3) is
   computed from two indexed lookups against composite indexes on the
@@ -85,7 +117,20 @@ the SRS, and can be checked against the commits and tests that implement it.
   deadline)` pairs, with O(1) get/set, a bounded `maxsize` with expired-first
   eviction, lazy expiry on read, and invalidation on the writes that change the
   summary. The ADR documents the staleness-versus-cost trade-off and the
-  invalidation policy explicitly.
+  invalidation policy explicitly. Expiry uses `time.monotonic` (immune to
+  wall-clock changes) and evicts with `pop`, not `del`, so two threadpool
+  workers reading the same just-expired key cannot race into a `KeyError`:
+
+  ```python
+  def get(self, key: K) -> V | None:
+      entry = self._store.get(key)
+      if entry is None:
+          return None
+      if self._now() >= entry.expires_at:
+          self._store.pop(key, None)  # lazy, idempotent eviction
+          return None
+      return entry.value
+  ```
 
 - **Preferences storage (ADR-0020) and the trend chart (DDR-0006).** A
   key/value preference structure drives display (including preference-driven
