@@ -372,3 +372,118 @@ query served | ADR. "Partial" means a `WHERE` predicate restricts the indexed ro
 | `idx_achievements_user_earned` | `achievements` | `(user_id, earned_at)` | Composite | Achievement history listing per user ordered by `earned_at` | ADR-0026 |
 | `idx_audit_log_user_created` | `audit_log` | `(user_id, created_at DESC)` | Composite | Per-user audit trail lookup for security review queries | ADR-0024 |
 | `idx_audit_log_event_type_created` | `audit_log` | `(event_type, created_at DESC)` | Composite | Per-event-type audit queries (e.g. all failed logins within a time window) | ADR-0024 |
+
+---
+
+## 6. Audit Log Design
+
+### Event taxonomy
+
+The `event_type` column accepts exactly 14 values, defined by `AuditEventType(StrEnum)`
+in `web/backend/src/weighttogo/audit/domain/entities.py`. The CHECK constraint is built
+from the enum at model-definition time, so adding a new event type to the enum
+automatically extends the constraint on the next migration.
+
+| Event type | Category | Triggered by |
+|------------|----------|--------------|
+| `auth.register` | Auth | New user registration |
+| `auth.login_succeeded` | Auth | Successful login |
+| `auth.login_failed` | Auth | Failed login attempt |
+| `auth.logout` | Auth | Explicit logout |
+| `auth.token_refreshed` | Auth | Access token refresh |
+| `auth.token_reuse_detected` | Auth | Reuse of a revoked refresh token (ADR-0013) |
+| `auth.account_locked` | Auth | Lockout after `failed_login_count` threshold |
+| `weight_entry.created` | Data | Weight entry creation |
+| `weight_entry.updated` | Data | Weight entry update |
+| `weight_entry.deleted` | Data | Soft-delete of a weight entry |
+| `goal.created` | Data | Goal creation |
+| `goal.updated` | Data | Goal update |
+| `goal.abandoned` | Data | Goal deactivation |
+| `preference.updated` | Data | User preference change |
+
+### ON DELETE SET NULL rationale
+
+`user_id` is nullable with ON DELETE SET NULL. This is the forensically correct
+choice: CASCADE would silently destroy evidence of the actor's historical activity.
+A row with `user_id = NULL` retains the `event_type`, timestamp, IP address, and
+`request_id` even after the actor's account is deleted.
+
+### Append-only invariant
+
+`SqlAlchemyAuditRepository` exposes only `add()`. No update or delete paths exist at
+any layer. The invariant is enforced by the port contract (ADR-0024) rather than a
+database trigger. `metadata` uses `JSON` (not `JSONB`) and `ip_address` uses
+`VARCHAR(45)` (not `INET`) for SQLite portability in the integration suite.
+
+### Retention policy
+
+No automated purge mechanism is implemented within this milestone scope. Rows
+accumulate indefinitely. Production retention strategy (e.g. time-based partitioning
+or scheduled DELETE) is explicitly deferred — see ADR-0024 §Deferred decisions.
+
+---
+
+## 7. Migration History
+
+All ten Alembic migrations in the chain, their purpose, the milestone that introduced
+them, and the key schema objects they create or modify.
+
+Migrations `0001`–`0008` were authored during Milestones 2 and 3. Milestone 4
+(GH-97, GH-98, GH-99) added migrations `0009`–`0010` and audited the full chain
+for reversibility. A full upgrade → downgrade → upgrade round-trip is verified in CI
+via `.github/workflows/migration-ci.yml`.
+
+| Migration | Purpose | Milestone | Key objects |
+|-----------|---------|-----------|-------------|
+| `0001` | Initial users + auth (CITEXT email, refresh tokens) | M2 | `users`, `refresh_tokens` |
+| `0002` | Weight entries + composite performance indexes | M2 | `weight_entries`, `idx_weight_entries_user_date_active`, `idx_weight_entries_user_observation_desc` |
+| `0003` | Goals table | M2 | `goals` |
+| `0004` | Goals direction-invariant CHECK constraint | M2 | `goals_direction_invariant` |
+| `0005` | Achievements table + indexes | M3 | `achievements` |
+| `0006` | User preferences table (EAV storage, ADR-0020) | M3 | `user_preferences` |
+| `0007` | Composite `created_at` index for NFR-P-3 (ADR-0021) | M3 | `idx_weight_entries_user_created_at` |
+| `0008` | Widen `achievement_type` CHECK to include `'streak'` | M3 | `achievements_type_valid` |
+| `0009` | Audit log table + indexes (ADR-0024) | M4 | `audit_log`, `idx_audit_log_user_created`, `idx_audit_log_event_type_created` |
+| `0010` | Constraint hardening + goals listing index (ADR-0025) | M4 | `achievements_threshold_positive`, `goals_target_date_epoch`, `idx_goals_user_created` |
+
+---
+
+## 8. Connection and Pooling Policy
+
+Source: SRS §8.4.
+
+- **SSL:** Required in all environments. `sslmode=require` must appear in `DATABASE_URL`.
+- **Driver:** `psycopg` (psycopg3; async-compatible).
+- **Pool:** SQLAlchemy `QueuePool` with `pool_size=5` and `max_overflow=10` (development defaults).
+- **Configuration:** The connection string is loaded exclusively from the `DATABASE_URL` environment variable; it is never hard-coded.
+- **Production tuning:** Pool sizing for production load is out of scope for this milestone. The parameters are environment-variable overrideable for future tuning.
+
+Example `DATABASE_URL`:
+```
+postgresql+psycopg://weighttogo:weighttogo@localhost:5432/weighttogo_dev?sslmode=require
+```
+
+---
+
+## 9. Historical Note
+
+This document describes the web rebuild schema (PostgreSQL). The original Android
+application used a different SQLite schema documented in
+[WeighToGo_Database_Architecture.md](./WeighToGo_Database_Architecture.md).
+That document is retained as historical reference.
+
+---
+
+## ADR Cross-Reference
+
+| ADR | Relevance to this document |
+|-----|---------------------------|
+| ADR-0009 | CITEXT email in `users` table |
+| ADR-0012 | Shared `DeclarativeBase` across all bounded contexts |
+| ADR-0013 | `refresh_tokens`: `family_id` + `replaced_by` for rotation and family revocation |
+| ADR-0019 | Milestone detection algorithm; primary source for `idx_achievements_unique_*` indexes |
+| ADR-0020 | `user_preferences` EAV design + constraint rationale |
+| ADR-0021 | Composite/partial index strategy for `weight_entries` |
+| ADR-0024 | `audit_log` structure, event taxonomy, append-only invariant, retention choice |
+| ADR-0025 | Constraint hardening strategy (migrations 0002–0010 backfill + new CHECKs in 0010) |
+| ADR-0026 | Achievement write-flow contract (create-only, permanent; references ADR-0019 for indexes) |

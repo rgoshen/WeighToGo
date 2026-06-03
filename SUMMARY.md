@@ -7,6 +7,29 @@ issues were resolved.
 
 ---
 
+## [2026-06-02] GH-100 — Phase 4: Web Database-Architecture Document (Sections 6–9)
+
+**Change Type:** Docs
+**Scope:** docs/architecture
+
+**Summary:**
+Completed WeighToGo_Web_Database_Architecture.md with Sections 6 (Audit Log Design:
+14-event taxonomy, ON DELETE SET NULL rationale, append-only invariant, retention
+policy), 7 (Migration History: 10 migrations with CI round-trip note), 8 (Connection
+and Pooling Policy per SRS §8.4), 9 (Historical Note), and an ADR cross-reference
+table.
+
+**Rationale:**
+Section 6 documents the three design choices that distinguish audit_log from the other
+tables: nullable user_id, append-only port contract, and no automated purge.
+Section 7 provides a single-table view of the 0001–0010 migration chain with CI
+verification status.
+
+**References:**
+- Issue: GH-100
+
+---
+
 ## [2026-06-02] GH-100 — Phase 4: Web Database-Architecture Document (Sections 4–5)
 
 **Change Type:** Docs
