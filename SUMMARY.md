@@ -7,6 +7,26 @@ issues were resolved.
 
 ---
 
+## [2026-06-02] GH-100 — Phase 4: Web Database-Architecture Document (Section 3)
+
+**Change Type:** Docs
+**Scope:** docs/architecture
+
+**Summary:**
+Added Section 3 (Schema) to WeighToGo_Web_Database_Architecture.md: one subsection per
+table (§8.2.1–§8.2.7) with full column tables — type, nullability, default, notes — and
+explicit FK ON DELETE policies for all seven tables.
+
+**Rationale:**
+Schema section provides the column-level reference that the Constraints and Index
+catalogues (Sections 4–5) annotate by name. Cross-cutting structure keeps per-table
+column facts in one place and aggregate constraint/index rationale in another.
+
+**References:**
+- Issue: GH-100
+
+---
+
 ## [2026-06-02] GH-100 — Phase 4: Web Database-Architecture Document (Sections 1–2)
 
 **Change Type:** Docs
