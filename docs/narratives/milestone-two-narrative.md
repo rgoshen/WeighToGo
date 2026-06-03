@@ -68,7 +68,7 @@ The Milestone Two work showcases the following:
 
 - **Three-pattern backend architecture** (`web/backend/src/weighttogo/`) combining
   Screaming Architecture (folder structure named after bounded contexts —
-  `auth/`, `weight_tracking/`, `goals/`, `users/`), Clean Architecture (the
+  `auth/`, `weight_tracking/`, `dashboard/`), Clean Architecture (the
   dependency rule, enforced in CI by `import-linter` — domain code with any
   framework import breaks the build), and Hexagonal Architecture (ports
   defined in the domain, adapters in `infrastructure/`). The decision is
@@ -83,7 +83,21 @@ The Milestone Two work showcases the following:
   ([ADR-0013](../adr/0013-refresh-token-rotation-family-revocation.md)),
   bcrypt password hashing at cost 12, account lockout, and rate-limited auth
   endpoints — every finding from the Android code review is addressed by a
-  specific countermeasure with a specific test.
+  specific countermeasure with a specific test. The password adapter is the
+  sole module that touches bcrypt (a Hexagonal adapter, ADR-0012) and also
+  closes the *timing* side-channel a generic error message alone leaves open:
+  an unknown account still runs a real constant-time verify against a cached
+  dummy hash, so login latency cannot distinguish a missing user from a wrong
+  password.
+
+  ```python
+  def verify_dummy(self, plaintext: str) -> None:
+      """Constant-time verify against a dummy hash for unknown/inactive accounts."""
+      if BcryptPasswordAdapter._dummy_hash is None:
+          salt = _bcrypt.gensalt(rounds=self._ROUNDS)
+          BcryptPasswordAdapter._dummy_hash = _bcrypt.hashpw(b"dummy", salt).decode()
+      self.verify(plaintext, BcryptPasswordAdapter._dummy_hash)
+  ```
 
 - **Test-driven development discipline throughout.** The Milestone Two diff
   is 544 files / +28,479 / −598 lines across 173 commits. It carries **277
@@ -94,13 +108,35 @@ The Milestone Two work showcases the following:
 
 - **RFC 7807 problem-details error responses** on every API path, with
   field-level validation detail for 422 responses. Both the backend
-  emission and the frontend parsing are tested.
+  emission and the frontend parsing are tested. A single shared builder
+  produces the `application/problem+json` shape, so every router emits the
+  same contract rather than hand-rolling the dict:
+
+  ```python
+  def build_problem_detail(
+      *, status: int, title: str, detail: str, instance: str,
+      errors: list[dict[str, str]] | None = None, request_id: str | None = None,
+  ) -> dict[str, object]:
+      return {
+          "type": "about:blank", "title": title, "status": status,
+          "detail": detail, "instance": instance,
+          "errors": errors, "request_id": request_id,
+      }
+  ```
 
 - **Cursor-based pagination** with an opaque compound cursor
   ([ADR-0015](../adr/0015-opaque-compound-cursor-pagination.md)) — surfaced
   during PR #30 review when the first-cut cursor leaked schema and skipped
   rows at page boundaries. Authoring an ADR mid-PR captured both the bug
-  and the corrected design in one place.
+  and the corrected design in one place. The token base64url-encodes the
+  `(observation_date, entry_id)` sort key, so the wire format mirrors the SQL
+  key without exposing it:
+
+  ```python
+  def encode_cursor(observation_date: date, entry_id: int) -> str:
+      payload = f"{observation_date.isoformat()}:{entry_id}".encode("ascii")
+      return base64.urlsafe_b64encode(payload).rstrip(b"=").decode("ascii")
+  ```
 
 - **Documentation discipline.** A versioned Software Requirements
   Specification ([`/docs/specs/WeighToGo_Web_SRS_v2.md`](../specs/WeighToGo_Web_SRS_v2.md))

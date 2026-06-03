@@ -7,6 +7,26 @@ issues were resolved.
 
 ---
 
+## [2026-06-02] GH-101 — Phase 5: narrative code snippets + orphan cleanup
+
+**Change Type:** Docs
+**Scope:** docs/narratives, docs/architecture
+
+**Summary:**
+Per instructor feedback, polished the M2 and M3 narratives with real, verbatim
+code snippets pulled from the implementation: M2 — the bcrypt timing-side-channel
+defense (`verify_dummy`), the shared RFC 7807 problem-detail builder, and the
+opaque compound-cursor encoder; M3 — the single-pass streak scan, the milestone
+delta/idempotency filter, and the TTL cache's monotonic-clock `pop`-not-`del`
+eviction. Also fixed the M2 narrative's bounded-context example (`users/` →
+`dashboard/`). Deleted the orphaned `docs/architecture/migration_table.md` (an
+unreferenced duplicate of the web DB doc §7, which is now the single source).
+
+**References:**
+- Issue: GH-101
+
+---
+
 ## [2026-06-02] GH-101 — Phase 5: documentation currency review
 
 **Change Type:** Docs
