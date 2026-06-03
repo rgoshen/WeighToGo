@@ -7,6 +7,30 @@ issues were resolved.
 
 ---
 
+## [2026-06-02] GH-101 — Phase 5: backup/restore runbook
+
+**Change Type:** Docs
+**Scope:** docs/runbooks
+
+**Summary:**
+Added `docs/runbooks/backup-restore.md`: a manual `pg_dump`/`pg_restore`
+procedure (prerequisites, what is and isn't captured, backup, destructive
+restore with a scratch-DB warning, post-restore verification via `alembic
+current` + row counts + `/health`, and a PII/credentials security note). Added a
+`backups/` + `*.dump` ignore to `.gitignore` so a PII-bearing dump cannot be
+committed — making the runbook's "never commit a dump" guidance enforced rather
+than merely stated.
+
+**Rationale:**
+SRS §13.3.1 #6 asks for a documented (not automated) backup/restore procedure.
+The runbook pairs with the thin scripts and is explicit that scheduling, PITR,
+and WAL archiving are out of capstone scope.
+
+**References:**
+- Issue: GH-101
+
+---
+
 ## [2026-06-02] GH-101 — Phase 5: CI for backup/restore scripts
 
 **Change Type:** CI

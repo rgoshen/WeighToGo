@@ -3,6 +3,12 @@
 # markdown sources via pandoc; only the markdown is the source of truth.
 docs/narratives/*.docx
 
+### Database backups
+# Logical dumps from web/backend/scripts/backup.sh contain PII and credentials;
+# never commit. See docs/runbooks/backup-restore.md.
+web/backend/backups/
+*.dump
+
 ### Java template
 # Compiled class file
 *.class
