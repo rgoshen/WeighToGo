@@ -7,6 +7,33 @@ issues were resolved.
 
 ---
 
+## [2026-06-11] #132 — Align ADR-0024 with the enforced audit isolation and SAVEPOINT mechanism
+
+**Change Type:** Docs
+**Scope:** docs/adr (0024-audit-log-structure.md)
+
+**Summary:**
+Documentation half of #132. Two corrections to ADR-0024. (1) The Consequences bullet claiming the
+`audit` domain "is never imported by other domain packages (enforced by import-linter)" was made precise
+and now genuinely backed: it names the new `audit: other contexts must not import audit` contract and
+states the allowed exception — the four interface routers wiring audit at the composition root. (2) Added
+the missing SAVEPOINT detail to the "Failure handling asymmetry" rationale: the fail-open auth audit
+write runs inside `session.begin_nested()` so a rejected INSERT confines its rollback and leaves the
+main transaction (and the successful login) intact; the data-mutation path needs no savepoint because it
+fails closed.
+
+**Rationale:**
+The review (finding 3 + Documentation section) flagged both the unbacked import-linter claim and the
+omitted SAVEPOINT mechanism the code actually uses, recommending they be fixed in the same ADR pass.
+No new ADR and no `docs/adr/README.md` index-row change — this edits existing ADR-0024 content only.
+
+**References:**
+- Issue: #132 (M4-quality epic #140)
+- `docs/standards/M4_WEB_APP_QUALITY.md` finding 3 (and Documentation section)
+- `web/backend/src/weighttogo/auth/interface/router.py` (`_audit` SAVEPOINT)
+
+---
+
 ## [2026-06-11] #132 — Enforce audit context isolation with an import-linter contract
 
 **Change Type:** Fix
