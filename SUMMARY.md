@@ -7,6 +7,39 @@ issues were resolved.
 
 ---
 
+## [2026-06-11] #132 — Enforce audit context isolation with an import-linter contract
+
+**Change Type:** Fix
+**Scope:** web/backend (import-linter contracts, architecture tests)
+
+**Summary:**
+Closed M4 Web App Quality Review finding 3: ADR-0024 claimed the `audit` context "is never imported
+by other domain packages (enforced by import-linter)", but no contract backed that — the invariant held
+only by convention. Added a `forbidden` import-linter contract (`audit: other contexts must not import
+audit`) to `web/backend/pyproject.toml` whose source is the six other contexts' `domain`/`application`
+sub-packages plus `weighttogo.shared`, forbidding any reach into `weighttogo.audit`. Added a committed
+test (`test_audit_context_isolation_contract_is_enforced`) that asserts `lint-imports` reports the named
+contract as `KEPT`. The four interface-layer routers (auth, goals, weight_tracking, preferences) keep
+their legitimate composition-root wiring. Contracts: 16 kept, 0 broken.
+
+**Rationale:**
+Chose mechanical enforcement (the review's primary recommendation) over softening the ADR wording —
+it makes the stronger claim true rather than retreating to "verified by review". A `forbidden` contract
+scoped to domain/application is the correct tool; an `independence` contract was rejected because it
+would wrongly flag the four interface routers' legitimate audit imports. The new test asserts on the
+named contract being `KEPT`, giving a genuine red→green TDD cycle (the name is absent before the
+contract exists) and a regression guard against silent deletion. The contract was additionally proven
+non-trivial by a manual red proof: a temporary `import weighttogo.audit` in `goals.application` made
+`lint-imports` report the contract `BROKEN` (`weighttogo.goals.application -> weighttogo.audit`), then
+reverted.
+
+**References:**
+- Issue: #132 (M4-quality epic #140)
+- `docs/standards/M4_WEB_APP_QUALITY.md` finding 3
+- ADR-0024 (`docs/adr/0024-audit-log-structure.md`)
+
+---
+
 ## [2026-06-11] #131 — Complete the database-architecture constraint and index catalogues
 
 **Change Type:** Docs

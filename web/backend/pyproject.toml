@@ -226,3 +226,26 @@ source_modules = [
     "weighttogo.audit.application",
 ]
 forbidden_modules = ["fastapi", "sqlalchemy", "pydantic", "alembic", "starlette"]
+
+# Audit context isolation: only the four interface routers (auth, goals,
+# weight_tracking, preferences) may wire audit at the composition root. No
+# other context's domain/application layer may reach into weighttogo.audit
+# (ADR-0024; M4 Web App Quality Review finding 3).
+[[tool.importlinter.contracts]]
+name = "audit: other contexts must not import audit"
+type = "forbidden"
+source_modules = [
+    "weighttogo.auth.domain",
+    "weighttogo.auth.application",
+    "weighttogo.goals.domain",
+    "weighttogo.goals.application",
+    "weighttogo.weight_tracking.domain",
+    "weighttogo.weight_tracking.application",
+    "weighttogo.achievements.domain",
+    "weighttogo.achievements.application",
+    "weighttogo.preferences.domain",
+    "weighttogo.preferences.application",
+    "weighttogo.dashboard.application",
+    "weighttogo.shared",
+]
+forbidden_modules = ["weighttogo.audit"]
