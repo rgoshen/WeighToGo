@@ -7,6 +7,100 @@ issues were resolved.
 
 ---
 
+## [2026-06-11] #130 — Address code review: scope shell-main locator, harden assertions, reserve main min-width
+
+**Change Type:** Fix
+**Scope:** web/frontend (application shell + e2e)
+
+**Summary:**
+Addressed five review comments on PR #141. (1) Scoped the geometry guard's `getByRole('main')` to
+`.first()` in both tests: every authenticated page renders its own `<main>` nested inside the shell's
+`<main>`, so the bare locator is ambiguous under Playwright strict mode — the committed spec passed
+only because the lazy `DashboardPage` chunk had not yet mounted its `<main>` when the assertion ran (a
+Suspense timing race). Added a wait for the dashboard heading so the test measures the settled
+two-`<main>` state deterministically. (2) Replaced the brittle `width > 360` mobile assertion with
+`>= viewportSize().width - 16`. (3) Added `minWidth: 0` to the main flex item so wide or unbreakable
+content cannot push the row past the viewport now that the drawer column is reserved. (4) Hardened the
+register helper's email with random entropy (`Date.now()` alone collides under `--repeat-each`, as a
+UniqueViolation confirmed). The shell spec passes 6/6 under `--repeat-each=3`.
+
+**Bug Fix Context:**
+The strict-mode ambiguity stems from a latent duplicate/nested `<main>` landmark (WCAG) across all
+authenticated pages — pre-existing and out of #130's scope; recommended as a dedicated follow-up along
+with a shared, collision-proof e2e auth helper.
+
+**References:**
+- Issue: #130 (M4-quality epic #140); PR #141 review
+
+---
+
+## [2026-06-11] #130 — Extract registration helper and add mobile shell-layout guard (TDD refactor)
+
+**Change Type:** Refactor
+**Scope:** web/frontend (e2e)
+
+**Summary:**
+Refactored the shell-layout spec: extracted the duplicated register-and-land flow into a
+`registerFreshUser` helper, and added a mobile guard (390×844) asserting the main region stays
+flush left and (nearly) full-width when the temporary drawer is the closed overlay. This locks
+the "mobile layout unchanged" requirement from the issue as a durable assertion rather than a
+one-time manual check. Full Playwright suite green at 49 passed.
+
+**References:**
+- Issue: #130 (M4-quality epic #140)
+
+---
+
+## [2026-06-11] #130 — Reserve permanent-drawer width so main content clears the sidebar (TDD green)
+
+**Change Type:** Fix
+**Scope:** web/frontend (application shell)
+
+**Summary:**
+Fixed the desktop application shell so the main content region no longer renders under the
+permanent sidebar. Added `width: DRAWER_WIDTH` and `flexShrink: 0` to the permanent `Drawer`
+root `sx` so the docked root reserves its 240px column in the flex row, and removed the
+now-redundant `width: calc(100% - 240px)` from `<Box component="main">`, leaving `flexGrow: 1`
+to fill the remaining width. The previously-failing geometry spec now passes (main left edge
+at x=240, not x=0). The mobile temporary-drawer path is untouched.
+
+**Bug Fix Context:**
+A permanent MUI Drawer's paper is `position: fixed` (removed from flow). The shell set the
+240px width only on `.MuiDrawer-paper`, never on the docked root, so nothing reserved horizontal
+space; `flexGrow: 1` then expanded the main region across the full viewport and the fixed drawer
+painted over its left 240px. Reserving the width on the root restores the intended two-column
+layout.
+
+**References:**
+- Issue: #130 (M4-quality epic #140)
+- docs/standards/M4_WEB_APP_QUALITY.md (Finding 1)
+
+---
+
+## [2026-06-11] #130 — Failing layout-geometry spec for the desktop shell (TDD red)
+
+**Change Type:** Test
+**Scope:** web/frontend (e2e)
+
+**Summary:**
+Added `web/frontend/e2e/app-shell-layout.spec.ts`, a Playwright regression guard that
+registers a user, lands on the dashboard inside the application shell at a 1366×768
+desktop viewport, and asserts the `main` landmark's left edge sits at or beyond the
+240px permanent-drawer width. The spec fails as written — the main region's left edge
+measures x=0, painted under the drawer — pinning the Finding 1 defect that the Vitest
+and axe suites cannot catch because jsdom has no layout engine.
+
+**Rationale:**
+TDD red step: write the single failing test first. Geometry is the only thing that
+distinguishes the broken layout from the fixed one, and only a real browser can measure
+it, so the guard is an end-to-end spec rather than a component test.
+
+**References:**
+- Issue: #130 (M4-quality epic #140)
+- docs/standards/M4_WEB_APP_QUALITY.md (Finding 1)
+
+---
+
 ## [2026-06-03] M4 Web App Quality Review
 
 **Change Type:** Docs
