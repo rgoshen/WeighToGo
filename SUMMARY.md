@@ -7,6 +7,30 @@ issues were resolved.
 
 ---
 
+## [2026-06-11] #130 — Failing layout-geometry spec for the desktop shell (TDD red)
+
+**Change Type:** Test
+**Scope:** web/frontend (e2e)
+
+**Summary:**
+Added `web/frontend/e2e/app-shell-layout.spec.ts`, a Playwright regression guard that
+registers a user, lands on the dashboard inside the application shell at a 1366×768
+desktop viewport, and asserts the `main` landmark's left edge sits at or beyond the
+240px permanent-drawer width. The spec fails as written — the main region's left edge
+measures x=0, painted under the drawer — pinning the Finding 1 defect that the Vitest
+and axe suites cannot catch because jsdom has no layout engine.
+
+**Rationale:**
+TDD red step: write the single failing test first. Geometry is the only thing that
+distinguishes the broken layout from the fixed one, and only a real browser can measure
+it, so the guard is an end-to-end spec rather than a component test.
+
+**References:**
+- Issue: #130 (M4-quality epic #140)
+- docs/standards/M4_WEB_APP_QUALITY.md (Finding 1)
+
+---
+
 ## [2026-06-03] M4 Web App Quality Review
 
 **Change Type:** Docs
