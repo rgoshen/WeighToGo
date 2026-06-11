@@ -107,6 +107,11 @@ export function AppLayout() {
         variant="permanent"
         sx={{
           display: { xs: 'none', md: 'block' },
+          // Reserve horizontal space in the flex row. The drawer paper is
+          // position:fixed (out of flow), so the docked root must carry the
+          // width; without it the main region slides under the drawer (#130).
+          width: DRAWER_WIDTH,
+          flexShrink: 0,
           '& .MuiDrawer-paper': { width: DRAWER_WIDTH, boxSizing: 'border-box' },
         }}
         open
@@ -120,7 +125,6 @@ export function AppLayout() {
         sx={{
           flexGrow: 1,
           p: 3,
-          width: { md: `calc(100% - ${DRAWER_WIDTH}px)` },
         }}
       >
         <Toolbar />

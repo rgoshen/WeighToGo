@@ -7,6 +7,32 @@ issues were resolved.
 
 ---
 
+## [2026-06-11] #130 — Reserve permanent-drawer width so main content clears the sidebar (TDD green)
+
+**Change Type:** Fix
+**Scope:** web/frontend (application shell)
+
+**Summary:**
+Fixed the desktop application shell so the main content region no longer renders under the
+permanent sidebar. Added `width: DRAWER_WIDTH` and `flexShrink: 0` to the permanent `Drawer`
+root `sx` so the docked root reserves its 240px column in the flex row, and removed the
+now-redundant `width: calc(100% - 240px)` from `<Box component="main">`, leaving `flexGrow: 1`
+to fill the remaining width. The previously-failing geometry spec now passes (main left edge
+at x=240, not x=0). The mobile temporary-drawer path is untouched.
+
+**Bug Fix Context:**
+A permanent MUI Drawer's paper is `position: fixed` (removed from flow). The shell set the
+240px width only on `.MuiDrawer-paper`, never on the docked root, so nothing reserved horizontal
+space; `flexGrow: 1` then expanded the main region across the full viewport and the fixed drawer
+painted over its left 240px. Reserving the width on the root restores the intended two-column
+layout.
+
+**References:**
+- Issue: #130 (M4-quality epic #140)
+- docs/standards/M4_WEB_APP_QUALITY.md (Finding 1)
+
+---
+
 ## [2026-06-11] #130 — Failing layout-geometry spec for the desktop shell (TDD red)
 
 **Change Type:** Test
