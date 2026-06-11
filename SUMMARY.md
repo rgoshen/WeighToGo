@@ -7,6 +7,23 @@ issues were resolved.
 
 ---
 
+## [2026-06-11] #130 — Extract registration helper and add mobile shell-layout guard (TDD refactor)
+
+**Change Type:** Refactor
+**Scope:** web/frontend (e2e)
+
+**Summary:**
+Refactored the shell-layout spec: extracted the duplicated register-and-land flow into a
+`registerFreshUser` helper, and added a mobile guard (390×844) asserting the main region stays
+flush left and (nearly) full-width when the temporary drawer is the closed overlay. This locks
+the "mobile layout unchanged" requirement from the issue as a durable assertion rather than a
+one-time manual check. Full Playwright suite green at 49 passed.
+
+**References:**
+- Issue: #130 (M4-quality epic #140)
+
+---
+
 ## [2026-06-11] #130 — Reserve permanent-drawer width so main content clears the sidebar (TDD green)
 
 **Change Type:** Fix
