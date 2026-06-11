@@ -7,6 +7,41 @@ issues were resolved.
 
 ---
 
+## [2026-06-11] #131 — Complete the database-architecture constraint and index catalogues
+
+**Change Type:** Docs
+**Scope:** docs/architecture (WeighToGo_Web_Database_Architecture.md §3–§5)
+
+**Summary:**
+Reconciled §4/§5 of the web database-architecture document against the full Alembic chain
+(migrations 0001–0010), closing M4 Web App Quality Review finding 2. The catalogues claimed "all
+tables" but silently omitted the entire authentication subsystem. Added a `users` (4 constraints) and
+`refresh_tokens` (2 constraints) subsection to §4 — the four migration-0001 CHECKs
+(`users_email_format`, `users_display_name_length`, `users_failed_login_nonneg`,
+`refresh_tokens_expiry_after_issuance`) plus the two UNIQUE constraints (`uq_users_email`,
+`uq_refresh_tokens_hash`). Added four index rows to §5 (`idx_users_email_active`,
+`idx_refresh_tokens_user_active`, `idx_refresh_tokens_family`, `idx_user_preferences_user`). Filled the
+DB-enforced rule into the §3.1 `email`, `display_name`, and `failed_login_count` notes. Corrected
+`idx_achievements_user_earned`'s provenance from `ADR-0026` (which makes no indexing decision) to
+`migration 0005 (no ADR)`, matching the `idx_goals_one_active_per_user` convention.
+
+**Rationale:**
+Completed the catalogues (the review's Option A) rather than narrowing the "all tables" scope
+sentences — for a Databases milestone whose graded artifact is this catalogue, a genuinely complete
+catalogue is the stronger fix and leaves the existing claim honest. UNIQUE constraints placed in §4
+(not §5) to stay consistent with the existing `user_preferences_unique_key` entry; the alternative
+would have introduced a fresh §4/§5 inconsistency. An ADR is cited only where its Decision text makes
+the call: ADR-0009 explicitly decides the unique email, so `uq_users_email` cites it; every other auth
+object has no governing ADR and is marked `migration NNNN (no ADR)`. Verified with a reconciliation
+script that extracts all 41 named constraints/indexes from the migrations and confirms each appears in
+the doc (no automated test added — documentation-only change).
+
+**References:**
+- Issue: #131 (M4-quality epic #140)
+- Source: docs/standards/M4_WEB_APP_QUALITY.md finding 2
+
+---
+
 ## [2026-06-11] #130 — Address code review: scope shell-main locator, harden assertions, reserve main min-width
 
 **Change Type:** Fix
