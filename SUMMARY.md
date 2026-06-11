@@ -7,6 +7,33 @@ issues were resolved.
 
 ---
 
+## [2026-06-11] #130 — Address code review: scope shell-main locator, harden assertions, reserve main min-width
+
+**Change Type:** Fix
+**Scope:** web/frontend (application shell + e2e)
+
+**Summary:**
+Addressed five review comments on PR #141. (1) Scoped the geometry guard's `getByRole('main')` to
+`.first()` in both tests: every authenticated page renders its own `<main>` nested inside the shell's
+`<main>`, so the bare locator is ambiguous under Playwright strict mode — the committed spec passed
+only because the lazy `DashboardPage` chunk had not yet mounted its `<main>` when the assertion ran (a
+Suspense timing race). Added a wait for the dashboard heading so the test measures the settled
+two-`<main>` state deterministically. (2) Replaced the brittle `width > 360` mobile assertion with
+`>= viewportSize().width - 16`. (3) Added `minWidth: 0` to the main flex item so wide or unbreakable
+content cannot push the row past the viewport now that the drawer column is reserved. (4) Hardened the
+register helper's email with random entropy (`Date.now()` alone collides under `--repeat-each`, as a
+UniqueViolation confirmed). The shell spec passes 6/6 under `--repeat-each=3`.
+
+**Bug Fix Context:**
+The strict-mode ambiguity stems from a latent duplicate/nested `<main>` landmark (WCAG) across all
+authenticated pages — pre-existing and out of #130's scope; recommended as a dedicated follow-up along
+with a shared, collision-proof e2e auth helper.
+
+**References:**
+- Issue: #130 (M4-quality epic #140); PR #141 review
+
+---
+
 ## [2026-06-11] #130 — Extract registration helper and add mobile shell-layout guard (TDD refactor)
 
 **Change Type:** Refactor

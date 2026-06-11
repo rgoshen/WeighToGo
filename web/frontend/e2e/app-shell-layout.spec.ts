@@ -15,7 +15,9 @@ const DRAWER_WIDTH = 240;
 
 /** Register a unique account; registration lands the user on the dashboard, inside the shell. */
 async function registerFreshUser(page: Page, prefix: string): Promise<void> {
-  const email = `${prefix}-${Date.now()}@example.com`;
+  // Date.now() alone collides when the same registration runs twice within a millisecond
+  // (e.g. under --repeat-each); add random entropy so the email is always unique.
+  const email = `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.com`;
   const password = 'Aa1!aaaaaaaa';
   await page.goto('/register');
   await page.getByLabel(/display name/i).fill('Shell Layout User');
@@ -33,9 +35,15 @@ test.describe('application shell layout (desktop)', () => {
   test('main content region clears the permanent sidebar', async ({ page }) => {
     await registerFreshUser(page, 'shell-desktop');
 
-    // The permanent drawer is DRAWER_WIDTH wide; the main region's left edge must sit at
-    // or beyond it, never under it.
-    const main = page.getByRole('main');
+    // Wait for the lazy dashboard chunk to mount so its nested <main> is present and the
+    // layout has settled, then measure — proving the locator is unambiguous, not race-bound.
+    await expect(page.getByRole('heading', { level: 1, name: 'Dashboard' })).toBeVisible();
+
+    // Every authenticated page renders its own <main> nested inside the shell's <main>, so
+    // getByRole('main') is ambiguous under Playwright strict mode; .first() targets the
+    // shell's outer main — the flex item that must clear the drawer. The permanent drawer is
+    // DRAWER_WIDTH wide, so the shell main's left edge must sit at or beyond it.
+    const main = page.getByRole('main').first();
     await expect(main).toBeVisible();
     const box = await main.boundingBox();
     expect(box).not.toBeNull();
@@ -50,13 +58,18 @@ test.describe('application shell layout (mobile)', () => {
   test('main content spans the full width with the temporary drawer closed', async ({ page }) => {
     await registerFreshUser(page, 'shell-mobile');
 
-    // The temporary drawer is a closed overlay and reserves no space, so the main region
-    // stays flush to the left edge and spans (nearly) the full viewport.
-    const main = page.getByRole('main');
+    // Wait for the lazy dashboard chunk to mount so its nested <main> is present, then measure.
+    await expect(page.getByRole('heading', { level: 1, name: 'Dashboard' })).toBeVisible();
+
+    // The temporary drawer is a closed overlay and reserves no space, so the shell's main
+    // region stays flush to the left edge and spans the full viewport. .first() targets the
+    // shell's outer main (each page nests its own <main> inside it). Compare against the
+    // actual viewport (less a scrollbar allowance) rather than a hard-coded width.
+    const main = page.getByRole('main').first();
     await expect(main).toBeVisible();
     const box = await main.boundingBox();
     expect(box).not.toBeNull();
     expect(box!.x).toBeLessThan(1);
-    expect(box!.width).toBeGreaterThan(360);
+    expect(box!.width).toBeGreaterThanOrEqual(page.viewportSize()!.width - 16);
   });
 });

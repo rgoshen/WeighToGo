@@ -124,6 +124,11 @@ export function AppLayout() {
         component="main"
         sx={{
           flexGrow: 1,
+          // Let the flex item shrink below its content's intrinsic min-width
+          // (the default is min-width:auto) so wide or unbreakable content does
+          // not push the row past the viewport now that the drawer column is
+          // reserved (#130).
+          minWidth: 0,
           p: 3,
         }}
       >
