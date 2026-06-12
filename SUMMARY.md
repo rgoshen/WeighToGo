@@ -7,6 +7,103 @@ issues were resolved.
 
 ---
 
+## [2026-06-12] #134 — Document the two-tier (SQLite/PostgreSQL) test strategy
+
+**Change Type:** Docs
+**Scope:** web/backend (tests/README.md, README.md)
+
+**Summary:**
+Added `web/backend/tests/README.md` explaining why a local `uv run pytest` shows skipped tests: the
+`@pytest.mark.postgres` index-usage and migration-round-trip tests are PostgreSQL-fidelity tests that
+skip under the default in-memory SQLite suite and run against a real `postgres:16` service in CI. Noted
+that the skip count is by design — and will grow, not shrink, as more fidelity tests are added — and
+documented how to run them locally via the `WEIGHTTOGO_TEST_POSTGRES_DSN` env var. Replaced the backend
+README's stale "682 tests" line with a non-brittle pointer to the new test README.
+
+**Rationale:**
+Surfaced during the PR #147 review discussion: a reader could mistake the skipped count for a coverage
+gap. Documenting the two-tier strategy makes the intent durable. Docs-only; no test or source changes.
+
+**References:**
+- Issue: #134 (M4-quality epic #140), PR #147
+- ADR-0012 (three-pattern backend architecture); SRS §11 (quality engineering)
+
+---
+
+## [2026-06-12] #134 — Address PR #147 review feedback
+
+**Change Type:** Test
+**Scope:** web/backend (tests/integration/auth/test_auth_audit.py, tests/integration/audit/test_migration_0009.py)
+
+**Summary:**
+Addressed three review comments on the #134 tests. (1) Widened the taxonomy-parity regex from
+`[a-z_]+\.[a-z_]+` to `["']([\w.]+)["']` so a future event value with a digit, casing, or a second dot is
+captured rather than silently dropped — the old class would have reported drift that does not exist. (2)
+Derived the account-lockout loop bound from `get_settings().max_login_attempts + 1` instead of a hard-coded
+`range(6)`, so the test tracks the configured threshold. (3) Extracted a shared `_assert_email_masked`
+helper used by both the failed-login and account-locked audit tests, and tightened it to assert the masked
+value `startswith("***")` — encoding the NFR-Priv-1 front-masking contract, which catches a leading
+local-part leak (e.g. `tes***@example.com`) that the previous `"@example.com" in ...` check missed.
+
+**Rationale:**
+Code review (PR #147). Each guard was re-verified against a mutation: the widened regex now reports a
+digit-bearing drift value (`oauth2.login`) cleanly instead of dropping it. The tightened email assertion
+improves on the reviewer's literal suggestion (asserting `"test"` is absent), which would not have caught
+the `tes***@example.com` leak it cited, whereas the front-mask check does.
+
+**References:**
+- Issue: #134 (M4-quality epic #140), PR #147
+- `docs/standards/M4_WEB_APP_QUALITY.md` finding 5
+
+---
+
+## [2026-06-12] #134 — Guard the audit event taxonomy against migration drift
+
+**Change Type:** Test
+**Scope:** web/backend (tests/integration/audit/test_migration_0009.py)
+
+**Summary:**
+Added `test_event_type_check_constraint_matches_enum`, which parses migration 0009's `for v in (...)`
+event-type tuple and asserts it equals `{e.value for e in AuditEventType}`. The ORM model derives its
+event-type CHECK from the enum automatically, but the migration hard-codes the list; this guard catches
+a future enum addition that lands without a matching CHECK update.
+
+**Rationale:**
+Finding 5 (M4 Web App Quality Review): nothing asserted that the migration's hard-coded taxonomy stays in
+sync with the enum. Proven RED via a mutation check — adding a bogus enum member made the test fail;
+reverted to green. Two extraction bugs surfaced while watching it fail and were fixed: source literals are
+double-quoted (the single quotes in `f"'{v}'"` are runtime-only), and the value match must be scoped to
+`for v in (...)` so the unrelated `"users.user_id"` foreign-key literal is not swept in. Per the chosen
+approach, the assertion is pinned to migration 0009 and moves to a later migration if one re-declares the CHECK.
+
+**References:**
+- Issue: #134 (M4-quality epic #140)
+- `docs/standards/M4_WEB_APP_QUALITY.md` finding 5 (Structure, Loops and Branches, Defensive Programming)
+
+---
+
+## [2026-06-12] #134 — Cover the account-locked audit path
+
+**Change Type:** Test
+**Scope:** web/backend (tests/integration/auth/test_auth_audit.py)
+
+**Summary:**
+Added `test_account_locked_writes_account_locked_event_with_masked_email`, an integration test that
+drives six failed logins (the fifth sets the lockout, the sixth trips `AccountLockedError`) and asserts
+the `auth.account_locked` audit row is written with a null `user_id` and a masked email. This was the
+one audited path that previously had no coverage; the test mirrors the existing `login_failed` audit test.
+
+**Rationale:**
+Finding 5 (M4 Web App Quality Review): every other audited path has an assertion, but the lockout path
+did not. Proven RED via a mutation check — temporarily swapping the handler's event type to
+`auth.login_failed` made the test fail because no `account_locked` row was written; reverted to green.
+
+**References:**
+- Issue: #134 (M4-quality epic #140)
+- `docs/standards/M4_WEB_APP_QUALITY.md` finding 5 (Structure, Loops and Branches, Defensive Programming)
+
+---
+
 ## [2026-06-12] #133 — Document atomic restore in the backup/restore runbook
 
 **Change Type:** Docs
