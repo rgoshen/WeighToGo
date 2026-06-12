@@ -7,6 +7,132 @@ issues were resolved.
 
 ---
 
+## [2026-06-11] #132 — Update ADR-0024 to describe the protected audit contract (PR #145 review)
+
+**Change Type:** Docs
+**Scope:** docs/adr (0024-audit-log-structure.md)
+
+**Summary:**
+Follow-on to the contract redesign. Rewrote the ADR-0024 Consequences bullet so the citation matches
+what is actually enforced: `weighttogo.audit` is imported only by the four interface routers, and no
+other module — another context's interface, any domain/application/infrastructure layer, the request
+middleware, or a future bounded context — may import it, "Enforced by the
+`audit: only the four interface routers may import audit` import-linter `protected` contract". The
+earlier wording cited the `forbidden` contract, which only enforced the domain/application half of the
+claim; the review noted a reviewer trusting that sentence might approve a new wiring site believing CI
+would catch it.
+
+**Rationale:**
+The review offered "tighten the contract or soften the wording"; tightening to a `protected` contract
+makes the exclusivity claim literally true, so the ADR can keep the strong claim and now back it. No new
+ADR and no `docs/adr/README.md` index-row change.
+
+**References:**
+- Issue: #132 (M4-quality epic #140); PR #145 review
+- `docs/standards/M4_WEB_APP_QUALITY.md` finding 3 (Documentation)
+
+---
+
+## [2026-06-11] #132 — Strengthen audit isolation to a protected contract; harden the architecture test (PR #145 review)
+
+**Change Type:** Fix
+**Scope:** web/backend (import-linter contracts, architecture tests)
+
+**Summary:**
+Addressed the PR #145 review. Replaced the original `forbidden` contract — which fenced only the six
+other contexts' `domain`/`application` layers — with a `protected` contract
+(`audit: only the four interface routers may import audit`): `weighttogo.audit` may be imported only by
+the four `*.interface.router` allow-listed importers; every other module is forbidden by default
+(`as_packages` defaults to True, so audit's own descendants still import each other). This closes the
+gaps the review identified — `achievements.interface`/`dashboard.interface` (non-wiring interfaces), the
+top-level `weighttogo.interface` middleware, every `*.infrastructure` layer, and any future bounded
+context — none of which the `forbidden` allow-list covered, and none of which need hand-maintenance now.
+Also added `weighttogo.audit` to the pre-existing `shared: must not import bounded contexts`
+`forbidden_modules` so all of `shared`'s isolation rules live in one contract (closing a pre-existing
+omission). Hardened `tests/architecture/test_import_contracts.py`: a session-scoped fixture runs
+`lint-imports` once (was twice; removed the duplicated `shutil.which`/`subprocess.run` block); the audit
+test asserts `returncode == 0` and matches the contract's `KEPT` status against whitespace-normalized
+stdout (robust to rich's width-based soft-wrapping and import-linter output reformats); the config path
+is anchored to `Path(__file__).parents[2]` with an explicit `cwd` (location-independent) and a 120s
+`subprocess` timeout (fail-fast on a wedged run).
+
+**Rationale:**
+A `protected` contract inverts the allow-list fragility the review flagged: instead of enumerating every
+module that must *not* import audit (where the first omission silently defeats the invariant), it names
+the only modules that *may*, so the default is closed and the ADR's "only the four routers" claim is now
+literally enforced rather than partially. Verified by a manual red proof: temporary `import
+weighttogo.audit` statements in `achievements.interface`, `goals.infrastructure`, and
+`weighttogo.interface` — all previously uncaught — each made `lint-imports` report the contract `BROKEN`,
+then reverted. The `independence` contract remained the wrong tool (it would flag the four legitimate
+routers). Contracts: 16 kept, 0 broken.
+
+**References:**
+- Issue: #132 (M4-quality epic #140); PR #145 review
+- `docs/standards/M4_WEB_APP_QUALITY.md` finding 3
+- import-linter `protected` contract (allow-list of importers; `as_packages` default True)
+
+---
+
+## [2026-06-11] #132 — Align ADR-0024 with the enforced audit isolation and SAVEPOINT mechanism
+
+**Change Type:** Docs
+**Scope:** docs/adr (0024-audit-log-structure.md)
+
+**Summary:**
+Documentation half of #132. Two corrections to ADR-0024. (1) The Consequences bullet claiming the
+`audit` domain "is never imported by other domain packages (enforced by import-linter)" was made precise
+and now genuinely backed: it names the new `audit: other contexts must not import audit` contract and
+states the allowed exception — the four interface routers wiring audit at the composition root. (2) Added
+the missing SAVEPOINT detail to the "Failure handling asymmetry" rationale: the fail-open auth audit
+write runs inside `session.begin_nested()` so a rejected INSERT confines its rollback and leaves the
+main transaction (and the successful login) intact; the data-mutation path needs no savepoint because it
+fails closed.
+
+**Rationale:**
+The review (finding 3 + Documentation section) flagged both the unbacked import-linter claim and the
+omitted SAVEPOINT mechanism the code actually uses, recommending they be fixed in the same ADR pass.
+No new ADR and no `docs/adr/README.md` index-row change — this edits existing ADR-0024 content only.
+
+**References:**
+- Issue: #132 (M4-quality epic #140)
+- `docs/standards/M4_WEB_APP_QUALITY.md` finding 3 (and Documentation section)
+- `web/backend/src/weighttogo/auth/interface/router.py` (`_audit` SAVEPOINT)
+
+---
+
+## [2026-06-11] #132 — Enforce audit context isolation with an import-linter contract
+
+**Change Type:** Fix
+**Scope:** web/backend (import-linter contracts, architecture tests)
+
+**Summary:**
+Closed M4 Web App Quality Review finding 3: ADR-0024 claimed the `audit` context "is never imported
+by other domain packages (enforced by import-linter)", but no contract backed that — the invariant held
+only by convention. Added a `forbidden` import-linter contract (`audit: other contexts must not import
+audit`) to `web/backend/pyproject.toml` whose source is the six other contexts' `domain`/`application`
+sub-packages plus `weighttogo.shared`, forbidding any reach into `weighttogo.audit`. Added a committed
+test (`test_audit_context_isolation_contract_is_enforced`) that asserts `lint-imports` reports the named
+contract as `KEPT`. The four interface-layer routers (auth, goals, weight_tracking, preferences) keep
+their legitimate composition-root wiring. Contracts: 16 kept, 0 broken.
+
+**Rationale:**
+Chose mechanical enforcement (the review's primary recommendation) over softening the ADR wording —
+it makes the stronger claim true rather than retreating to "verified by review". A `forbidden` contract
+scoped to domain/application is the correct tool; an `independence` contract was rejected because it
+would wrongly flag the four interface routers' legitimate audit imports. The new test asserts on the
+named contract being `KEPT`, giving a genuine red→green TDD cycle (the name is absent before the
+contract exists) and a regression guard against silent deletion. The contract was additionally proven
+non-trivial by a manual red proof: a temporary `import weighttogo.audit` in `goals.application` made
+`lint-imports` report the contract `BROKEN` (`weighttogo.goals.application -> weighttogo.audit`), then
+reverted.
+
+**References:**
+- Issue: #132 (M4-quality epic #140)
+- `docs/standards/M4_WEB_APP_QUALITY.md` finding 3
+- ADR-0024 (`docs/adr/0024-audit-log-structure.md`)
+
+---
+
 ## [2026-06-11] #131 — Complete the database-architecture constraint and index catalogues
 
 **Change Type:** Docs
