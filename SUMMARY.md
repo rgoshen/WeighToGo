@@ -7,6 +7,88 @@ issues were resolved.
 
 ---
 
+## [2026-06-12] #135 — Address PR #148 review on the goals index tests
+
+**Change Type:** Test
+**Scope:** web/backend (goals/infrastructure/models.py, tests/unit/goals/test_sqlalchemy_model.py, tests/integration/goals/test_index_usage_postgres.py)
+
+**Summary:**
+Addressed PR #148 review feedback. (1) Strengthened the model-declaration test to assert
+`column_names == ['user_id', 'created_at']` and — since SQLite reflection drops sort direction — that the
+`sqlite_master` DDL contains `created_at DESC`, so a drift to the wrong columns or to ASC now fails the test.
+(2) Reworked the Postgres seed to a single user with exactly one active goal so the `is_active = FALSE`
+history query excludes a real row (previously every row was inactive, making the two query shapes scan an
+identical set), and dropped the second user (dead setup under `enable_seqscan = off`). (3) Documented that the
+distinct-timestamp seed is load-bearing for plan stability and that the `goal_id` tie-break is a row-ordering
+concern out of scope for a plan test. (4) Softened the EXPLAIN docstrings: `enable_seqscan = off` proves the
+index is usable / guards against its removal, not that the planner prefers it organically. (5) Corrected the
+`idx_achievements_user_earned` wording (the shared trait is dual-declaration, not the `DESC` shape).
+
+**Rationale:**
+Review found the original assertions could not distinguish ASC from DESC or catch wrong columns, the
+history/listing seed never exercised the `include_active` distinction, and the achievements parallel was
+overstated. Deferred (with on-thread reasoning) the cross-cutting suggestions — a generic `create_all`↔
+migration index-parity test (which also surfaces a pre-existing weight-index gap: the weight model declares
+no indexes, so its migration-only indexes are absent from `create_all`; overlaps #137) and hoisting the
+shared `pg_engine` fixture — as out of scope for finding 6.
+
+**References:**
+- Issue: #135 (M4-quality epic #140), PR #148, finding 6
+
+---
+
+## [2026-06-12] #135 — Prove the goal-listing read path uses the index on PostgreSQL
+
+**Change Type:** Test
+**Scope:** web/backend (tests/integration/goals/test_index_usage_postgres.py)
+
+**Summary:**
+Added a `@pytest.mark.postgres` index-usage test mirroring the weight read-path proof
+(`tests/integration/weight/test_index_usage_postgres.py`). It seeds 150 inactive goals per user, runs
+`EXPLAIN` with `enable_seqscan = off` for both the full listing (`include_active=True`) and the past-goals
+history (`is_active = FALSE`) shapes of `SqlAlchemyGoalRepository.list_for_user`, and asserts the plan names
+`idx_goals_user_created` with no `Seq Scan on goals`; a third test asserts the index is present in
+`pg_indexes`. Skips locally without `WEIGHTTOGO_TEST_POSTGRES_DSN`; runs against the `postgres:16` CI service.
+
+**Rationale:**
+M4 review finding 6: the goal read path had no production-engine proof, unlike the weight path. The index
+exists via migration 0010, so the test passes on a migrated schema — its value is proving the query plans
+against the index and guarding against a future regression (e.g. an accidental drop) that the SQLite suite
+cannot catch.
+
+**References:**
+- Issue: #135 (M4-quality epic #140), finding 6
+- Mirrors `tests/integration/weight/test_index_usage_postgres.py`; SRS §11 (quality engineering)
+
+---
+
+## [2026-06-12] #135 — Dual-declare idx_goals_user_created for create_all parity
+
+**Change Type:** Fix
+**Scope:** web/backend (goals/infrastructure/models.py, tests/unit/goals/test_sqlalchemy_model.py)
+
+**Summary:**
+Declared `idx_goals_user_created (user_id, created_at DESC)` in `GoalModel.__table_args__`, mirroring
+migration 0010 exactly via `text("created_at DESC")`. The index was previously migration-only, so
+`Base.metadata.create_all` (the SQLite integration schema) never built it and the model and migration
+schemas diverged. Added a unit test asserting the index is present in
+`inspect(engine).get_indexes("goals")` after `create_all` — written first and watched fail before the
+declaration was added.
+
+**Rationale:**
+M4 review finding 6: the goal-listing index matched neither codebase precedent. Dual-declaring follows the
+codebase precedent that read indexes are declared in both the model and the migration (e.g. the
+also-dual-declared `idx_achievements_user_earned`) and gives the SQLite suite a faithful schema. The shared
+trait is the dual-declaration, not the index shape — this index is `DESC`, achievements is plain ASC. Chosen
+over a documentation-only note because this is a quality-remediation epic — matching the demonstrated
+discipline beats explaining the gap.
+
+**References:**
+- Issue: #135 (M4-quality epic #140), finding 6
+- Migration 0010 (`idx_goals_user_created`); ADR-0025 (constraint-hardening strategy)
+
+---
+
 ## [2026-06-12] #134 — Document the two-tier (SQLite/PostgreSQL) test strategy
 
 **Change Type:** Docs
