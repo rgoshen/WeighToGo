@@ -7,6 +7,31 @@ issues were resolved.
 
 ---
 
+## [2026-06-12] #134 — Guard the audit event taxonomy against migration drift
+
+**Change Type:** Test
+**Scope:** web/backend (tests/integration/audit/test_migration_0009.py)
+
+**Summary:**
+Added `test_event_type_check_constraint_matches_enum`, which parses migration 0009's `for v in (...)`
+event-type tuple and asserts it equals `{e.value for e in AuditEventType}`. The ORM model derives its
+event-type CHECK from the enum automatically, but the migration hard-codes the list; this guard catches
+a future enum addition that lands without a matching CHECK update.
+
+**Rationale:**
+Finding 5 (M4 Web App Quality Review): nothing asserted that the migration's hard-coded taxonomy stays in
+sync with the enum. Proven RED via a mutation check — adding a bogus enum member made the test fail;
+reverted to green. Two extraction bugs surfaced while watching it fail and were fixed: source literals are
+double-quoted (the single quotes in `f"'{v}'"` are runtime-only), and the value match must be scoped to
+`for v in (...)` so the unrelated `"users.user_id"` foreign-key literal is not swept in. Per the chosen
+approach, the assertion is pinned to migration 0009 and moves to a later migration if one re-declares the CHECK.
+
+**References:**
+- Issue: #134 (M4-quality epic #140)
+- `docs/standards/M4_WEB_APP_QUALITY.md` finding 5 (Structure, Loops and Branches, Defensive Programming)
+
+---
+
 ## [2026-06-12] #134 — Cover the account-locked audit path
 
 **Change Type:** Test
