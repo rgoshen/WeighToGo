@@ -7,6 +7,36 @@ issues were resolved.
 
 ---
 
+## [2026-06-12] #135 — Address PR #148 review on the goals index tests
+
+**Change Type:** Test
+**Scope:** web/backend (goals/infrastructure/models.py, tests/unit/goals/test_sqlalchemy_model.py, tests/integration/goals/test_index_usage_postgres.py)
+
+**Summary:**
+Addressed PR #148 review feedback. (1) Strengthened the model-declaration test to assert
+`column_names == ['user_id', 'created_at']` and — since SQLite reflection drops sort direction — that the
+`sqlite_master` DDL contains `created_at DESC`, so a drift to the wrong columns or to ASC now fails the test.
+(2) Reworked the Postgres seed to a single user with exactly one active goal so the `is_active = FALSE`
+history query excludes a real row (previously every row was inactive, making the two query shapes scan an
+identical set), and dropped the second user (dead setup under `enable_seqscan = off`). (3) Documented that the
+distinct-timestamp seed is load-bearing for plan stability and that the `goal_id` tie-break is a row-ordering
+concern out of scope for a plan test. (4) Softened the EXPLAIN docstrings: `enable_seqscan = off` proves the
+index is usable / guards against its removal, not that the planner prefers it organically. (5) Corrected the
+`idx_achievements_user_earned` wording (the shared trait is dual-declaration, not the `DESC` shape).
+
+**Rationale:**
+Review found the original assertions could not distinguish ASC from DESC or catch wrong columns, the
+history/listing seed never exercised the `include_active` distinction, and the achievements parallel was
+overstated. Deferred (with on-thread reasoning) the cross-cutting suggestions — a generic `create_all`↔
+migration index-parity test (which also surfaces a pre-existing weight-index gap: the weight model declares
+no indexes, so its migration-only indexes are absent from `create_all`; overlaps #137) and hoisting the
+shared `pg_engine` fixture — as out of scope for finding 6.
+
+**References:**
+- Issue: #135 (M4-quality epic #140), PR #148, finding 6
+
+---
+
 ## [2026-06-12] #135 — Prove the goal-listing read path uses the index on PostgreSQL
 
 **Change Type:** Test
@@ -46,10 +76,12 @@ schemas diverged. Added a unit test asserting the index is present in
 declaration was added.
 
 **Rationale:**
-M4 review finding 6: the goal-listing index matched neither codebase precedent. Dual-declaring brings it to
-parity with the dual-declared `idx_achievements_user_earned` read index and gives the SQLite suite a
-faithful schema. Chosen over a documentation-only note because this is a quality-remediation epic — matching
-the demonstrated discipline beats explaining the gap.
+M4 review finding 6: the goal-listing index matched neither codebase precedent. Dual-declaring follows the
+codebase precedent that read indexes are declared in both the model and the migration (e.g. the
+also-dual-declared `idx_achievements_user_earned`) and gives the SQLite suite a faithful schema. The shared
+trait is the dual-declaration, not the index shape — this index is `DESC`, achievements is plain ASC. Chosen
+over a documentation-only note because this is a quality-remediation epic — matching the demonstrated
+discipline beats explaining the gap.
 
 **References:**
 - Issue: #135 (M4-quality epic #140), finding 6

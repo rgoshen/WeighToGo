@@ -7,7 +7,7 @@ from datetime import date
 from decimal import Decimal
 
 import pytest
-from sqlalchemy import inspect
+from sqlalchemy import inspect, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -24,15 +24,29 @@ def test_goal_model_declares_user_created_listing_index(db_session: Session) -> 
     ``idx_goals_user_created (user_id, created_at DESC)`` backs the all-goals
     history read path (``SqlAlchemyGoalRepository.list_for_user``). Migration 0010
     creates it in production; declaring it on the model gives the SQLite
-    integration schema parity — matching the dual-declared
-    ``idx_achievements_user_earned`` read index rather than leaving this index
-    migration-only (issue #135, M4 review finding 6).
+    integration schema the same index, following the codebase precedent that read
+    indexes are declared in both the model and the migration (e.g. the
+    also-dual-declared ``idx_achievements_user_earned``) rather than leaving this
+    index migration-only (issue #135, M4 review finding 6).
+
+    Asserts the columns *and* the descending order. SQLite reflection
+    (``get_indexes``) drops the sort direction, so the ``created_at DESC`` shape is
+    checked against the raw ``sqlite_master`` DDL. Together these fail if the
+    declaration drifts to the wrong columns or to ASC.
     """
     # ARRANGE — the db_session fixture ran Base.metadata.create_all on SQLite.
+    engine = db_session.get_bind()
     # ACT
-    index_names = {ix["name"] for ix in inspect(db_session.get_bind()).get_indexes("goals")}
+    indexes = {ix["name"]: ix for ix in inspect(engine).get_indexes("goals")}
+    ddl = db_session.execute(
+        text(
+            "SELECT sql FROM sqlite_master WHERE type = 'index' AND name = 'idx_goals_user_created'"
+        )
+    ).scalar()
     # ASSERT
-    assert "idx_goals_user_created" in index_names
+    assert "idx_goals_user_created" in indexes
+    assert indexes["idx_goals_user_created"]["column_names"] == ["user_id", "created_at"]
+    assert ddl is not None and "created_at DESC" in ddl
 
 
 def test_goal_model_has_required_columns() -> None:

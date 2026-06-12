@@ -53,10 +53,12 @@ class GoalModel(Base):
         ),
         # Listing index (migration 0010): backs the all-goals history read path
         # (SqlAlchemyGoalRepository.list_for_user → ORDER BY created_at DESC).
-        # Dual-declared here so Base.metadata.create_all builds it, giving the
-        # SQLite integration schema parity with production and matching the
-        # dual-declared idx_achievements_user_earned read index. The text()
-        # expression mirrors the migration's (user_id, created_at DESC) exactly.
+        # Declared here as well as in the migration so Base.metadata.create_all
+        # builds it, following the codebase precedent that read indexes are
+        # declared in both the model and the migration (e.g.
+        # idx_achievements_user_earned). The text() expression mirrors migration
+        # 0010's (user_id, created_at DESC) exactly; the DESC shape is specific to
+        # this index, not shared with the ASC achievements one.
         Index(
             "idx_goals_user_created",
             "user_id",
