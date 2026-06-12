@@ -7,6 +7,28 @@ issues were resolved.
 
 ---
 
+## [2026-06-12] #134 — Cover the account-locked audit path
+
+**Change Type:** Test
+**Scope:** web/backend (tests/integration/auth/test_auth_audit.py)
+
+**Summary:**
+Added `test_account_locked_writes_account_locked_event_with_masked_email`, an integration test that
+drives six failed logins (the fifth sets the lockout, the sixth trips `AccountLockedError`) and asserts
+the `auth.account_locked` audit row is written with a null `user_id` and a masked email. This was the
+one audited path that previously had no coverage; the test mirrors the existing `login_failed` audit test.
+
+**Rationale:**
+Finding 5 (M4 Web App Quality Review): every other audited path has an assertion, but the lockout path
+did not. Proven RED via a mutation check — temporarily swapping the handler's event type to
+`auth.login_failed` made the test fail because no `account_locked` row was written; reverted to green.
+
+**References:**
+- Issue: #134 (M4-quality epic #140)
+- `docs/standards/M4_WEB_APP_QUALITY.md` finding 5 (Structure, Loops and Branches, Defensive Programming)
+
+---
+
 ## [2026-06-12] #133 — Document atomic restore in the backup/restore runbook
 
 **Change Type:** Docs

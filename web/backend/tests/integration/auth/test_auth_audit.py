@@ -79,6 +79,33 @@ def test_login_failure_writes_login_failed_event_with_masked_email(
     assert "@example.com" in email_in_meta
 
 
+def test_account_locked_writes_account_locked_event_with_masked_email(
+    client: TestClient, db_session: Session
+) -> None:
+    # ARRANGE
+    _register(client)
+    db_session.query(AuditLogModel).delete()
+    db_session.flush()
+
+    # ACT — exhaust the five permitted attempts (the fifth sets the lockout),
+    # then a sixth attempt trips AccountLockedError and audits the lockout.
+    for _ in range(6):
+        client.post(
+            "/api/v1/auth/login",
+            json={"email": "test@example.com", "password": "wrongpassword"},
+        )
+
+    # ASSERT
+    rows = _audit_rows(db_session)
+    locked = next((r for r in rows if r.event_type == "auth.account_locked"), None)
+    assert locked is not None
+    assert locked.user_id is None
+    assert locked.event_metadata is not None
+    email_in_meta = locked.event_metadata.get("email", "")
+    assert "test@example.com" not in email_in_meta
+    assert "@example.com" in email_in_meta
+
+
 def test_logout_writes_auth_logout_event(client: TestClient, db_session: Session) -> None:
     # ARRANGE
     _register(client)
