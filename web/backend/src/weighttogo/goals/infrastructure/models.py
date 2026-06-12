@@ -51,6 +51,17 @@ class GoalModel(Base):
             postgresql_where=text("is_active = TRUE"),
             sqlite_where=text("is_active = 1"),
         ),
+        # Listing index (migration 0010): backs the all-goals history read path
+        # (SqlAlchemyGoalRepository.list_for_user → ORDER BY created_at DESC).
+        # Dual-declared here so Base.metadata.create_all builds it, giving the
+        # SQLite integration schema parity with production and matching the
+        # dual-declared idx_achievements_user_earned read index. The text()
+        # expression mirrors the migration's (user_id, created_at DESC) exactly.
+        Index(
+            "idx_goals_user_created",
+            "user_id",
+            text("created_at DESC"),
+        ),
         # Backfill from migration 0003.
         CheckConstraint("goal_type IN ('lose', 'gain')", name="goals_goal_type_valid"),
         CheckConstraint("target_value > 0", name="goals_target_value_positive"),

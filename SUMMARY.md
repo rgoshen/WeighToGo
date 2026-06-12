@@ -7,6 +7,31 @@ issues were resolved.
 
 ---
 
+## [2026-06-12] #135 — Dual-declare idx_goals_user_created for create_all parity
+
+**Change Type:** Fix
+**Scope:** web/backend (goals/infrastructure/models.py, tests/unit/goals/test_sqlalchemy_model.py)
+
+**Summary:**
+Declared `idx_goals_user_created (user_id, created_at DESC)` in `GoalModel.__table_args__`, mirroring
+migration 0010 exactly via `text("created_at DESC")`. The index was previously migration-only, so
+`Base.metadata.create_all` (the SQLite integration schema) never built it and the model and migration
+schemas diverged. Added a unit test asserting the index is present in
+`inspect(engine).get_indexes("goals")` after `create_all` — written first and watched fail before the
+declaration was added.
+
+**Rationale:**
+M4 review finding 6: the goal-listing index matched neither codebase precedent. Dual-declaring brings it to
+parity with the dual-declared `idx_achievements_user_earned` read index and gives the SQLite suite a
+faithful schema. Chosen over a documentation-only note because this is a quality-remediation epic — matching
+the demonstrated discipline beats explaining the gap.
+
+**References:**
+- Issue: #135 (M4-quality epic #140), finding 6
+- Migration 0010 (`idx_goals_user_created`); ADR-0025 (constraint-hardening strategy)
+
+---
+
 ## [2026-06-12] #134 — Document the two-tier (SQLite/PostgreSQL) test strategy
 
 **Change Type:** Docs

@@ -7,6 +7,7 @@ from datetime import date
 from decimal import Decimal
 
 import pytest
+from sqlalchemy import inspect
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -15,6 +16,23 @@ from weighttogo.goals.infrastructure.models import GoalModel
 
 def test_goal_model_tablename() -> None:
     assert GoalModel.__tablename__ == "goals"
+
+
+def test_goal_model_declares_user_created_listing_index(db_session: Session) -> None:
+    """The goal-listing index is declared on the model, so ``create_all`` builds it.
+
+    ``idx_goals_user_created (user_id, created_at DESC)`` backs the all-goals
+    history read path (``SqlAlchemyGoalRepository.list_for_user``). Migration 0010
+    creates it in production; declaring it on the model gives the SQLite
+    integration schema parity — matching the dual-declared
+    ``idx_achievements_user_earned`` read index rather than leaving this index
+    migration-only (issue #135, M4 review finding 6).
+    """
+    # ARRANGE — the db_session fixture ran Base.metadata.create_all on SQLite.
+    # ACT
+    index_names = {ix["name"] for ix in inspect(db_session.get_bind()).get_indexes("goals")}
+    # ASSERT
+    assert "idx_goals_user_created" in index_names
 
 
 def test_goal_model_has_required_columns() -> None:
