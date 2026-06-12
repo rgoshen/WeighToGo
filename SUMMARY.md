@@ -7,6 +7,56 @@ issues were resolved.
 
 ---
 
+## [2026-06-12] #133 — Document atomic restore in the backup/restore runbook
+
+**Change Type:** Docs
+**Scope:** docs/runbooks (backup-restore.md)
+
+**Summary:**
+Updated the §4 restore procedure to match the now-atomic script: the DESTRUCTIVE note states the
+restore runs inside a single transaction (`--single-transaction`) and rolls back atomically on a
+mid-restore failure (leaving the database unchanged rather than partially clobbered, and implying
+`--exit-on-error`), while keeping the scratch-database-first + verify-before-cutover guidance as
+defense-in-depth for the still-destructive success path. Added `--single-transaction` to the raw
+equivalent `pg_restore` command so the documented command matches `restore.sh`.
+
+**Rationale:**
+Finding 4's Documentation half: the runbook must describe the chosen behavior. With atomicity now
+enforced in the script, the runbook documents the atomic guarantee rather than a partial-restore
+recovery procedure.
+
+**References:**
+- Issue: #133 (M4-quality epic #140)
+- `docs/standards/M4_WEB_APP_QUALITY.md` finding 4 (Defensive Programming, Documentation)
+
+---
+
+## [2026-06-12] #133 — Make restore.sh atomic with --single-transaction
+
+**Change Type:** Fix
+**Scope:** web/backend (scripts/restore.sh, tests/scripts)
+
+**Summary:**
+Added `--single-transaction` to the `pg_restore` invocation in `restore.sh` so a restore commits or
+rolls back atomically (the flag also implies `--exit-on-error`, making `set -e` predictable). Drove it
+with `test_restore_uses_single_transaction_for_atomicity`, which asserts the flag reaches `pg_restore`
+via the suite's argument-echoing stub. Written test-first (proven RED — the prior command passed only
+`--clean --if-exists --no-owner --no-privileges`); committed test + fix together because the pre-commit
+hook runs the full backend suite, which must stay green.
+
+**Rationale:**
+Finding 4 (Defensive Programming: leave the resource in a correct state on failure). Without
+`--single-transaction`, DROP/CREATE/COPY run as independent statements, so a mid-restore failure leaves
+the database partially clobbered. The flag is the review's recommended fix; verified against the
+PostgreSQL 16 `pg_restore` docs. Asserting at the script level matches the suite's convention of proving
+guard logic without a live database — PostgreSQL's transactional semantics belong to the engine.
+
+**References:**
+- Issue: #133 (M4-quality epic #140)
+- `docs/standards/M4_WEB_APP_QUALITY.md` finding 4 (Defensive Programming, Documentation)
+
+---
+
 ## [2026-06-11] #132 — Update ADR-0024 to describe the protected audit contract (PR #145 review)
 
 **Change Type:** Docs
