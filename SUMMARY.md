@@ -7,6 +7,29 @@ issues were resolved.
 
 ---
 
+## [2026-06-12] #134 — Document the two-tier (SQLite/PostgreSQL) test strategy
+
+**Change Type:** Docs
+**Scope:** web/backend (tests/README.md, README.md)
+
+**Summary:**
+Added `web/backend/tests/README.md` explaining why a local `uv run pytest` shows skipped tests: the
+`@pytest.mark.postgres` index-usage and migration-round-trip tests are PostgreSQL-fidelity tests that
+skip under the default in-memory SQLite suite and run against a real `postgres:16` service in CI. Noted
+that the skip count is by design — and will grow, not shrink, as more fidelity tests are added — and
+documented how to run them locally via the `WEIGHTTOGO_TEST_POSTGRES_DSN` env var. Replaced the backend
+README's stale "682 tests" line with a non-brittle pointer to the new test README.
+
+**Rationale:**
+Surfaced during the PR #147 review discussion: a reader could mistake the skipped count for a coverage
+gap. Documenting the two-tier strategy makes the intent durable. Docs-only; no test or source changes.
+
+**References:**
+- Issue: #134 (M4-quality epic #140), PR #147
+- ADR-0012 (three-pattern backend architecture); SRS §11 (quality engineering)
+
+---
+
 ## [2026-06-12] #134 — Address PR #147 review feedback
 
 **Change Type:** Test
