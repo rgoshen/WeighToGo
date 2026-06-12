@@ -7,6 +7,46 @@ issues were resolved.
 
 ---
 
+## [2026-06-11] #132 — Strengthen audit isolation to a protected contract; harden the architecture test (PR #145 review)
+
+**Change Type:** Fix
+**Scope:** web/backend (import-linter contracts, architecture tests)
+
+**Summary:**
+Addressed the PR #145 review. Replaced the original `forbidden` contract — which fenced only the six
+other contexts' `domain`/`application` layers — with a `protected` contract
+(`audit: only the four interface routers may import audit`): `weighttogo.audit` may be imported only by
+the four `*.interface.router` allow-listed importers; every other module is forbidden by default
+(`as_packages` defaults to True, so audit's own descendants still import each other). This closes the
+gaps the review identified — `achievements.interface`/`dashboard.interface` (non-wiring interfaces), the
+top-level `weighttogo.interface` middleware, every `*.infrastructure` layer, and any future bounded
+context — none of which the `forbidden` allow-list covered, and none of which need hand-maintenance now.
+Also added `weighttogo.audit` to the pre-existing `shared: must not import bounded contexts`
+`forbidden_modules` so all of `shared`'s isolation rules live in one contract (closing a pre-existing
+omission). Hardened `tests/architecture/test_import_contracts.py`: a session-scoped fixture runs
+`lint-imports` once (was twice; removed the duplicated `shutil.which`/`subprocess.run` block); the audit
+test asserts `returncode == 0` and matches the contract's `KEPT` status against whitespace-normalized
+stdout (robust to rich's width-based soft-wrapping and import-linter output reformats); the config path
+is anchored to `Path(__file__).parents[2]` with an explicit `cwd` (location-independent) and a 120s
+`subprocess` timeout (fail-fast on a wedged run).
+
+**Rationale:**
+A `protected` contract inverts the allow-list fragility the review flagged: instead of enumerating every
+module that must *not* import audit (where the first omission silently defeats the invariant), it names
+the only modules that *may*, so the default is closed and the ADR's "only the four routers" claim is now
+literally enforced rather than partially. Verified by a manual red proof: temporary `import
+weighttogo.audit` statements in `achievements.interface`, `goals.infrastructure`, and
+`weighttogo.interface` — all previously uncaught — each made `lint-imports` report the contract `BROKEN`,
+then reverted. The `independence` contract remained the wrong tool (it would flag the four legitimate
+routers). Contracts: 16 kept, 0 broken.
+
+**References:**
+- Issue: #132 (M4-quality epic #140); PR #145 review
+- `docs/standards/M4_WEB_APP_QUALITY.md` finding 3
+- import-linter `protected` contract (allow-list of importers; `as_packages` default True)
+
+---
+
 ## [2026-06-11] #132 — Align ADR-0024 with the enforced audit isolation and SAVEPOINT mechanism
 
 **Change Type:** Docs
