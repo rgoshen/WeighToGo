@@ -148,6 +148,20 @@ def test_restore_invokes_pg_restore_and_strips_dsn(stub_bin: Path, tmp_path: Pat
     assert _STRIPPED_DSN in result.stdout
 
 
+def test_restore_uses_single_transaction_for_atomicity(stub_bin: Path, tmp_path: Path) -> None:
+    # ARRANGE — a present dump file so the script reaches the pg_restore invocation.
+    (tmp_path / "in.dump").touch()
+
+    # ACT
+    result = _run(_RESTORE, "in.dump", path_prefix=stub_bin, cwd=tmp_path, database_url=_DSN)
+
+    # ASSERT — --single-transaction makes the restore commit-or-roll-back atomically
+    # (and implies --exit-on-error), so a mid-restore failure cannot leave a partially
+    # clobbered database. See docs/runbooks/backup-restore.md section 4.
+    assert result.returncode == 0
+    assert "--single-transaction" in result.stdout
+
+
 def test_restore_fails_when_pg_restore_fails(tmp_path: Path) -> None:
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
