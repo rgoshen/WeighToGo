@@ -79,6 +79,9 @@ def test_event_type_check_constraint_matches_enum() -> None:
     # double-quoted in source; the single quotes in f"'{v}'" only appear at runtime.
     tuple_match = re.search(r"for v in \((.*?)\)", src, re.DOTALL)
     assert tuple_match is not None, "could not locate the _VALID_EVENT_TYPES tuple"
-    migration_values = set(re.findall(r"""["']([a-z_]+\.[a-z_]+)["']""", tuple_match.group(1)))
+    # Capture the full quoted-literal shape (word chars and dots) so values with
+    # digits, casing, or extra dots (e.g. oauth2.login) are not silently dropped,
+    # which would report drift that does not exist.
+    migration_values = set(re.findall(r"""["']([\w.]+)["']""", tuple_match.group(1)))
 
     assert migration_values == {e.value for e in AuditEventType}

@@ -7,6 +7,33 @@ issues were resolved.
 
 ---
 
+## [2026-06-12] #134 — Address PR #147 review feedback
+
+**Change Type:** Test
+**Scope:** web/backend (tests/integration/auth/test_auth_audit.py, tests/integration/audit/test_migration_0009.py)
+
+**Summary:**
+Addressed three review comments on the #134 tests. (1) Widened the taxonomy-parity regex from
+`[a-z_]+\.[a-z_]+` to `["']([\w.]+)["']` so a future event value with a digit, casing, or a second dot is
+captured rather than silently dropped — the old class would have reported drift that does not exist. (2)
+Derived the account-lockout loop bound from `get_settings().max_login_attempts + 1` instead of a hard-coded
+`range(6)`, so the test tracks the configured threshold. (3) Extracted a shared `_assert_email_masked`
+helper used by both the failed-login and account-locked audit tests, and tightened it to assert the masked
+value `startswith("***")` — encoding the NFR-Priv-1 front-masking contract, which catches a leading
+local-part leak (e.g. `tes***@example.com`) that the previous `"@example.com" in ...` check missed.
+
+**Rationale:**
+Code review (PR #147). Each guard was re-verified against a mutation: the widened regex now reports a
+digit-bearing drift value (`oauth2.login`) cleanly instead of dropping it. The tightened email assertion
+improves on the reviewer's literal suggestion (asserting `"test"` is absent), which would not have caught
+the `tes***@example.com` leak it cited, whereas the front-mask check does.
+
+**References:**
+- Issue: #134 (M4-quality epic #140), PR #147
+- `docs/standards/M4_WEB_APP_QUALITY.md` finding 5
+
+---
+
 ## [2026-06-12] #134 — Guard the audit event taxonomy against migration drift
 
 **Change Type:** Test
