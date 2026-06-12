@@ -7,6 +7,32 @@ issues were resolved.
 
 ---
 
+## [2026-06-11] #132 — Update ADR-0024 to describe the protected audit contract (PR #145 review)
+
+**Change Type:** Docs
+**Scope:** docs/adr (0024-audit-log-structure.md)
+
+**Summary:**
+Follow-on to the contract redesign. Rewrote the ADR-0024 Consequences bullet so the citation matches
+what is actually enforced: `weighttogo.audit` is imported only by the four interface routers, and no
+other module — another context's interface, any domain/application/infrastructure layer, the request
+middleware, or a future bounded context — may import it, "Enforced by the
+`audit: only the four interface routers may import audit` import-linter `protected` contract". The
+earlier wording cited the `forbidden` contract, which only enforced the domain/application half of the
+claim; the review noted a reviewer trusting that sentence might approve a new wiring site believing CI
+would catch it.
+
+**Rationale:**
+The review offered "tighten the contract or soften the wording"; tightening to a `protected` contract
+makes the exclusivity claim literally true, so the ADR can keep the strong claim and now back it. No new
+ADR and no `docs/adr/README.md` index-row change.
+
+**References:**
+- Issue: #132 (M4-quality epic #140); PR #145 review
+- `docs/standards/M4_WEB_APP_QUALITY.md` finding 3 (Documentation)
+
+---
+
 ## [2026-06-11] #132 — Strengthen audit isolation to a protected contract; harden the architecture test (PR #145 review)
 
 **Change Type:** Fix

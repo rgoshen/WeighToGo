@@ -74,7 +74,7 @@ This event type is reserved in the CHECK constraint taxonomy but is not currentl
 - Every in-scope operation writes exactly one audit row.
 - User deletion does not destroy the audit trail.
 - No unmasked PII is stored; failed logins carry a masked email in `metadata` via `mask_pii()`.
-- The `audit` context is never imported by another context's domain or application layer — only the four interface routers (`auth`, `goals`, `weight_tracking`, `preferences`) wire it at the composition root (the ADR-0019 pattern). Enforced by the `audit: other contexts must not import audit` import-linter `forbidden` contract and verified in `test_import_contracts.py`.
+- `weighttogo.audit` is imported only by the four interface routers (`auth`, `goals`, `weight_tracking`, `preferences`) that wire it at the composition root (the ADR-0019 pattern). No other module may import it — not another context's interface, any domain/application/infrastructure layer, the top-level request middleware, or a future bounded context. Enforced by the `audit: only the four interface routers may import audit` import-linter `protected` contract (allow-list of importers; everything else forbidden by default) and verified in `test_import_contracts.py`.
 
 ## Alternatives Considered
 
