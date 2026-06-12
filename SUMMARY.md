@@ -7,6 +7,31 @@ issues were resolved.
 
 ---
 
+## [2026-06-12] #135 — Prove the goal-listing read path uses the index on PostgreSQL
+
+**Change Type:** Test
+**Scope:** web/backend (tests/integration/goals/test_index_usage_postgres.py)
+
+**Summary:**
+Added a `@pytest.mark.postgres` index-usage test mirroring the weight read-path proof
+(`tests/integration/weight/test_index_usage_postgres.py`). It seeds 150 inactive goals per user, runs
+`EXPLAIN` with `enable_seqscan = off` for both the full listing (`include_active=True`) and the past-goals
+history (`is_active = FALSE`) shapes of `SqlAlchemyGoalRepository.list_for_user`, and asserts the plan names
+`idx_goals_user_created` with no `Seq Scan on goals`; a third test asserts the index is present in
+`pg_indexes`. Skips locally without `WEIGHTTOGO_TEST_POSTGRES_DSN`; runs against the `postgres:16` CI service.
+
+**Rationale:**
+M4 review finding 6: the goal read path had no production-engine proof, unlike the weight path. The index
+exists via migration 0010, so the test passes on a migrated schema — its value is proving the query plans
+against the index and guarding against a future regression (e.g. an accidental drop) that the SQLite suite
+cannot catch.
+
+**References:**
+- Issue: #135 (M4-quality epic #140), finding 6
+- Mirrors `tests/integration/weight/test_index_usage_postgres.py`; SRS §11 (quality engineering)
+
+---
+
 ## [2026-06-12] #135 — Dual-declare idx_goals_user_created for create_all parity
 
 **Change Type:** Fix
