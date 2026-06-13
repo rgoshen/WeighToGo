@@ -7,6 +7,55 @@ issues were resolved.
 
 ---
 
+## [2026-06-13] #136 — Cover goals target_date epoch boundary and guard literal parity
+
+**Change Type:** Test
+**Scope:** web/backend (tests/unit/goals/test_sqlalchemy_model.py)
+
+**Summary:**
+Added an at-boundary accept test for `goals_target_date_epoch` (`target_date >= '2020-01-01'`): the
+inclusive boundary `date(2020, 1, 1)` must be admitted (only the `2019-12-31` reject was previously
+tested). Added a drift-guard test asserting the `'2020-01-01'` epoch in the model's `CheckConstraint`
+matches the literal migration 0010 writes in its `create_check_constraint` (introspecting the model
+constraint and regex-extracting the migration's, anchored on the `create_check_constraint` call so the
+migration docstring is never matched). Both tests were watched failing first — the accept test under an
+exclusive `>`, the parity test under an injected model/migration divergence — before being made green.
+
+**Rationale:**
+M4 Web App Quality Review finding 7: the inclusive epoch boundary had no accept-side test, and the
+duplicated literal could silently drift between the model and migration. The drift guard is a parity
+test rather than a shared constant because a migration is a point-in-time snapshot and must not import
+a live application constant (Alembic guidance); this keeps migration 0010 a faithful frozen snapshot and
+follows the dual-declaration precedent from #135.
+
+**References:**
+- Issue: #136 (M4-quality epic #140), finding 7
+
+---
+
+## [2026-06-13] #136 — Cover achievements threshold CHECK boundaries
+
+**Change Type:** Test
+**Scope:** web/backend (tests/unit/achievements/test_sqlalchemy_model.py)
+
+**Summary:**
+Added accept- and reject-side boundary tests for `achievements_threshold_positive`
+(`threshold IS NULL OR threshold > 0`): a negative-threshold reject case (the strict boundary was
+previously tested only at zero), a smallest-positive accept case (`Decimal("0.01")`, the least value
+`Numeric(6, 2)` can represent above the boundary), and an explicit NULL-acceptance case for a
+`goal_reached` row (previously only incidental). Each new test was proven non-vacuous by momentarily
+perturbing the constraint and watching it fail, then restoring it — no production code changed.
+
+**Rationale:**
+M4 Web App Quality Review finding 7: the constraint's accept side and its negative reject side were
+unverified. Boundary tests document the exact admissible range and catch a future over-tightening
+(e.g. dropping the NULL allowance or excluding `0.01`).
+
+**References:**
+- Issue: #136 (M4-quality epic #140), finding 7
+
+---
+
 ## [2026-06-12] #135 — Address PR #148 review on the goals index tests
 
 **Change Type:** Test

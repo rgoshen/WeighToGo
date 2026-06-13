@@ -2,16 +2,53 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import Callable
 from datetime import date
 from decimal import Decimal
+from pathlib import Path
+from typing import cast
 
 import pytest
-from sqlalchemy import inspect, text
+from sqlalchemy import CheckConstraint, Table, inspect, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from weighttogo.goals.infrastructure.models import GoalModel
+
+_EPOCH_RE = re.compile(r"\d{4}-\d{2}-\d{2}")
+
+
+def _check_constraint_sqltext(table: Table, name: str) -> str:
+    """Return the SQL text of the named CHECK constraint declared on ``table``."""
+    for constraint in table.constraints:
+        if isinstance(constraint, CheckConstraint) and constraint.name == name:
+            return str(constraint.sqltext)
+    raise AssertionError(f"CheckConstraint {name!r} not found on {table.name}")
+
+
+def _migration_check_constraint_sql(source: str, name: str) -> str:
+    """Return the ``sa.text`` SQL for the named ``create_check_constraint`` call.
+
+    Anchored on the ``create_check_constraint(<name>, ...)`` call so the
+    constraint's own docstring mention of the same SQL is never matched.
+    """
+    pattern = re.compile(
+        r'create_check_constraint\(\s*"'
+        + re.escape(name)
+        + r'",\s*"[^"]+",\s*sa\.text\(\s*"([^"]+)"',
+        re.DOTALL,
+    )
+    match = pattern.search(source)
+    assert match is not None, f"create_check_constraint for {name!r} not found in migration"
+    return match.group(1)
+
+
+def _extract_epoch(constraint_sql: str) -> str:
+    """Extract the YYYY-MM-DD epoch literal from a constraint's SQL text."""
+    match = _EPOCH_RE.search(constraint_sql)
+    assert match is not None, f"no epoch date found in {constraint_sql!r}"
+    return match.group(0)
 
 
 def test_goal_model_tablename() -> None:
@@ -110,6 +147,63 @@ def test_goal_target_date_before_epoch_rejected(
     # ACT / ASSERT
     with pytest.raises(IntegrityError):
         db_session.flush()
+
+
+def test_goal_target_date_epoch_matches_migration() -> None:
+    """The ``goals_target_date_epoch`` literal must not drift between declarations.
+
+    The constraint is dual-declared: the model's ``CheckConstraint`` (so the
+    SQLite ``create_all`` suite enforces it) and migration 0010's
+    ``create_check_constraint`` (so production enforces it) each carry the
+    ``'2020-01-01'`` epoch inline. A migration is a point-in-time snapshot and
+    must not import a live application constant, so the literal is intentionally
+    written in both places; this test is the drift guard the acceptance criteria
+    require — it fails if the two epochs ever diverge (M4 review finding 7).
+    """
+    # ARRANGE — the epoch the model enforces.
+    model_sql = _check_constraint_sqltext(
+        cast(Table, GoalModel.__table__), "goals_target_date_epoch"
+    )
+    model_epoch = _extract_epoch(model_sql)
+    # ARRANGE — the epoch migration 0010 writes for the same constraint.
+    migration_path = (
+        Path(__file__).resolve().parents[3] / "alembic/versions/0010_constraint_hardening.py"
+    )
+    migration_sql = _migration_check_constraint_sql(
+        migration_path.read_text(encoding="utf-8"), "goals_target_date_epoch"
+    )
+    migration_epoch = _extract_epoch(migration_sql)
+    # ASSERT
+    assert model_epoch == migration_epoch
+
+
+def test_goal_target_date_at_epoch_accepted(
+    db_session: Session, make_user: Callable[..., int]
+) -> None:
+    """The epoch boundary date itself is accepted (the constraint is inclusive).
+
+    ``goals_target_date_epoch`` is ``target_date >= '2020-01-01'``, so the exact
+    boundary must be admitted. Complements the ``2019-12-31`` reject case, pinning
+    the inclusive side of the boundary that was previously unverified (M4 review
+    finding 7).
+    """
+    # ARRANGE
+    user_id = make_user()
+    goal = GoalModel(
+        user_id=user_id,
+        target_value=Decimal("150.0"),
+        target_unit="lbs",
+        start_value=Decimal("200.0"),
+        goal_type="lose",
+        is_active=False,  # avoid conflict with the active-goal unique index
+        is_achieved=False,
+        target_date=date(2020, 1, 1),  # exactly the inclusive epoch boundary
+    )
+    db_session.add(goal)
+    # ACT
+    db_session.flush()
+    # ASSERT
+    assert goal.goal_id is not None
 
 
 def test_goal_invalid_type_rejected(db_session: Session, make_user: Callable[..., int]) -> None:
