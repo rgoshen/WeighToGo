@@ -7,6 +7,37 @@ issues were resolved.
 
 ---
 
+## [2026-06-13] #137 — Consolidate the migration round-trip tests into one ordered scenario
+
+**Change Type:** Test
+**Scope:** web/backend (tests/integration/migrations/test_migration_round_trips.py)
+
+**Summary:**
+Replaced the three mutually order-dependent round-trip tests
+(`test_from_scratch_apply_reaches_head`, `test_downgrade_base_removes_all_domain_tables`,
+`test_upgrade_head_after_downgrade_restores_schema`) with a single linear
+`test_full_chain_round_trip`. With one test there is no collection-order dependency to enforce, so
+the reliance on unenforced pytest file-definition order is gone and `pytest-randomly` is a non-issue.
+Added an existence-assertion step immediately after seeding — `count(audit_log) == 1`,
+`count(achievements) == 2`, `count(achievements WHERE threshold > 0) == 1`, and
+`count(goals WHERE target_date = '2020-01-01') == 1` — so a silently-failed or removed INSERT now
+fails the test instead of letting an empty-schema rollback pass green. The guard was proven
+non-vacuous by temporarily removing the `audit_log` insert and watching the test fail (`assert 0 == 1`),
+then restoring it. Verified on real PostgreSQL.
+
+**Rationale:**
+M4 Web App Quality Review finding 8: the three tests relied on unenforced file-definition ordering
+(safe only because `pytest-randomly` is absent). Consolidation removes the fragility at its root rather
+than annotating it with an ordering plugin, avoiding a test dependency the project deliberately omits.
+The existence assertions close the gap that the round-trip could otherwise pass even if the seed
+silently inserted nothing.
+
+**References:**
+- Issue: #137 (M4-quality epic #140), finding 8
+- Spec: SRS §8.3 (migrations)
+
+---
+
 ## [2026-06-13] #137 — Make the migration round-trip seed data-bearing for the M4 tables
 
 **Change Type:** Test

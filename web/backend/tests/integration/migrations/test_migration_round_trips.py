@@ -155,54 +155,64 @@ def pg_migration_engine() -> Iterator[Engine]:
         get_settings.cache_clear()
 
 
-def test_from_scratch_apply_reaches_head(pg_migration_engine: Engine) -> None:
-    """upgrade head from an empty DB lands at revision 0010 (AC: from-scratch apply).
+def test_full_chain_round_trip(pg_migration_engine: Engine) -> None:
+    """The full migration chain round-trips with data in every M4 table.
 
-    Seeds representative data after the version check so that
-    test_downgrade_base_removes_all_domain_tables exercises data-bearing rollback,
-    not just empty-schema rollback.
+    Deliberately a single linear test: with no sibling tests there is no collection-order
+    dependency to enforce, so pytest-randomly is a non-issue.  This replaces three previously
+    order-dependent tests that relied on unenforced file-definition order (finding 8).
+
+    1. a fresh upgrade head (applied by the module fixture) lands at revision 0010,
+    2. seed representative rows so every M4 table is data-bearing (an audit_log row, a
+       'milestone' achievement with threshold > 0, and an epoch-boundary goal),
+    3. assert those seeded rows exist, so a silently-failed or removed INSERT fails the test
+       instead of letting an empty-schema rollback pass green,
+    4. downgrade base removes all seven SRS domain tables with the data present (migration
+       0008's downgrade must DELETE the 'streak' row before re-narrowing its CHECK), and
+    5. upgrade head restores the full schema at revision 0010.
     """
-    with pg_migration_engine.connect() as conn:
-        row = conn.execute(text("SELECT version_num FROM alembic_version")).scalar_one()
-    assert row == "0010"  # update when migration 0011 is added
-    _seed_representative_data(pg_migration_engine)
-
-
-def test_downgrade_base_removes_all_domain_tables(pg_migration_engine: Engine) -> None:
-    """downgrade base removes all seven SRS domain tables with representative data present.
-
-    AC: chain is reversible.
-
-    Depends on test_from_scratch_apply_reaches_head running first (DB at head with seeded data).
-    The seeded data includes achievement_type='streak'; migration 0008's downgrade deletes
-    these rows before narrowing the CHECK so this test catches constraint-violation hazards
-    that an empty-schema rollback would miss.
-    Tests run in file-definition order by default; do not add pytest-randomly without
-    adding explicit ordering enforcement.
-    """
+    engine = pg_migration_engine
     cfg = Config("alembic.ini")
+
+    # 1. fresh apply reached head
+    with engine.connect() as conn:
+        version = conn.execute(text("SELECT version_num FROM alembic_version")).scalar_one()
+    assert version == "0010"  # update when migration 0011 is added
+
+    # 2. seed data-bearing rows in every M4 table
+    _seed_representative_data(engine)
+
+    # 3. the seeded M4 rows must exist before the downgrade, so "data-bearing" is an enforced
+    #    precondition rather than an implicit hope
+    with engine.connect() as conn:
+        audit_count = conn.execute(text("SELECT count(*) FROM audit_log")).scalar_one()
+        achievement_count = conn.execute(text("SELECT count(*) FROM achievements")).scalar_one()
+        threshold_count = conn.execute(
+            text("SELECT count(*) FROM achievements WHERE threshold > 0")
+        ).scalar_one()
+        epoch_goal_count = conn.execute(
+            text("SELECT count(*) FROM goals WHERE target_date = '2020-01-01'")
+        ).scalar_one()
+    assert audit_count == 1
+    assert achievement_count == 2  # one 'streak' + one 'milestone'
+    assert threshold_count == 1
+    assert epoch_goal_count == 1
+
+    # 4. downgrade base clears every domain table with data present
     command.downgrade(cfg, "base")
-    table_names = set(inspect(pg_migration_engine).get_table_names())
-    assert table_names.isdisjoint(_DOMAIN_TABLES), (
+    after_downgrade = set(inspect(engine).get_table_names())
+    assert after_downgrade.isdisjoint(_DOMAIN_TABLES), (
         f"Expected all domain tables gone after downgrade base; "
-        f"still present: {table_names & _DOMAIN_TABLES}"
+        f"still present: {after_downgrade & _DOMAIN_TABLES}"
     )
 
-
-def test_upgrade_head_after_downgrade_restores_schema(pg_migration_engine: Engine) -> None:
-    """upgrade head after downgrade base restores all domain tables (AC: chain round-trips).
-
-    Depends on test_downgrade_base_removes_all_domain_tables running first (DB must be at base).
-    Tests run in file-definition order by default; do not add pytest-randomly without
-    adding explicit ordering enforcement.
-    """
-    cfg = Config("alembic.ini")
+    # 5. upgrade head restores the full schema
     command.upgrade(cfg, "head")
-    table_names = set(inspect(pg_migration_engine).get_table_names())
-    assert table_names >= _DOMAIN_TABLES, (
+    after_upgrade = set(inspect(engine).get_table_names())
+    assert after_upgrade >= _DOMAIN_TABLES, (
         f"Expected all domain tables present after upgrade head; "
-        f"missing: {_DOMAIN_TABLES - table_names}"
+        f"missing: {_DOMAIN_TABLES - after_upgrade}"
     )
-    with pg_migration_engine.connect() as conn:
-        row = conn.execute(text("SELECT version_num FROM alembic_version")).scalar_one()
-    assert row == "0010"  # update when migration 0011 is added
+    with engine.connect() as conn:
+        version = conn.execute(text("SELECT version_num FROM alembic_version")).scalar_one()
+    assert version == "0010"  # update when migration 0011 is added
