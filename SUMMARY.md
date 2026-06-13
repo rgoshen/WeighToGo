@@ -7,6 +7,34 @@ issues were resolved.
 
 ---
 
+## [2026-06-13] #137 — Make the migration round-trip seed data-bearing for the M4 tables
+
+**Change Type:** Test
+**Scope:** web/backend (tests/integration/migrations/test_migration_round_trips.py)
+
+**Summary:**
+Extended `_seed_representative_data` so every M4 table carries a real row through the full
+downgrade/upgrade chain (finding 8): added an `audit_log` row (table introduced by migration 0009;
+`event_type='goal.created'` from the taxonomy, `resource_type`/`resource_id` set to satisfy the
+resource-consistency CHECK), a `'milestone'` achievement with `threshold = 10.00` (exercising the 0010
+`achievements_threshold_positive` column, in the `WHERE threshold IS NOT NULL` unique-index partition so
+it does not collide with the NULL-threshold `streak` row), and moved the seeded goal's `target_date` to
+`'2020-01-01'`, the inclusive lower bound of the 0010 `goals_target_date_epoch` CHECK. Verified on real
+PostgreSQL (the suite is `@pytest.mark.postgres`): the new inserts are admitted and the round-trip stays green.
+
+**Rationale:**
+The seed previously inserted no `audit_log` row, no non-null `threshold`, and a far-future `target_date`,
+so the suite's docstring claim that the chain "handles real data" was unproven for the M4 tables. `0009`/`0010`
+downgrades do not validate rows (unlike `0008`), so impact is low, but the seed now makes the docstring true
+and will catch any future row-validating downgrade on these tables. `refresh_tokens` is M2-era (migration
+0001), not an M4 table, so it is intentionally left unseeded (structural drop/restore coverage only).
+
+**References:**
+- Issue: #137 (M4-quality epic #140), finding 8
+- Spec: SRS §8.3 (migrations)
+
+---
+
 ## [2026-06-13] #136 — Cover goals target_date epoch boundary and guard literal parity
 
 **Change Type:** Test

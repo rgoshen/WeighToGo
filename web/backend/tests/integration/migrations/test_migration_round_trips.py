@@ -47,6 +47,14 @@ def _seed_representative_data(engine: Engine) -> None:
     must DELETE streak rows before recreating the narrow CHECK; without that cleanup,
     PostgreSQL raises a constraint violation on any existing streak row.
 
+    Every M4 table is data-bearing so the full downgrade chain is exercised against real
+    data, not just an empty schema (finding 8):
+      - audit_log: one row (table introduced by migration 0009),
+      - achievements: a 'milestone' row with threshold > 0 (the 0010
+        achievements_threshold_positive column) alongside the 'streak' row,
+      - goals: target_date = '2020-01-01', the inclusive lower bound of the 0010
+        goals_target_date_epoch CHECK.
+
     All other rows anchor the representative-data set and confirm the full downgrade
     chain handles real data without errors.
     """
@@ -66,12 +74,14 @@ def _seed_representative_data(engine: Engine) -> None:
             ),
             {"uid": user_id},
         )
-        # 'lose' goal: target_value < start_value satisfies the direction invariant (0004)
+        # 'lose' goal: target_value < start_value satisfies the direction invariant (0004).
+        # target_date = '2020-01-01' is the inclusive lower bound of the 0010
+        # goals_target_date_epoch CHECK (target_date IS NULL OR target_date >= '2020-01-01').
         goal_id = conn.execute(
             text(
                 "INSERT INTO goals "
                 "(user_id, target_value, target_unit, start_value, goal_type, target_date) "
-                "VALUES (:uid, 160.0, 'lbs', 180.0, 'lose', '2025-12-31') "
+                "VALUES (:uid, 160.0, 'lbs', 180.0, 'lose', '2020-01-01') "
                 "RETURNING goal_id"
             ),
             {"uid": user_id},
@@ -84,12 +94,34 @@ def _seed_representative_data(engine: Engine) -> None:
             ),
             {"uid": user_id, "gid": goal_id},
         )
+        # 'milestone' with threshold > 0 makes the 0010 achievements_threshold_positive
+        # column data-bearing.  It lives in the idx_achievements_unique_milestone partition
+        # (WHERE threshold IS NOT NULL), so it does not collide with the NULL-threshold streak row.
+        conn.execute(
+            text(
+                "INSERT INTO achievements "
+                "(user_id, goal_id, achievement_type, threshold, earned_at) "
+                "VALUES (:uid, :gid, 'milestone', 10.00, NOW())"
+            ),
+            {"uid": user_id, "gid": goal_id},
+        )
         conn.execute(
             text(
                 "INSERT INTO user_preferences (user_id, pref_key, pref_value) "
                 "VALUES (:uid, 'weight_unit', 'lbs')"
             ),
             {"uid": user_id},
+        )
+        # audit_log row (table introduced by migration 0009).  event_type is in the
+        # audit_log_event_type_valid taxonomy; resource_type is non-null because resource_id
+        # is set (audit_log_resource_consistency).  resource_id carries no FK, so :gid is for
+        # realism only; created_at defaults to NOW().
+        conn.execute(
+            text(
+                "INSERT INTO audit_log (user_id, event_type, resource_type, resource_id) "
+                "VALUES (:uid, 'goal.created', 'goal', :gid)"
+            ),
+            {"uid": user_id, "gid": goal_id},
         )
 
 
