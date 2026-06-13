@@ -7,6 +7,32 @@ issues were resolved.
 
 ---
 
+## [2026-06-13] #136 — Cover goals target_date epoch boundary and guard literal parity
+
+**Change Type:** Test
+**Scope:** web/backend (tests/unit/goals/test_sqlalchemy_model.py)
+
+**Summary:**
+Added an at-boundary accept test for `goals_target_date_epoch` (`target_date >= '2020-01-01'`): the
+inclusive boundary `date(2020, 1, 1)` must be admitted (only the `2019-12-31` reject was previously
+tested). Added a drift-guard test asserting the `'2020-01-01'` epoch in the model's `CheckConstraint`
+matches the literal migration 0010 writes in its `create_check_constraint` (introspecting the model
+constraint and regex-extracting the migration's, anchored on the `create_check_constraint` call so the
+migration docstring is never matched). Both tests were watched failing first — the accept test under an
+exclusive `>`, the parity test under an injected model/migration divergence — before being made green.
+
+**Rationale:**
+M4 Web App Quality Review finding 7: the inclusive epoch boundary had no accept-side test, and the
+duplicated literal could silently drift between the model and migration. The drift guard is a parity
+test rather than a shared constant because a migration is a point-in-time snapshot and must not import
+a live application constant (Alembic guidance); this keeps migration 0010 a faithful frozen snapshot and
+follows the dual-declaration precedent from #135.
+
+**References:**
+- Issue: #136 (M4-quality epic #140), finding 7
+
+---
+
 ## [2026-06-13] #136 — Cover achievements threshold CHECK boundaries
 
 **Change Type:** Test
