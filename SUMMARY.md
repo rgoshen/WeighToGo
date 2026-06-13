@@ -7,6 +7,29 @@ issues were resolved.
 
 ---
 
+## [2026-06-13] #136 — Cover achievements threshold CHECK boundaries
+
+**Change Type:** Test
+**Scope:** web/backend (tests/unit/achievements/test_sqlalchemy_model.py)
+
+**Summary:**
+Added accept- and reject-side boundary tests for `achievements_threshold_positive`
+(`threshold IS NULL OR threshold > 0`): a negative-threshold reject case (the strict boundary was
+previously tested only at zero), a smallest-positive accept case (`Decimal("0.01")`, the least value
+`Numeric(6, 2)` can represent above the boundary), and an explicit NULL-acceptance case for a
+`goal_reached` row (previously only incidental). Each new test was proven non-vacuous by momentarily
+perturbing the constraint and watching it fail, then restoring it — no production code changed.
+
+**Rationale:**
+M4 Web App Quality Review finding 7: the constraint's accept side and its negative reject side were
+unverified. Boundary tests document the exact admissible range and catch a future over-tightening
+(e.g. dropping the NULL allowance or excluding `0.01`).
+
+**References:**
+- Issue: #136 (M4-quality epic #140), finding 7
+
+---
+
 ## [2026-06-12] #135 — Address PR #148 review on the goals index tests
 
 **Change Type:** Test
