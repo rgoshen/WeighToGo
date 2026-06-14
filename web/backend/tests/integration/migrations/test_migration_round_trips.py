@@ -8,7 +8,7 @@ Must run with CWD = web/backend so Config("alembic.ini") resolves correctly
     cd web/backend && uv run pytest -m postgres tests/integration/migrations/ -v
 
 Requires WEIGHTTOGO_TEST_POSTGRES_DSN pointing to a throwaway test database.
-Update the two "0010" revision assertions when migration 0011 is added.
+Update _HEAD_REVISION when migration 0011 is added.
 """
 
 from __future__ import annotations
@@ -25,6 +25,15 @@ from sqlalchemy import Engine, create_engine, inspect, text
 pytestmark = pytest.mark.postgres
 
 _DSN = os.environ.get("WEIGHTTOGO_TEST_POSTGRES_DSN")
+
+# Current Alembic head.  Kept as an explicit expected value — deriving it from
+# ScriptDirectory.get_current_head() would make the version assertions tautological.
+# Update when migration 0011 is added.
+_HEAD_REVISION = "0010"
+
+# Inclusive lower bound of the 0010 goals_target_date_epoch CHECK.  Bound to one constant so the
+# seed insert and its existence assertion cannot drift.
+_EPOCH_LOWER_BOUND = "2020-01-01"
 
 _DOMAIN_TABLES: frozenset[str] = frozenset(
     {
@@ -75,16 +84,16 @@ def _seed_representative_data(engine: Engine) -> None:
             {"uid": user_id},
         )
         # 'lose' goal: target_value < start_value satisfies the direction invariant (0004).
-        # target_date = '2020-01-01' is the inclusive lower bound of the 0010
+        # target_date is _EPOCH_LOWER_BOUND, the inclusive lower bound of the 0010
         # goals_target_date_epoch CHECK (target_date IS NULL OR target_date >= '2020-01-01').
         goal_id = conn.execute(
             text(
                 "INSERT INTO goals "
                 "(user_id, target_value, target_unit, start_value, goal_type, target_date) "
-                "VALUES (:uid, 160.0, 'lbs', 180.0, 'lose', '2020-01-01') "
+                "VALUES (:uid, 160.0, 'lbs', 180.0, 'lose', :target_date) "
                 "RETURNING goal_id"
             ),
-            {"uid": user_id},
+            {"uid": user_id, "target_date": _EPOCH_LOWER_BOUND},
         ).scalar_one()
         # 'streak' is the value widened by migration 0008; downgrade must delete it first
         conn.execute(
@@ -162,14 +171,14 @@ def test_full_chain_round_trip(pg_migration_engine: Engine) -> None:
     dependency to enforce, so pytest-randomly is a non-issue.  This replaces three previously
     order-dependent tests that relied on unenforced file-definition order (finding 8).
 
-    1. a fresh upgrade head (applied by the module fixture) lands at revision 0010,
+    1. a fresh upgrade head (applied by the module fixture) lands at the head revision,
     2. seed representative rows so every M4 table is data-bearing (an audit_log row, a
        'milestone' achievement with threshold > 0, and an epoch-boundary goal),
     3. assert those seeded rows exist, so a silently-failed or removed INSERT fails the test
        instead of letting an empty-schema rollback pass green,
     4. downgrade base removes all seven SRS domain tables with the data present (migration
        0008's downgrade must DELETE the 'streak' row before re-narrowing its CHECK), and
-    5. upgrade head restores the full schema at revision 0010.
+    5. upgrade head restores the full schema at the head revision.
     """
     engine = pg_migration_engine
     cfg = Config("alembic.ini")
@@ -177,26 +186,39 @@ def test_full_chain_round_trip(pg_migration_engine: Engine) -> None:
     # 1. fresh apply reached head
     with engine.connect() as conn:
         version = conn.execute(text("SELECT version_num FROM alembic_version")).scalar_one()
-    assert version == "0010"  # update when migration 0011 is added
+    assert version == _HEAD_REVISION, f"expected head revision {_HEAD_REVISION}, found {version}"
 
     # 2. seed data-bearing rows in every M4 table
     _seed_representative_data(engine)
 
     # 3. the seeded M4 rows must exist before the downgrade, so "data-bearing" is an enforced
-    #    precondition rather than an implicit hope
+    #    precondition rather than an implicit hope.  The 'streak' row is pinned explicitly because
+    #    it is the load-bearing probe for migration 0008's data-validating downgrade — a count of
+    #    achievements alone would not catch a refactor that swapped it for another type.
     with engine.connect() as conn:
         audit_count = conn.execute(text("SELECT count(*) FROM audit_log")).scalar_one()
         achievement_count = conn.execute(text("SELECT count(*) FROM achievements")).scalar_one()
+        streak_count = conn.execute(
+            text("SELECT count(*) FROM achievements WHERE achievement_type = 'streak'")
+        ).scalar_one()
         threshold_count = conn.execute(
             text("SELECT count(*) FROM achievements WHERE threshold > 0")
         ).scalar_one()
         epoch_goal_count = conn.execute(
-            text("SELECT count(*) FROM goals WHERE target_date = '2020-01-01'")
+            text("SELECT count(*) FROM goals WHERE target_date = :target_date"),
+            {"target_date": _EPOCH_LOWER_BOUND},
         ).scalar_one()
-    assert audit_count == 1
-    assert achievement_count == 2  # one 'streak' + one 'milestone'
-    assert threshold_count == 1
-    assert epoch_goal_count == 1
+    assert audit_count == 1, f"expected 1 audit_log row after seed, found {audit_count}"
+    assert achievement_count == 2, (
+        f"expected 2 achievements (streak + milestone), found {achievement_count}"
+    )
+    assert streak_count == 1, (
+        f"expected 1 'streak' achievement (the 0008-downgrade probe), found {streak_count}"
+    )
+    assert threshold_count == 1, (
+        f"expected 1 positive-threshold achievement, found {threshold_count}"
+    )
+    assert epoch_goal_count == 1, f"expected 1 epoch-boundary goal, found {epoch_goal_count}"
 
     # 4. downgrade base clears every domain table with data present
     command.downgrade(cfg, "base")
@@ -215,4 +237,4 @@ def test_full_chain_round_trip(pg_migration_engine: Engine) -> None:
     )
     with engine.connect() as conn:
         version = conn.execute(text("SELECT version_num FROM alembic_version")).scalar_one()
-    assert version == "0010"  # update when migration 0011 is added
+    assert version == _HEAD_REVISION, f"expected head revision {_HEAD_REVISION}, found {version}"

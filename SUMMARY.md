@@ -7,6 +7,31 @@ issues were resolved.
 
 ---
 
+## [2026-06-13] #137 — Address PR #152 review (guard messages, streak pin, literal de-dup)
+
+**Change Type:** Test
+**Scope:** web/backend (tests/integration/migrations/test_migration_round_trips.py)
+
+**Summary:**
+Applied the three PR #152 review comments. Added f-string failure messages to the data-bearing guard
+assertions so a regressed seed names the table that lost its row. Pinned the load-bearing `'streak'` row
+with an explicit count guard — the achievement count alone could not catch a refactor that swapped streak
+for another NULL-threshold type, silently dropping the migration 0008 data-validating-downgrade coverage.
+De-duplicated the two hardcoded literals into module-level constants: `_EPOCH_LOWER_BOUND` for the
+`'2020-01-01'` epoch shared by the seed insert (now a bound parameter) and its assertion, and
+`_HEAD_REVISION` for the `'0010'` head shared by both version assertions. Verified on real PostgreSQL.
+
+**Rationale:**
+Diagnosability and drift-resistance improvements; no correctness change. The constants live in the test
+file (not a migration), so they do not conflict with the #136 decision that migrations must not import live
+constants. The head revision stays an explicit literal rather than a derived value, which would otherwise
+make the version assertions tautological.
+
+**References:**
+- Issue: #137 (M4-quality epic #140); PR #152 review
+
+---
+
 ## [2026-06-13] #137 — Consolidate the migration round-trip tests into one ordered scenario
 
 **Change Type:** Test
