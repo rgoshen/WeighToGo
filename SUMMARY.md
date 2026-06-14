@@ -7,6 +7,90 @@ issues were resolved.
 
 ---
 
+## [2026-06-13] #137 — Address PR #152 review (guard messages, streak pin, literal de-dup)
+
+**Change Type:** Test
+**Scope:** web/backend (tests/integration/migrations/test_migration_round_trips.py)
+
+**Summary:**
+Applied the three PR #152 review comments. Added f-string failure messages to the data-bearing guard
+assertions so a regressed seed names the table that lost its row. Pinned the load-bearing `'streak'` row
+with an explicit count guard — the achievement count alone could not catch a refactor that swapped streak
+for another NULL-threshold type, silently dropping the migration 0008 data-validating-downgrade coverage.
+De-duplicated the two hardcoded literals into module-level constants: `_EPOCH_LOWER_BOUND` for the
+`'2020-01-01'` epoch shared by the seed insert (now a bound parameter) and its assertion, and
+`_HEAD_REVISION` for the `'0010'` head shared by both version assertions. Verified on real PostgreSQL.
+
+**Rationale:**
+Diagnosability and drift-resistance improvements; no correctness change. The constants live in the test
+file (not a migration), so they do not conflict with the #136 decision that migrations must not import live
+constants. The head revision stays an explicit literal rather than a derived value, which would otherwise
+make the version assertions tautological.
+
+**References:**
+- Issue: #137 (M4-quality epic #140); PR #152 review
+
+---
+
+## [2026-06-13] #137 — Consolidate the migration round-trip tests into one ordered scenario
+
+**Change Type:** Test
+**Scope:** web/backend (tests/integration/migrations/test_migration_round_trips.py)
+
+**Summary:**
+Replaced the three mutually order-dependent round-trip tests
+(`test_from_scratch_apply_reaches_head`, `test_downgrade_base_removes_all_domain_tables`,
+`test_upgrade_head_after_downgrade_restores_schema`) with a single linear
+`test_full_chain_round_trip`. With one test there is no collection-order dependency to enforce, so
+the reliance on unenforced pytest file-definition order is gone and `pytest-randomly` is a non-issue.
+Added an existence-assertion step immediately after seeding — `count(audit_log) == 1`,
+`count(achievements) == 2`, `count(achievements WHERE threshold > 0) == 1`, and
+`count(goals WHERE target_date = '2020-01-01') == 1` — so a silently-failed or removed INSERT now
+fails the test instead of letting an empty-schema rollback pass green. The guard was proven
+non-vacuous by temporarily removing the `audit_log` insert and watching the test fail (`assert 0 == 1`),
+then restoring it. Verified on real PostgreSQL.
+
+**Rationale:**
+M4 Web App Quality Review finding 8: the three tests relied on unenforced file-definition ordering
+(safe only because `pytest-randomly` is absent). Consolidation removes the fragility at its root rather
+than annotating it with an ordering plugin, avoiding a test dependency the project deliberately omits.
+The existence assertions close the gap that the round-trip could otherwise pass even if the seed
+silently inserted nothing.
+
+**References:**
+- Issue: #137 (M4-quality epic #140), finding 8
+- Spec: SRS §8.3 (migrations)
+
+---
+
+## [2026-06-13] #137 — Make the migration round-trip seed data-bearing for the M4 tables
+
+**Change Type:** Test
+**Scope:** web/backend (tests/integration/migrations/test_migration_round_trips.py)
+
+**Summary:**
+Extended `_seed_representative_data` so every M4 table carries a real row through the full
+downgrade/upgrade chain (finding 8): added an `audit_log` row (table introduced by migration 0009;
+`event_type='goal.created'` from the taxonomy, `resource_type`/`resource_id` set to satisfy the
+resource-consistency CHECK), a `'milestone'` achievement with `threshold = 10.00` (exercising the 0010
+`achievements_threshold_positive` column, in the `WHERE threshold IS NOT NULL` unique-index partition so
+it does not collide with the NULL-threshold `streak` row), and moved the seeded goal's `target_date` to
+`'2020-01-01'`, the inclusive lower bound of the 0010 `goals_target_date_epoch` CHECK. Verified on real
+PostgreSQL (the suite is `@pytest.mark.postgres`): the new inserts are admitted and the round-trip stays green.
+
+**Rationale:**
+The seed previously inserted no `audit_log` row, no non-null `threshold`, and a far-future `target_date`,
+so the suite's docstring claim that the chain "handles real data" was unproven for the M4 tables. `0009`/`0010`
+downgrades do not validate rows (unlike `0008`), so impact is low, but the seed now makes the docstring true
+and will catch any future row-validating downgrade on these tables. `refresh_tokens` is M2-era (migration
+0001), not an M4 table, so it is intentionally left unseeded (structural drop/restore coverage only).
+
+**References:**
+- Issue: #137 (M4-quality epic #140), finding 8
+- Spec: SRS §8.3 (migrations)
+
+---
+
 ## [2026-06-13] #136 — Cover goals target_date epoch boundary and guard literal parity
 
 **Change Type:** Test
