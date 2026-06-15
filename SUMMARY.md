@@ -7,6 +7,29 @@ issues were resolved.
 
 ---
 
+## [2026-06-15] #153 — Auth-aware root: serve the landing at /
+
+**Change Type:** Feature
+**Scope:** web/frontend — routing (App.tsx)
+
+**Summary:**
+Extended the existing `ProtectedRoute` gate in place (no new route, no
+`AppLayout` change, route tree unchanged) so the root path "/" is auth-aware:
+unauthenticated visitors at "/" now see the public `LandingPage` instead of
+being redirected to login-only `/login`, while authenticated users still get
+the dashboard and unauthenticated access to any *other* protected path still
+redirects to `/login?from=<path>`. Keeping "/" as the index of the shared
+layout group preserves a single `AppLayout` instance, so navigation between the
+dashboard and other pages never remounts the shell. TDD: added a failing
+"unauthenticated / shows the split screen" test to App.test.tsx; the existing
+redirect and authenticated-dashboard tests stay green through the extended gate
+(8 passed).
+
+**References:**
+- Issue: #153 (epic #5)
+
+---
+
 ## [2026-06-15] #153 — LandingPage split-screen component
 
 **Change Type:** Feature
