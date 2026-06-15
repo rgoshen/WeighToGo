@@ -7,6 +7,28 @@ issues were resolved.
 
 ---
 
+## [2026-06-15] #153 — LandingPage split-screen component
+
+**Change Type:** Feature
+**Scope:** web/frontend — auth landing
+
+**Summary:**
+Added the public `LandingPage` (`features/auth/pages/LandingPage.tsx`): a
+responsive split-screen that composes the existing `LoginForm`/`RegisterForm`
+and `useLogin`/`useRegister` — login pane on the left, registration on the
+right — so account creation is discoverable from the app root without first
+navigating to `/register`. Each pane is a named `region` (`aria-labelledby` →
+its `h2`) so the two forms' shared "Email"/"Password" labels stay unambiguous
+for assistive tech and tests. Stacks to a single column on `xs`–`sm`. No auth
+logic duplicated and no API change. TDD: drove with a failing "both submit
+buttons" test, then layered in heading/region/single-`main` assertions
+(4 tests, all green).
+
+**References:**
+- Issue: #153 (epic #5)
+
+---
+
 ## [2026-06-02] GH-101 — Phase 5: narrative code snippets + orphan cleanup
 
 **Change Type:** Docs
