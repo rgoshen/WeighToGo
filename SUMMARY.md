@@ -7,6 +7,30 @@ issues were resolved.
 
 ---
 
+## [2026-06-15] Dependency security patches (resolve PR #155 audit failures)
+
+**Change Type:** Fix
+**Scope:** web/frontend, web/backend — dependencies
+
+**Summary:**
+The Final-ePortfolio aggregation PR (#155 → main) — the first CI run on the
+epic's work — surfaced dependency-audit failures: pre-existing CVE advisories in
+existing deps, not introduced by #153 (the #153-exercising checks, lint/test/
+build and e2e, passed). Fixed both: frontend `npm audit fix` cleared all three
+(high `vite` 8.0.14→8.0.16, plus `@babel/core` and `js-yaml`), lockfile-only;
+backend `uv lock --upgrade-package` bumped `cryptography` 48.0.0→49.0.0 and
+`starlette` 1.0.1→1.3.1 (pulling `fastapi` 0.136.1→0.137.1), clearing all five
+pip-audit findings. The starlette bump made its `TestClient.post` opaque to
+mypy, so one test helper now coerces the genuinely-int status code to satisfy
+strict no-any-return. Validated: frontend build + test:ci green (coverage ≥90%);
+backend ruff/format/mypy/import-linter clean and 682 tests pass; both audits now
+report zero vulnerabilities.
+
+**References:**
+- PR #155 (epic #5 aggregation)
+
+---
+
 ## [2026-06-15] #153 — Address PR #154 review (a11y coverage + DRY)
 
 **Change Type:** Refactor
