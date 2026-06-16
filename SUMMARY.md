@@ -7,6 +7,26 @@ issues were resolved.
 
 ---
 
+## [2026-06-15] #153 — E2E for the split-screen landing
+
+**Change Type:** Test
+**Scope:** web/frontend — e2e (Playwright)
+
+**Summary:**
+Added `e2e/landing-split.spec.ts`: logged-out `/` shows both forms; a new user
+can register from the root landing; a returning user can log in from it; logout
+returns to `/`. Because the two forms share "Email"/"Password" labels, every
+field locator is scoped to its named region ("Log In" / "Create Account") to
+stay unambiguous under Playwright strict mode. Updated the existing
+`auth-login.spec.ts` logout assertion from `/login` to `/` to match the new
+logout target. Both specs transpile and list cleanly (5 tests); execution
+requires the full stack and is validated in CI.
+
+**References:**
+- Issue: #153 (epic #5)
+
+---
+
 ## [2026-06-15] #153 — Logout returns to the root landing
 
 **Change Type:** Feature
