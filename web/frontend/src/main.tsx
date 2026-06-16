@@ -44,9 +44,10 @@ installAuthRefreshInterceptor({
   onLogout: () => {
     // Only hard-redirect when the user had an active session that just expired.
     // If the query cache has no user yet (null | undefined) we are still in the
-    // initial /me probe — React Router's ProtectedRoute will redirect to
-    // /login?from=<path> on its own, and firing window.location.assign here
-    // would override that redirect and strip the ?from= query parameter.
+    // initial /me probe — React Router's ProtectedRoute handles the
+    // unauthenticated view on its own (redirecting protected paths to
+    // /login?from=<path>, or rendering the public landing at "/"), and firing
+    // window.location.assign here would override that and strip the ?from= query.
     const hadSession =
       queryClient.getQueryData<{ user_id: number } | null>(['auth', 'me']) !== null &&
       queryClient.getQueryData<{ user_id: number } | null>(['auth', 'me']) !== undefined;

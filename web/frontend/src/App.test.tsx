@@ -139,4 +139,20 @@ describe('App (integration)', () => {
       expect(screen.getByRole('heading', { name: /log in/i })).toBeInTheDocument(),
     );
   });
+
+  it('navigating to / when unauthenticated shows the split-screen landing', async () => {
+    render(
+      <FullProviders>
+        <MemoryRouter initialEntries={['/']}>
+          <App />
+        </MemoryRouter>
+      </FullProviders>,
+    );
+    // FullProviders' beforeEach mocks me() → rejected → unauthenticated. The root
+    // path renders the public split-screen landing with both forms in place.
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /log in/i })).toBeInTheDocument(),
+    );
+    expect(screen.getByRole('button', { name: /create account/i })).toBeInTheDocument();
+  });
 });

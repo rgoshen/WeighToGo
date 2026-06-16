@@ -7,6 +7,186 @@ issues were resolved.
 
 ---
 
+## [2026-06-15] Dependency security patches (resolve PR #155 audit failures)
+
+**Change Type:** Fix
+**Scope:** web/frontend, web/backend — dependencies
+
+**Summary:**
+The Final-ePortfolio aggregation PR (#155 → main) — the first CI run on the
+epic's work — surfaced dependency-audit failures: pre-existing CVE advisories in
+existing deps, not introduced by #153 (the #153-exercising checks, lint/test/
+build and e2e, passed). Fixed both: frontend `npm audit fix` cleared all three
+(high `vite` 8.0.14→8.0.16, plus `@babel/core` and `js-yaml`), lockfile-only;
+backend `uv lock --upgrade-package` bumped `cryptography` 48.0.0→49.0.0 and
+`starlette` 1.0.1→1.3.1 (pulling `fastapi` 0.136.1→0.137.1), clearing all five
+pip-audit findings. The starlette bump made its `TestClient.post` opaque to
+mypy, so one test helper now coerces the genuinely-int status code to satisfy
+strict no-any-return. Validated: frontend build + test:ci green (coverage ≥90%);
+backend ruff/format/mypy/import-linter clean and 682 tests pass; both audits now
+report zero vulnerabilities.
+
+**References:**
+- PR #155 (epic #5 aggregation)
+
+---
+
+## [2026-06-15] #153 — Address PR #154 review (a11y coverage + DRY)
+
+**Change Type:** Refactor
+**Scope:** web/frontend — auth components, tests, e2e
+
+**Summary:**
+Addressed all four PR #154 review comments. (1) **A11y coverage:** added the
+logged-out `/` (LandingPage) to the axe loop in `auth-a11y.spec.ts` — the new
+primary unauthenticated entry now scans clean (3/3 paths, zero violations).
+(2) **DRY:** extracted the shared full-height `<main>` + brand into a new
+`AuthShell`, now rendered by both `AuthLayout` (login/register) and
+`LandingPage`, so the brand/landmark lives in one place; and extracted a local
+`AuthPane` helper for the two split-screen panes so their `aria-labelledby`
+region wiring (which the e2e selectors depend on) can't drift. (3) Collapsed the
+repeated `render(<Wrapper>…)` in `LandingPage.test.tsx` to a `renderLanding`
+helper. (4) Parameterized the `useLogout` test wrapper by initial path
+(`makeWrapper`) so the redirect test reuses it, and dropped the initial-state
+assertion that only exercised the router. Full unit suite green (394);
+`auth-a11y` and `landing-split` e2e green.
+
+**References:**
+- Issue: #153 (epic #5); PR #154 review
+
+---
+
+## [2026-06-15] #153 — Fix remaining logout e2e assertions
+
+**Change Type:** Test
+**Scope:** web/frontend — e2e (Playwright)
+
+**Summary:**
+Running the full e2e suite locally surfaced two more specs that asserted
+logout → `/login` and so broke under the logout → `/` change: `auth-logout.spec.ts`
+(the direct logout test) and the `seedUser` helper in `auth-login-errors.spec.ts`
+(which logs out before each error test). Updated both logout assertions to `/`
+and the helper comment; left the `auth-login-errors.spec.ts:35` assertion — a
+*failed login* correctly staying on `/login` — unchanged. Full suite green:
+50/50 passing when run serially (`--workers=1 --retries=1`, CI-like). The
+transient failures seen under default local parallelism (`retries: 0`, 2 workers)
+were load/timing flakiness, which CI's `retries: 1` absorbs.
+
+**References:**
+- Issue: #153 (epic #5)
+
+---
+
+## [2026-06-15] #153 — Documentation for the auth-aware root landing
+
+**Change Type:** Docs
+**Scope:** docs/specs (SRS §10), docs/adr, docs/ddr, web/frontend code comments
+
+**Summary:**
+Recorded the auth-aware root landing across the docs: SRS §10.1.1 adds the
+unauthenticated `/` → `LandingPage` row, §10.1.2 reframes `/` as the auth-aware
+root (Dashboard when authenticated, split-screen landing when not) and notes the
+logout-returns-to-`/` behavior, and §10.2 explains the `ProtectedRoute` gating
+and that this is a frontend-only composition reusing the existing
+`/api/v1/auth/*` endpoints (§9 unchanged). Added ADR-0027 (auth-aware root route:
+decision, rejected alternatives — separate route / AppLayout children / move
+dashboard / enhance-login-only — plus the logout-target and dual-surface
+decisions) and DDR-0010 (split-screen UI, accessible-name region contract,
+pre-existing nested-`<main>` noted as a separate follow-up), each with its
+decision-log index row. Updated the `routes.tsx` and `main.tsx` comments that
+referenced `ProtectedRoute`. Reviewed README — its auth references stay accurate
+(the previews are Android screenshots), so no change there.
+
+**References:**
+- Issue: #153 (epic #5)
+
+---
+
+## [2026-06-15] #153 — E2E for the split-screen landing
+
+**Change Type:** Test
+**Scope:** web/frontend — e2e (Playwright)
+
+**Summary:**
+Added `e2e/landing-split.spec.ts`: logged-out `/` shows both forms; a new user
+can register from the root landing; a returning user can log in from it; logout
+returns to `/`. Because the two forms share "Email"/"Password" labels, every
+field locator is scoped to its named region ("Log In" / "Create Account") to
+stay unambiguous under Playwright strict mode. Updated the existing
+`auth-login.spec.ts` logout assertion from `/login` to `/` to match the new
+logout target. Both specs transpile and list cleanly (5 tests); execution
+requires the full stack and is validated in CI.
+
+**References:**
+- Issue: #153 (epic #5)
+
+---
+
+## [2026-06-15] #153 — Logout returns to the root landing
+
+**Change Type:** Feature
+**Scope:** web/frontend — auth (useLogout)
+
+**Summary:**
+Changed the post-logout redirect from `/login` to `/` so logout returns the
+user to the canonical unauthenticated entry — the split-screen landing (login +
+registration) — keeping entry and exit symmetric and preserving registration
+discoverability at the logout boundary. Involuntary session-expiry / `from=`
+redirects to `/login` are a separate flow and stay unchanged. TDD: added a
+test that renders `useLogout` in a real router and asserts the path moves from
+`/settings` to `/` after logout (avoids mocking the router); full suite green
+(394 tests).
+
+**References:**
+- Issue: #153 (epic #5)
+
+---
+
+## [2026-06-15] #153 — Auth-aware root: serve the landing at /
+
+**Change Type:** Feature
+**Scope:** web/frontend — routing (App.tsx)
+
+**Summary:**
+Extended the existing `ProtectedRoute` gate in place (no new route, no
+`AppLayout` change, route tree unchanged) so the root path "/" is auth-aware:
+unauthenticated visitors at "/" now see the public `LandingPage` instead of
+being redirected to login-only `/login`, while authenticated users still get
+the dashboard and unauthenticated access to any *other* protected path still
+redirects to `/login?from=<path>`. Keeping "/" as the index of the shared
+layout group preserves a single `AppLayout` instance, so navigation between the
+dashboard and other pages never remounts the shell. TDD: added a failing
+"unauthenticated / shows the split screen" test to App.test.tsx; the existing
+redirect and authenticated-dashboard tests stay green through the extended gate
+(8 passed).
+
+**References:**
+- Issue: #153 (epic #5)
+
+---
+
+## [2026-06-15] #153 — LandingPage split-screen component
+
+**Change Type:** Feature
+**Scope:** web/frontend — auth landing
+
+**Summary:**
+Added the public `LandingPage` (`features/auth/pages/LandingPage.tsx`): a
+responsive split-screen that composes the existing `LoginForm`/`RegisterForm`
+and `useLogin`/`useRegister` — login pane on the left, registration on the
+right — so account creation is discoverable from the app root without first
+navigating to `/register`. Each pane is a named `region` (`aria-labelledby` →
+its `h2`) so the two forms' shared "Email"/"Password" labels stay unambiguous
+for assistive tech and tests. Stacks to a single column on `xs`–`sm`. No auth
+logic duplicated and no API change. TDD: drove with a failing "both submit
+buttons" test, then layered in heading/region/single-`main` assertions
+(4 tests, all green).
+
+**References:**
+- Issue: #153 (epic #5)
+
+---
+
 ## [2026-06-13] #137 — Address PR #152 review (guard messages, streak pin, literal de-dup)
 
 **Change Type:** Test
