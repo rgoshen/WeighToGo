@@ -6,15 +6,22 @@ import { authClient, type AuthUser } from '../api/auth-client';
 import { AuthProvider } from '../../../contexts/AuthContext';
 import { useLogout } from './useLogout';
 
-function wrapper({ children }: { children: React.ReactNode }) {
-  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return (
-    <QueryClientProvider client={qc}>
-      <MemoryRouter initialEntries={['/']}>
-        <AuthProvider>{children}</AuthProvider>
-      </MemoryRouter>
-    </QueryClientProvider>
-  );
+/**
+ * Provider tree for the hook/component under test, parameterized by the
+ * router's initial path so a navigation-target assertion can start somewhere
+ * other than '/'.
+ */
+function makeWrapper(initialPath = '/') {
+  return function Wrapper({ children }: { children: React.ReactNode }) {
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    return (
+      <QueryClientProvider client={qc}>
+        <MemoryRouter initialEntries={[initialPath]}>
+          <AuthProvider>{children}</AuthProvider>
+        </MemoryRouter>
+      </QueryClientProvider>
+    );
+  };
 }
 
 /**
@@ -42,31 +49,22 @@ describe('useLogout', () => {
 
   it('calls authClient.logout and clears auth on success', async () => {
     vi.spyOn(authClient, 'logout').mockResolvedValueOnce(undefined);
-    const { result } = renderHook(() => useLogout(), { wrapper });
+    const { result } = renderHook(() => useLogout(), { wrapper: makeWrapper() });
     result.current.submit();
     await waitFor(() => expect(authClient.logout).toHaveBeenCalled());
   });
 
   it('clears auth even when logout call fails (onSettled)', async () => {
     vi.spyOn(authClient, 'logout').mockRejectedValueOnce(new Error('network'));
-    const { result } = renderHook(() => useLogout(), { wrapper });
+    const { result } = renderHook(() => useLogout(), { wrapper: makeWrapper() });
     result.current.submit();
     await waitFor(() => expect(result.current.isPending).toBe(false));
   });
 
   it('redirects to the root landing after logout', async () => {
     vi.spyOn(authClient, 'logout').mockResolvedValueOnce(undefined);
-    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    render(
-      <QueryClientProvider client={qc}>
-        <MemoryRouter initialEntries={['/settings']}>
-          <AuthProvider>
-            <LogoutHarness />
-          </AuthProvider>
-        </MemoryRouter>
-      </QueryClientProvider>,
-    );
-    expect(screen.getByTestId('path').textContent).toBe('/settings');
+    // Start at /settings so the transition to '/' on logout is meaningful.
+    render(<LogoutHarness />, { wrapper: makeWrapper('/settings') });
     fireEvent.click(screen.getByRole('button', { name: /do-logout/i }));
     await waitFor(() => expect(screen.getByTestId('path').textContent).toBe('/'));
   });

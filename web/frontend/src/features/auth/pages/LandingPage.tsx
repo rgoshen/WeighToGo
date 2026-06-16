@@ -18,10 +18,37 @@
  */
 
 import { Box, Paper, Typography } from '@mui/material';
+import type { ReactNode } from 'react';
+import { AuthShell } from '../../../components/AuthShell';
 import { LoginForm } from '../components/LoginForm';
 import { RegisterForm } from '../components/RegisterForm';
 import { useLogin } from '../hooks/useLogin';
 import { useRegister } from '../hooks/useRegister';
+
+/**
+ * One pane of the split screen: a titled `section` exposing an ARIA `region`
+ * (its accessible name comes from `headingId` → the `h2`). Keeping the
+ * heading / `aria-labelledby` wiring in one place stops the two panes' region
+ * names — which the e2e selectors depend on — from drifting apart.
+ */
+function AuthPane({
+  headingId,
+  title,
+  children,
+}: {
+  headingId: string;
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <Paper component="section" aria-labelledby={headingId} elevation={3} sx={{ p: 4, flex: 1 }}>
+      <Typography id={headingId} variant="h5" component="h2" gutterBottom>
+        {title}
+      </Typography>
+      {children}
+    </Paper>
+  );
+}
 
 /**
  * Renders the split-screen public landing at the application root.
@@ -31,27 +58,7 @@ export function LandingPage() {
   const register = useRegister();
 
   return (
-    <Box
-      component="main"
-      sx={{
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        bgcolor: 'background.default',
-        px: 2,
-        py: 4,
-      }}
-    >
-      <Typography
-        variant="h4"
-        component="h1"
-        sx={{ mb: 3, color: 'primary.main', fontWeight: 700 }}
-      >
-        Weigh to Go!
-      </Typography>
-
+    <AuthShell>
       <Box
         sx={{
           display: 'flex',
@@ -61,34 +68,18 @@ export function LandingPage() {
           maxWidth: 900,
         }}
       >
-        <Paper
-          component="section"
-          aria-labelledby="landing-login-heading"
-          elevation={3}
-          sx={{ p: 4, flex: 1 }}
-        >
-          <Typography id="landing-login-heading" variant="h5" component="h2" gutterBottom>
-            Log In
-          </Typography>
+        <AuthPane headingId="landing-login-heading" title="Log In">
           <LoginForm onSubmit={login.submit} status={login.status} formError={login.formError} />
-        </Paper>
+        </AuthPane>
 
-        <Paper
-          component="section"
-          aria-labelledby="landing-register-heading"
-          elevation={3}
-          sx={{ p: 4, flex: 1 }}
-        >
-          <Typography id="landing-register-heading" variant="h5" component="h2" gutterBottom>
-            Create Account
-          </Typography>
+        <AuthPane headingId="landing-register-heading" title="Create Account">
           <RegisterForm
             onSubmit={register.submit}
             status={register.status}
             formError={register.formError}
           />
-        </Paper>
+        </AuthPane>
       </Box>
-    </Box>
+    </AuthShell>
   );
 }

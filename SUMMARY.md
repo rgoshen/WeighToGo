@@ -7,6 +7,31 @@ issues were resolved.
 
 ---
 
+## [2026-06-15] #153 — Address PR #154 review (a11y coverage + DRY)
+
+**Change Type:** Refactor
+**Scope:** web/frontend — auth components, tests, e2e
+
+**Summary:**
+Addressed all four PR #154 review comments. (1) **A11y coverage:** added the
+logged-out `/` (LandingPage) to the axe loop in `auth-a11y.spec.ts` — the new
+primary unauthenticated entry now scans clean (3/3 paths, zero violations).
+(2) **DRY:** extracted the shared full-height `<main>` + brand into a new
+`AuthShell`, now rendered by both `AuthLayout` (login/register) and
+`LandingPage`, so the brand/landmark lives in one place; and extracted a local
+`AuthPane` helper for the two split-screen panes so their `aria-labelledby`
+region wiring (which the e2e selectors depend on) can't drift. (3) Collapsed the
+repeated `render(<Wrapper>…)` in `LandingPage.test.tsx` to a `renderLanding`
+helper. (4) Parameterized the `useLogout` test wrapper by initial path
+(`makeWrapper`) so the redirect test reuses it, and dropped the initial-state
+assertion that only exercised the router. Full unit suite green (394);
+`auth-a11y` and `landing-split` e2e green.
+
+**References:**
+- Issue: #153 (epic #5); PR #154 review
+
+---
+
 ## [2026-06-15] #153 — Fix remaining logout e2e assertions
 
 **Change Type:** Test
