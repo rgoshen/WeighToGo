@@ -40,3 +40,4 @@ the next available number.
 | [0024](0024-audit-log-structure.md) | Audit Log Structure | Accepted | 2026-06-02 | Web |
 | [0025](0025-constraint-hardening-strategy.md) | Constraint Hardening Strategy | Accepted | 2026-06-02 | Web |
 | [0026](0026-achievement-write-flow-contract.md) | Achievement Write-Flow Contract | Accepted | 2026-05-31 | Web |
+| [0027](0027-auth-aware-root-route.md) | Auth-Aware Root Route with Public Split-Screen Landing | Accepted | 2026-06-15 | Web |

@@ -39,8 +39,10 @@ export const publicRoutes: RouteConfig[] = [
  * Routes that require an authenticated session.
  *
  * Unauthenticated access to any protected route redirects to
- * `/login?from=<original-path>`.  The ProtectedRoute wrapper in App.tsx
- * implements that redirect — these declarations are pure data.
+ * `/login?from=<original-path>` — except the root path `/`, which the
+ * ProtectedRoute gate in App.tsx renders as the public split-screen
+ * LandingPage. These declarations are pure data; `/` remains listed here as
+ * the authenticated Dashboard navigation target.
  */
 export const protectedRoutes: RouteConfig[] = [
   { path: '/', label: 'Dashboard', showInNav: true, iconName: 'Dashboard' },

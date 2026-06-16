@@ -1381,14 +1381,15 @@ The frontend uses React Router v7 with declarative route definitions and code-sp
 | --- | --- | --- |
 | `/login` | `LoginPage` | Email and password authentication form |
 | `/register` | `RegisterPage` | New user registration form |
+| `/` (unauthenticated) | `LandingPage` | Split-screen login + registration — the canonical entry point for logged-out visitors. See §10.1.2 for the authenticated behavior of `/`. |
 
 #### 10.1.2 Protected Routes
 
-Protected routes require authentication. An unauthenticated user attempting access is redirected to `/login` with the original destination preserved as a query parameter for post-login redirect.
+Protected routes require authentication. An unauthenticated user attempting access is redirected to `/login` with the original destination preserved as a query parameter for post-login redirect — except the root path `/`, which renders the public split-screen `LandingPage` (§10.1.1) instead of redirecting. After logout, users return to `/`.
 
 | Path | Component | Milestone | Description |
 | --- | --- | --- | --- |
-| `/` | `DashboardPage` | M2 | Primary landing page after login |
+| `/` | `DashboardPage` / `LandingPage` | M2 / Final | Auth-aware root: Dashboard when authenticated; split-screen `LandingPage` (§10.1.1) when not |
 | `/weight` | `WeightHistoryPage` | M2 | Full weight entry list with CRUD |
 | `/weight/new` | `WeightEntryFormPage` | M2 | Create a new weight entry |
 | `/weight/:entryId/edit` | `WeightEntryFormPage` | M2 | Edit an existing weight entry |
@@ -1410,6 +1411,8 @@ The application has two layouts that wrap all routes:
 | `AppLayout` | Protected routes | App bar, side navigation (collapsible on mobile), main outlet, footer |
 
 The side navigation in `AppLayout` is a declarative list of route definitions consumed by a `NavList` component, not a series of hardcoded conditional branches. Adding a new top-level navigation item requires updating the list and adding the route definition; no central dispatcher edit is needed.
+
+The root path `/` is gated by `ProtectedRoute`, which renders the dashboard inside `AppLayout` for authenticated users and the public split-screen `LandingPage` for unauthenticated users. `LandingPage` composes its own two-pane responsive layout (login left, registration right) — collapsing to a single column on narrow viewports — rather than the centered-card `AuthLayout`. This is a frontend-only composition that reuses the existing `/api/v1/auth/*` endpoints (§9) with no API changes.
 
 ### 10.3 Forms and Validation
 

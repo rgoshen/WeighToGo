@@ -24,3 +24,4 @@ the next available number.
 | [0007](0007-achievement-notification-ui.md) | Achievement Notification UI | Accepted | 2026-05-29 | Web |
 | [0008](0008-settings-page-layout.md) | Settings Page Layout | Accepted | 2026-05-29 | Web |
 | [0009](0009-milestone-display-unit.md) | Milestone Display Unit Conversion | Accepted | 2026-06-01 | Web |
+| [0010](0010-split-screen-landing.md) | Split-Screen Landing (Login + Registration) | Accepted | 2026-06-15 | Web |

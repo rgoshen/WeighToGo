@@ -7,6 +7,31 @@ issues were resolved.
 
 ---
 
+## [2026-06-15] #153 — Documentation for the auth-aware root landing
+
+**Change Type:** Docs
+**Scope:** docs/specs (SRS §10), docs/adr, docs/ddr, web/frontend code comments
+
+**Summary:**
+Recorded the auth-aware root landing across the docs: SRS §10.1.1 adds the
+unauthenticated `/` → `LandingPage` row, §10.1.2 reframes `/` as the auth-aware
+root (Dashboard when authenticated, split-screen landing when not) and notes the
+logout-returns-to-`/` behavior, and §10.2 explains the `ProtectedRoute` gating
+and that this is a frontend-only composition reusing the existing
+`/api/v1/auth/*` endpoints (§9 unchanged). Added ADR-0027 (auth-aware root route:
+decision, rejected alternatives — separate route / AppLayout children / move
+dashboard / enhance-login-only — plus the logout-target and dual-surface
+decisions) and DDR-0010 (split-screen UI, accessible-name region contract,
+pre-existing nested-`<main>` noted as a separate follow-up), each with its
+decision-log index row. Updated the `routes.tsx` and `main.tsx` comments that
+referenced `ProtectedRoute`. Reviewed README — its auth references stay accurate
+(the previews are Android screenshots), so no change there.
+
+**References:**
+- Issue: #153 (epic #5)
+
+---
+
 ## [2026-06-15] #153 — E2E for the split-screen landing
 
 **Change Type:** Test
