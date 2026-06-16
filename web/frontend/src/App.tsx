@@ -1,10 +1,11 @@
 /**
  * Root application component.
  *
- * Declares the route hierarchy and the ProtectedRoute wrapper that redirects
- * unauthenticated users to /login. The component itself does not own a
- * BrowserRouter — that is provided by main.tsx so tests can supply a
- * MemoryRouter instead.
+ * Declares the route hierarchy and the ProtectedRoute gate. ProtectedRoute
+ * redirects unauthenticated users to /login, except at the root path "/", where
+ * it renders the public split-screen LandingPage (login + registration). The
+ * component itself does not own a BrowserRouter — that is provided by main.tsx
+ * so tests can supply a MemoryRouter instead.
  *
  * Route page components are loaded on demand (React.lazy) so each becomes its
  * own bundle chunk (NFR-P-2 / SRS §10.1). A top-level ErrorBoundary + Suspense
@@ -31,6 +32,7 @@ const DashboardPage = lazyNamed(
 );
 const LoginPage = lazyNamed(() => import('./features/auth/pages/LoginPage'), 'LoginPage');
 const RegisterPage = lazyNamed(() => import('./features/auth/pages/RegisterPage'), 'RegisterPage');
+const LandingPage = lazyNamed(() => import('./features/auth/pages/LandingPage'), 'LandingPage');
 const AchievementsPage = lazyNamed(
   () => import('./features/achievements/pages/AchievementsPage'),
   'AchievementsPage',
@@ -50,8 +52,17 @@ const WeightEntryFormPage = lazyNamed(
 );
 
 /**
- * Wraps a route element so that unauthenticated users are redirected to
- * /login?from=<original-path> before the protected page renders.
+ * Gate for the application shell.
+ *
+ * - Initial /me probe in flight → loading splash.
+ * - Authenticated → the protected children (the AppLayout shell, whose
+ *   <Outlet /> renders the matched page, including the dashboard index).
+ * - Unauthenticated at the root path "/" → the public split-screen LandingPage
+ *   (login + registration). Keeping "/" as the index of this group (rather than
+ *   a separate route) preserves a single AppLayout instance, so navigation
+ *   between the dashboard and other pages never remounts the shell.
+ * - Unauthenticated on any other protected path → redirect to
+ *   /login?from=<original-path>, preserving the destination for post-login return.
  */
 function ProtectedRoute({ children }: { children: ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -59,12 +70,12 @@ function ProtectedRoute({ children }: { children: ReactNode }) {
 
   if (isLoading) return <LoadingSplash />;
 
-  if (!isAuthenticated) {
-    const params = new URLSearchParams({ from: location.pathname });
-    return <Navigate to={`/login?${params.toString()}`} replace />;
-  }
+  if (isAuthenticated) return <>{children}</>;
 
-  return <>{children}</>;
+  if (location.pathname === '/') return <LandingPage />;
+
+  const params = new URLSearchParams({ from: location.pathname });
+  return <Navigate to={`/login?${params.toString()}`} replace />;
 }
 
 /**

@@ -19,7 +19,9 @@ def _register_and_login(client: TestClient) -> None:
 
 
 def _post_goal(client: TestClient, payload: dict[str, Any]) -> int:
-    return client.post("/api/v1/goals", json=payload).status_code
+    # Starlette's TestClient.post is untyped to mypy (returns Any), so coerce the
+    # genuinely-int status code to satisfy strict no-any-return.
+    return int(client.post("/api/v1/goals", json=payload).status_code)
 
 
 def _base(**overrides: Any) -> dict[str, Any]:

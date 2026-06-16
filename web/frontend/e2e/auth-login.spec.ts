@@ -15,7 +15,8 @@ test.describe.serial('login flow', () => {
     await expect(page).toHaveURL('/', { timeout: 10_000 });
     await page.getByRole('button', { name: /account menu/i }).click();
     await page.getByRole('menuitem', { name: /log out/i }).click();
-    await expect(page).toHaveURL(/\/login/);
+    // Logout now returns to the root landing rather than the login-only page.
+    await expect(page).toHaveURL('/');
   });
 
   test('returning user can log in and is redirected to ?from=', async ({ page }) => {
