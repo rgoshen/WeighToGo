@@ -7,6 +7,26 @@ issues were resolved.
 
 ---
 
+## [2026-06-15] #153 — Logout returns to the root landing
+
+**Change Type:** Feature
+**Scope:** web/frontend — auth (useLogout)
+
+**Summary:**
+Changed the post-logout redirect from `/login` to `/` so logout returns the
+user to the canonical unauthenticated entry — the split-screen landing (login +
+registration) — keeping entry and exit symmetric and preserving registration
+discoverability at the logout boundary. Involuntary session-expiry / `from=`
+redirects to `/login` are a separate flow and stay unchanged. TDD: added a
+test that renders `useLogout` in a real router and asserts the path moves from
+`/settings` to `/` after logout (avoids mocking the router); full suite green
+(394 tests).
+
+**References:**
+- Issue: #153 (epic #5)
+
+---
+
 ## [2026-06-15] #153 — Auth-aware root: serve the landing at /
 
 **Change Type:** Feature

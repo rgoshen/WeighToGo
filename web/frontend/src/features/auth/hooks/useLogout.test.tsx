@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { renderHook, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { fireEvent, render, renderHook, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { authClient, type AuthUser } from '../api/auth-client';
 import { AuthProvider } from '../../../contexts/AuthContext';
@@ -14,6 +14,21 @@ function wrapper({ children }: { children: React.ReactNode }) {
         <AuthProvider>{children}</AuthProvider>
       </MemoryRouter>
     </QueryClientProvider>
+  );
+}
+
+/**
+ * Renders useLogout inside a real router so the post-logout redirect target is
+ * observable: a button triggers logout and a probe surfaces the current path.
+ */
+function LogoutHarness() {
+  const { submit } = useLogout();
+  const location = useLocation();
+  return (
+    <>
+      <button onClick={() => submit()}>do-logout</button>
+      <span data-testid="path">{location.pathname}</span>
+    </>
   );
 }
 
@@ -37,5 +52,22 @@ describe('useLogout', () => {
     const { result } = renderHook(() => useLogout(), { wrapper });
     result.current.submit();
     await waitFor(() => expect(result.current.isPending).toBe(false));
+  });
+
+  it('redirects to the root landing after logout', async () => {
+    vi.spyOn(authClient, 'logout').mockResolvedValueOnce(undefined);
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={qc}>
+        <MemoryRouter initialEntries={['/settings']}>
+          <AuthProvider>
+            <LogoutHarness />
+          </AuthProvider>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+    expect(screen.getByTestId('path').textContent).toBe('/settings');
+    fireEvent.click(screen.getByRole('button', { name: /do-logout/i }));
+    await waitFor(() => expect(screen.getByTestId('path').textContent).toBe('/'));
   });
 });
