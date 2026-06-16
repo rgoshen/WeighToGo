@@ -40,7 +40,7 @@ Administrative actions are absent: SRS §1.3 defines no admin role, so no admini
 
 **Data mutations** (weight entries, goals, preferences): the audit write shares the operation's request-scoped SQLAlchemy session. If the audit write fails, the whole operation rolls back (fail-closed). An unaudited mutation is a compliance failure worse than a visible error.
 
-**Auth events** (register, login, logout, refresh): the audit write is wrapped in explicit `try/except Exception` that emits a structlog `warning` and never re-raises (fail-open). An audit hiccup must never turn a valid login into a 500.
+**Auth events** (register, login, logout, refresh): the audit write is wrapped in explicit `try/except Exception` that emits a structlog `warning` and never re-raises (fail-open). An audit hiccup must never turn a valid login into a 500. The fail-open write runs inside a SAVEPOINT (`session.begin_nested()`): a rejected INSERT would otherwise leave the shared request-scoped session in a failed state, so the savepoint confines the rollback and keeps the main transaction — and the successful login — intact. The data-mutation path needs no savepoint: it shares the session and fails closed, so a failed audit write correctly rolls the whole operation back.
 
 ### Append-only invariant
 
@@ -74,7 +74,7 @@ This event type is reserved in the CHECK constraint taxonomy but is not currentl
 - Every in-scope operation writes exactly one audit row.
 - User deletion does not destroy the audit trail.
 - No unmasked PII is stored; failed logins carry a masked email in `metadata` via `mask_pii()`.
-- The `audit` domain is never imported by other domain packages (enforced by import-linter, verified in `test_import_contracts.py`).
+- `weighttogo.audit` is imported only by the four interface routers (`auth`, `goals`, `weight_tracking`, `preferences`) that wire it at the composition root (the ADR-0019 pattern). No other module may import it — not another context's interface, any domain/application/infrastructure layer, the top-level request middleware, or a future bounded context. Enforced by the `audit: only the four interface routers may import audit` import-linter `protected` contract (allow-list of importers; everything else forbidden by default) and verified in `test_import_contracts.py`.
 
 ## Alternatives Considered
 

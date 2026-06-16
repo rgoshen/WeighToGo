@@ -71,9 +71,12 @@ different role names.
 ## 4. Restore procedure
 
 > ⚠️ **DESTRUCTIVE.** Restore runs with `--clean --if-exists`, which **drops and
-> recreates** the objects in the target database before loading. Restore into a
-> **scratch database first** (not production) and verify before pointing the
-> application at it.
+> recreates** the objects in the target database before loading. It runs inside a
+> **single transaction** (`--single-transaction`), so a mid-restore failure rolls
+> back atomically and leaves the database unchanged rather than partially clobbered
+> (the flag also implies `--exit-on-error`). On **success** the drop/recreate is
+> still destructive, so restore into a **scratch database first** (not production)
+> and verify before pointing the application at it.
 
 ```bash
 # from web/backend — restore into the database named in DATABASE_URL
@@ -83,7 +86,7 @@ different role names.
 The equivalent raw command:
 
 ```bash
-pg_restore --clean --if-exists --no-owner --no-privileges \
+pg_restore --single-transaction --clean --if-exists --no-owner --no-privileges \
   --dbname="$DSN" "<dump-file>"
 ```
 

@@ -8,7 +8,7 @@ Must run with CWD = web/backend so Config("alembic.ini") resolves correctly
     cd web/backend && uv run pytest -m postgres tests/integration/migrations/ -v
 
 Requires WEIGHTTOGO_TEST_POSTGRES_DSN pointing to a throwaway test database.
-Update the two "0010" revision assertions when migration 0011 is added.
+Update _HEAD_REVISION when migration 0011 is added.
 """
 
 from __future__ import annotations
@@ -25,6 +25,15 @@ from sqlalchemy import Engine, create_engine, inspect, text
 pytestmark = pytest.mark.postgres
 
 _DSN = os.environ.get("WEIGHTTOGO_TEST_POSTGRES_DSN")
+
+# Current Alembic head.  Kept as an explicit expected value — deriving it from
+# ScriptDirectory.get_current_head() would make the version assertions tautological.
+# Update when migration 0011 is added.
+_HEAD_REVISION = "0010"
+
+# Inclusive lower bound of the 0010 goals_target_date_epoch CHECK.  Bound to one constant so the
+# seed insert and its existence assertion cannot drift.
+_EPOCH_LOWER_BOUND = "2020-01-01"
 
 _DOMAIN_TABLES: frozenset[str] = frozenset(
     {
@@ -47,6 +56,14 @@ def _seed_representative_data(engine: Engine) -> None:
     must DELETE streak rows before recreating the narrow CHECK; without that cleanup,
     PostgreSQL raises a constraint violation on any existing streak row.
 
+    Every M4 table is data-bearing so the full downgrade chain is exercised against real
+    data, not just an empty schema (finding 8):
+      - audit_log: one row (table introduced by migration 0009),
+      - achievements: a 'milestone' row with threshold > 0 (the 0010
+        achievements_threshold_positive column) alongside the 'streak' row,
+      - goals: target_date = '2020-01-01', the inclusive lower bound of the 0010
+        goals_target_date_epoch CHECK.
+
     All other rows anchor the representative-data set and confirm the full downgrade
     chain handles real data without errors.
     """
@@ -66,15 +83,17 @@ def _seed_representative_data(engine: Engine) -> None:
             ),
             {"uid": user_id},
         )
-        # 'lose' goal: target_value < start_value satisfies the direction invariant (0004)
+        # 'lose' goal: target_value < start_value satisfies the direction invariant (0004).
+        # target_date is _EPOCH_LOWER_BOUND, the inclusive lower bound of the 0010
+        # goals_target_date_epoch CHECK (target_date IS NULL OR target_date >= '2020-01-01').
         goal_id = conn.execute(
             text(
                 "INSERT INTO goals "
                 "(user_id, target_value, target_unit, start_value, goal_type, target_date) "
-                "VALUES (:uid, 160.0, 'lbs', 180.0, 'lose', '2025-12-31') "
+                "VALUES (:uid, 160.0, 'lbs', 180.0, 'lose', :target_date) "
                 "RETURNING goal_id"
             ),
-            {"uid": user_id},
+            {"uid": user_id, "target_date": _EPOCH_LOWER_BOUND},
         ).scalar_one()
         # 'streak' is the value widened by migration 0008; downgrade must delete it first
         conn.execute(
@@ -84,12 +103,34 @@ def _seed_representative_data(engine: Engine) -> None:
             ),
             {"uid": user_id, "gid": goal_id},
         )
+        # 'milestone' with threshold > 0 makes the 0010 achievements_threshold_positive
+        # column data-bearing.  It lives in the idx_achievements_unique_milestone partition
+        # (WHERE threshold IS NOT NULL), so it does not collide with the NULL-threshold streak row.
+        conn.execute(
+            text(
+                "INSERT INTO achievements "
+                "(user_id, goal_id, achievement_type, threshold, earned_at) "
+                "VALUES (:uid, :gid, 'milestone', 10.00, NOW())"
+            ),
+            {"uid": user_id, "gid": goal_id},
+        )
         conn.execute(
             text(
                 "INSERT INTO user_preferences (user_id, pref_key, pref_value) "
                 "VALUES (:uid, 'weight_unit', 'lbs')"
             ),
             {"uid": user_id},
+        )
+        # audit_log row (table introduced by migration 0009).  event_type is in the
+        # audit_log_event_type_valid taxonomy; resource_type is non-null because resource_id
+        # is set (audit_log_resource_consistency).  resource_id carries no FK, so :gid is for
+        # realism only; created_at defaults to NOW().
+        conn.execute(
+            text(
+                "INSERT INTO audit_log (user_id, event_type, resource_type, resource_id) "
+                "VALUES (:uid, 'goal.created', 'goal', :gid)"
+            ),
+            {"uid": user_id, "gid": goal_id},
         )
 
 
@@ -123,54 +164,77 @@ def pg_migration_engine() -> Iterator[Engine]:
         get_settings.cache_clear()
 
 
-def test_from_scratch_apply_reaches_head(pg_migration_engine: Engine) -> None:
-    """upgrade head from an empty DB lands at revision 0010 (AC: from-scratch apply).
+def test_full_chain_round_trip(pg_migration_engine: Engine) -> None:
+    """The full migration chain round-trips with data in every M4 table.
 
-    Seeds representative data after the version check so that
-    test_downgrade_base_removes_all_domain_tables exercises data-bearing rollback,
-    not just empty-schema rollback.
+    Deliberately a single linear test: with no sibling tests there is no collection-order
+    dependency to enforce, so pytest-randomly is a non-issue.  This replaces three previously
+    order-dependent tests that relied on unenforced file-definition order (finding 8).
+
+    1. a fresh upgrade head (applied by the module fixture) lands at the head revision,
+    2. seed representative rows so every M4 table is data-bearing (an audit_log row, a
+       'milestone' achievement with threshold > 0, and an epoch-boundary goal),
+    3. assert those seeded rows exist, so a silently-failed or removed INSERT fails the test
+       instead of letting an empty-schema rollback pass green,
+    4. downgrade base removes all seven SRS domain tables with the data present (migration
+       0008's downgrade must DELETE the 'streak' row before re-narrowing its CHECK), and
+    5. upgrade head restores the full schema at the head revision.
     """
-    with pg_migration_engine.connect() as conn:
-        row = conn.execute(text("SELECT version_num FROM alembic_version")).scalar_one()
-    assert row == "0010"  # update when migration 0011 is added
-    _seed_representative_data(pg_migration_engine)
-
-
-def test_downgrade_base_removes_all_domain_tables(pg_migration_engine: Engine) -> None:
-    """downgrade base removes all seven SRS domain tables with representative data present.
-
-    AC: chain is reversible.
-
-    Depends on test_from_scratch_apply_reaches_head running first (DB at head with seeded data).
-    The seeded data includes achievement_type='streak'; migration 0008's downgrade deletes
-    these rows before narrowing the CHECK so this test catches constraint-violation hazards
-    that an empty-schema rollback would miss.
-    Tests run in file-definition order by default; do not add pytest-randomly without
-    adding explicit ordering enforcement.
-    """
+    engine = pg_migration_engine
     cfg = Config("alembic.ini")
+
+    # 1. fresh apply reached head
+    with engine.connect() as conn:
+        version = conn.execute(text("SELECT version_num FROM alembic_version")).scalar_one()
+    assert version == _HEAD_REVISION, f"expected head revision {_HEAD_REVISION}, found {version}"
+
+    # 2. seed data-bearing rows in every M4 table
+    _seed_representative_data(engine)
+
+    # 3. the seeded M4 rows must exist before the downgrade, so "data-bearing" is an enforced
+    #    precondition rather than an implicit hope.  The 'streak' row is pinned explicitly because
+    #    it is the load-bearing probe for migration 0008's data-validating downgrade — a count of
+    #    achievements alone would not catch a refactor that swapped it for another type.
+    with engine.connect() as conn:
+        audit_count = conn.execute(text("SELECT count(*) FROM audit_log")).scalar_one()
+        achievement_count = conn.execute(text("SELECT count(*) FROM achievements")).scalar_one()
+        streak_count = conn.execute(
+            text("SELECT count(*) FROM achievements WHERE achievement_type = 'streak'")
+        ).scalar_one()
+        threshold_count = conn.execute(
+            text("SELECT count(*) FROM achievements WHERE threshold > 0")
+        ).scalar_one()
+        epoch_goal_count = conn.execute(
+            text("SELECT count(*) FROM goals WHERE target_date = :target_date"),
+            {"target_date": _EPOCH_LOWER_BOUND},
+        ).scalar_one()
+    assert audit_count == 1, f"expected 1 audit_log row after seed, found {audit_count}"
+    assert achievement_count == 2, (
+        f"expected 2 achievements (streak + milestone), found {achievement_count}"
+    )
+    assert streak_count == 1, (
+        f"expected 1 'streak' achievement (the 0008-downgrade probe), found {streak_count}"
+    )
+    assert threshold_count == 1, (
+        f"expected 1 positive-threshold achievement, found {threshold_count}"
+    )
+    assert epoch_goal_count == 1, f"expected 1 epoch-boundary goal, found {epoch_goal_count}"
+
+    # 4. downgrade base clears every domain table with data present
     command.downgrade(cfg, "base")
-    table_names = set(inspect(pg_migration_engine).get_table_names())
-    assert table_names.isdisjoint(_DOMAIN_TABLES), (
+    after_downgrade = set(inspect(engine).get_table_names())
+    assert after_downgrade.isdisjoint(_DOMAIN_TABLES), (
         f"Expected all domain tables gone after downgrade base; "
-        f"still present: {table_names & _DOMAIN_TABLES}"
+        f"still present: {after_downgrade & _DOMAIN_TABLES}"
     )
 
-
-def test_upgrade_head_after_downgrade_restores_schema(pg_migration_engine: Engine) -> None:
-    """upgrade head after downgrade base restores all domain tables (AC: chain round-trips).
-
-    Depends on test_downgrade_base_removes_all_domain_tables running first (DB must be at base).
-    Tests run in file-definition order by default; do not add pytest-randomly without
-    adding explicit ordering enforcement.
-    """
-    cfg = Config("alembic.ini")
+    # 5. upgrade head restores the full schema
     command.upgrade(cfg, "head")
-    table_names = set(inspect(pg_migration_engine).get_table_names())
-    assert table_names >= _DOMAIN_TABLES, (
+    after_upgrade = set(inspect(engine).get_table_names())
+    assert after_upgrade >= _DOMAIN_TABLES, (
         f"Expected all domain tables present after upgrade head; "
-        f"missing: {_DOMAIN_TABLES - table_names}"
+        f"missing: {_DOMAIN_TABLES - after_upgrade}"
     )
-    with pg_migration_engine.connect() as conn:
-        row = conn.execute(text("SELECT version_num FROM alembic_version")).scalar_one()
-    assert row == "0010"  # update when migration 0011 is added
+    with engine.connect() as conn:
+        version = conn.execute(text("SELECT version_num FROM alembic_version")).scalar_one()
+    assert version == _HEAD_REVISION, f"expected head revision {_HEAD_REVISION}, found {version}"

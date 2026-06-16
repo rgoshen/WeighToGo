@@ -7,6 +7,52 @@ issues were resolved.
 
 ---
 
+## [2026-06-15] #139 — Keep weight-unit radio indicator visible when selected
+
+**Change Type:** Fix
+**Scope:** web/frontend (settings), docs/ddr
+
+**Summary:**
+Fixed the Weight unit control's selected-state styling. The selected option was painted
+with a solid `primary.main` fill and its radio tinted `primary.contrastText`, occluding the
+radio indicator so the control read as a toggle button rather than a radio. Replaced the
+solid fill with a `primary.main` border + subtle `action.selected` tint and removed the
+contrast-tint override, so the radio stays visible; the unselected option carries a
+`divider` border, giving a consistent segmented-radio appearance.
+
+**Rationale:**
+A toggle implies independent on/off; the unit choice is mutually exclusive, so it must read
+as a radio. The fix preserves the existing `RadioGroup`/`Radio` semantics (roles and
+accessible names unchanged), so the existing settings unit tests and the preferences e2e
+spec continue to cover it without modification. Restores the segmented-radio intent already
+documented in DDR-0008's Visual Reference; DDR-0008's decision text was amended to match.
+
+**References:**
+- docs/ddr/0008-settings-page-layout.md (amended)
+- Issue: #139
+
+---
+
+## [2026-06-15] Add CS 499 final project guidelines and rubric reference
+
+**Change Type:** Docs
+**Scope:** docs/plans
+
+**Summary:**
+Committed the official CS 499 Final Project Guidelines and Rubric to docs/plans/ as
+an in-repo reference for the capstone's final-submission requirements, course
+outcomes, and grading rubric.
+
+**Rationale:**
+Keeps the authoritative grading criteria versioned alongside the milestone briefs,
+so final-submission scope decisions trace back to the rubric rather than an external
+copy.
+
+**References:**
+- docs/plans/CS 499 Final Project Guidelines and Rubric.md
+
+---
+
 ## [2026-06-15] Dependency security patches (resolve PR #155 audit failures)
 
 **Change Type:** Fix
@@ -184,6 +230,650 @@ buttons" test, then layered in heading/region/single-`main` assertions
 
 **References:**
 - Issue: #153 (epic #5)
+
+---
+
+## [2026-06-13] #137 — Address PR #152 review (guard messages, streak pin, literal de-dup)
+
+**Change Type:** Test
+**Scope:** web/backend (tests/integration/migrations/test_migration_round_trips.py)
+
+**Summary:**
+Applied the three PR #152 review comments. Added f-string failure messages to the data-bearing guard
+assertions so a regressed seed names the table that lost its row. Pinned the load-bearing `'streak'` row
+with an explicit count guard — the achievement count alone could not catch a refactor that swapped streak
+for another NULL-threshold type, silently dropping the migration 0008 data-validating-downgrade coverage.
+De-duplicated the two hardcoded literals into module-level constants: `_EPOCH_LOWER_BOUND` for the
+`'2020-01-01'` epoch shared by the seed insert (now a bound parameter) and its assertion, and
+`_HEAD_REVISION` for the `'0010'` head shared by both version assertions. Verified on real PostgreSQL.
+
+**Rationale:**
+Diagnosability and drift-resistance improvements; no correctness change. The constants live in the test
+file (not a migration), so they do not conflict with the #136 decision that migrations must not import live
+constants. The head revision stays an explicit literal rather than a derived value, which would otherwise
+make the version assertions tautological.
+
+**References:**
+- Issue: #137 (M4-quality epic #140); PR #152 review
+
+---
+
+## [2026-06-13] #137 — Consolidate the migration round-trip tests into one ordered scenario
+
+**Change Type:** Test
+**Scope:** web/backend (tests/integration/migrations/test_migration_round_trips.py)
+
+**Summary:**
+Replaced the three mutually order-dependent round-trip tests
+(`test_from_scratch_apply_reaches_head`, `test_downgrade_base_removes_all_domain_tables`,
+`test_upgrade_head_after_downgrade_restores_schema`) with a single linear
+`test_full_chain_round_trip`. With one test there is no collection-order dependency to enforce, so
+the reliance on unenforced pytest file-definition order is gone and `pytest-randomly` is a non-issue.
+Added an existence-assertion step immediately after seeding — `count(audit_log) == 1`,
+`count(achievements) == 2`, `count(achievements WHERE threshold > 0) == 1`, and
+`count(goals WHERE target_date = '2020-01-01') == 1` — so a silently-failed or removed INSERT now
+fails the test instead of letting an empty-schema rollback pass green. The guard was proven
+non-vacuous by temporarily removing the `audit_log` insert and watching the test fail (`assert 0 == 1`),
+then restoring it. Verified on real PostgreSQL.
+
+**Rationale:**
+M4 Web App Quality Review finding 8: the three tests relied on unenforced file-definition ordering
+(safe only because `pytest-randomly` is absent). Consolidation removes the fragility at its root rather
+than annotating it with an ordering plugin, avoiding a test dependency the project deliberately omits.
+The existence assertions close the gap that the round-trip could otherwise pass even if the seed
+silently inserted nothing.
+
+**References:**
+- Issue: #137 (M4-quality epic #140), finding 8
+- Spec: SRS §8.3 (migrations)
+
+---
+
+## [2026-06-13] #137 — Make the migration round-trip seed data-bearing for the M4 tables
+
+**Change Type:** Test
+**Scope:** web/backend (tests/integration/migrations/test_migration_round_trips.py)
+
+**Summary:**
+Extended `_seed_representative_data` so every M4 table carries a real row through the full
+downgrade/upgrade chain (finding 8): added an `audit_log` row (table introduced by migration 0009;
+`event_type='goal.created'` from the taxonomy, `resource_type`/`resource_id` set to satisfy the
+resource-consistency CHECK), a `'milestone'` achievement with `threshold = 10.00` (exercising the 0010
+`achievements_threshold_positive` column, in the `WHERE threshold IS NOT NULL` unique-index partition so
+it does not collide with the NULL-threshold `streak` row), and moved the seeded goal's `target_date` to
+`'2020-01-01'`, the inclusive lower bound of the 0010 `goals_target_date_epoch` CHECK. Verified on real
+PostgreSQL (the suite is `@pytest.mark.postgres`): the new inserts are admitted and the round-trip stays green.
+
+**Rationale:**
+The seed previously inserted no `audit_log` row, no non-null `threshold`, and a far-future `target_date`,
+so the suite's docstring claim that the chain "handles real data" was unproven for the M4 tables. `0009`/`0010`
+downgrades do not validate rows (unlike `0008`), so impact is low, but the seed now makes the docstring true
+and will catch any future row-validating downgrade on these tables. `refresh_tokens` is M2-era (migration
+0001), not an M4 table, so it is intentionally left unseeded (structural drop/restore coverage only).
+
+**References:**
+- Issue: #137 (M4-quality epic #140), finding 8
+- Spec: SRS §8.3 (migrations)
+
+---
+
+## [2026-06-13] #136 — Cover goals target_date epoch boundary and guard literal parity
+
+**Change Type:** Test
+**Scope:** web/backend (tests/unit/goals/test_sqlalchemy_model.py)
+
+**Summary:**
+Added an at-boundary accept test for `goals_target_date_epoch` (`target_date >= '2020-01-01'`): the
+inclusive boundary `date(2020, 1, 1)` must be admitted (only the `2019-12-31` reject was previously
+tested). Added a drift-guard test asserting the `'2020-01-01'` epoch in the model's `CheckConstraint`
+matches the literal migration 0010 writes in its `create_check_constraint` (introspecting the model
+constraint and regex-extracting the migration's, anchored on the `create_check_constraint` call so the
+migration docstring is never matched). Both tests were watched failing first — the accept test under an
+exclusive `>`, the parity test under an injected model/migration divergence — before being made green.
+
+**Rationale:**
+M4 Web App Quality Review finding 7: the inclusive epoch boundary had no accept-side test, and the
+duplicated literal could silently drift between the model and migration. The drift guard is a parity
+test rather than a shared constant because a migration is a point-in-time snapshot and must not import
+a live application constant (Alembic guidance); this keeps migration 0010 a faithful frozen snapshot and
+follows the dual-declaration precedent from #135.
+
+**References:**
+- Issue: #136 (M4-quality epic #140), finding 7
+
+---
+
+## [2026-06-13] #136 — Cover achievements threshold CHECK boundaries
+
+**Change Type:** Test
+**Scope:** web/backend (tests/unit/achievements/test_sqlalchemy_model.py)
+
+**Summary:**
+Added accept- and reject-side boundary tests for `achievements_threshold_positive`
+(`threshold IS NULL OR threshold > 0`): a negative-threshold reject case (the strict boundary was
+previously tested only at zero), a smallest-positive accept case (`Decimal("0.01")`, the least value
+`Numeric(6, 2)` can represent above the boundary), and an explicit NULL-acceptance case for a
+`goal_reached` row (previously only incidental). Each new test was proven non-vacuous by momentarily
+perturbing the constraint and watching it fail, then restoring it — no production code changed.
+
+**Rationale:**
+M4 Web App Quality Review finding 7: the constraint's accept side and its negative reject side were
+unverified. Boundary tests document the exact admissible range and catch a future over-tightening
+(e.g. dropping the NULL allowance or excluding `0.01`).
+
+**References:**
+- Issue: #136 (M4-quality epic #140), finding 7
+
+---
+
+## [2026-06-12] #135 — Address PR #148 review on the goals index tests
+
+**Change Type:** Test
+**Scope:** web/backend (goals/infrastructure/models.py, tests/unit/goals/test_sqlalchemy_model.py, tests/integration/goals/test_index_usage_postgres.py)
+
+**Summary:**
+Addressed PR #148 review feedback. (1) Strengthened the model-declaration test to assert
+`column_names == ['user_id', 'created_at']` and — since SQLite reflection drops sort direction — that the
+`sqlite_master` DDL contains `created_at DESC`, so a drift to the wrong columns or to ASC now fails the test.
+(2) Reworked the Postgres seed to a single user with exactly one active goal so the `is_active = FALSE`
+history query excludes a real row (previously every row was inactive, making the two query shapes scan an
+identical set), and dropped the second user (dead setup under `enable_seqscan = off`). (3) Documented that the
+distinct-timestamp seed is load-bearing for plan stability and that the `goal_id` tie-break is a row-ordering
+concern out of scope for a plan test. (4) Softened the EXPLAIN docstrings: `enable_seqscan = off` proves the
+index is usable / guards against its removal, not that the planner prefers it organically. (5) Corrected the
+`idx_achievements_user_earned` wording (the shared trait is dual-declaration, not the `DESC` shape).
+
+**Rationale:**
+Review found the original assertions could not distinguish ASC from DESC or catch wrong columns, the
+history/listing seed never exercised the `include_active` distinction, and the achievements parallel was
+overstated. Deferred (with on-thread reasoning) the cross-cutting suggestions — a generic `create_all`↔
+migration index-parity test (which also surfaces a pre-existing weight-index gap: the weight model declares
+no indexes, so its migration-only indexes are absent from `create_all`; overlaps #137) and hoisting the
+shared `pg_engine` fixture — as out of scope for finding 6.
+
+**References:**
+- Issue: #135 (M4-quality epic #140), PR #148, finding 6
+
+---
+
+## [2026-06-12] #135 — Prove the goal-listing read path uses the index on PostgreSQL
+
+**Change Type:** Test
+**Scope:** web/backend (tests/integration/goals/test_index_usage_postgres.py)
+
+**Summary:**
+Added a `@pytest.mark.postgres` index-usage test mirroring the weight read-path proof
+(`tests/integration/weight/test_index_usage_postgres.py`). It seeds 150 inactive goals per user, runs
+`EXPLAIN` with `enable_seqscan = off` for both the full listing (`include_active=True`) and the past-goals
+history (`is_active = FALSE`) shapes of `SqlAlchemyGoalRepository.list_for_user`, and asserts the plan names
+`idx_goals_user_created` with no `Seq Scan on goals`; a third test asserts the index is present in
+`pg_indexes`. Skips locally without `WEIGHTTOGO_TEST_POSTGRES_DSN`; runs against the `postgres:16` CI service.
+
+**Rationale:**
+M4 review finding 6: the goal read path had no production-engine proof, unlike the weight path. The index
+exists via migration 0010, so the test passes on a migrated schema — its value is proving the query plans
+against the index and guarding against a future regression (e.g. an accidental drop) that the SQLite suite
+cannot catch.
+
+**References:**
+- Issue: #135 (M4-quality epic #140), finding 6
+- Mirrors `tests/integration/weight/test_index_usage_postgres.py`; SRS §11 (quality engineering)
+
+---
+
+## [2026-06-12] #135 — Dual-declare idx_goals_user_created for create_all parity
+
+**Change Type:** Fix
+**Scope:** web/backend (goals/infrastructure/models.py, tests/unit/goals/test_sqlalchemy_model.py)
+
+**Summary:**
+Declared `idx_goals_user_created (user_id, created_at DESC)` in `GoalModel.__table_args__`, mirroring
+migration 0010 exactly via `text("created_at DESC")`. The index was previously migration-only, so
+`Base.metadata.create_all` (the SQLite integration schema) never built it and the model and migration
+schemas diverged. Added a unit test asserting the index is present in
+`inspect(engine).get_indexes("goals")` after `create_all` — written first and watched fail before the
+declaration was added.
+
+**Rationale:**
+M4 review finding 6: the goal-listing index matched neither codebase precedent. Dual-declaring follows the
+codebase precedent that read indexes are declared in both the model and the migration (e.g. the
+also-dual-declared `idx_achievements_user_earned`) and gives the SQLite suite a faithful schema. The shared
+trait is the dual-declaration, not the index shape — this index is `DESC`, achievements is plain ASC. Chosen
+over a documentation-only note because this is a quality-remediation epic — matching the demonstrated
+discipline beats explaining the gap.
+
+**References:**
+- Issue: #135 (M4-quality epic #140), finding 6
+- Migration 0010 (`idx_goals_user_created`); ADR-0025 (constraint-hardening strategy)
+
+---
+
+## [2026-06-12] #134 — Document the two-tier (SQLite/PostgreSQL) test strategy
+
+**Change Type:** Docs
+**Scope:** web/backend (tests/README.md, README.md)
+
+**Summary:**
+Added `web/backend/tests/README.md` explaining why a local `uv run pytest` shows skipped tests: the
+`@pytest.mark.postgres` index-usage and migration-round-trip tests are PostgreSQL-fidelity tests that
+skip under the default in-memory SQLite suite and run against a real `postgres:16` service in CI. Noted
+that the skip count is by design — and will grow, not shrink, as more fidelity tests are added — and
+documented how to run them locally via the `WEIGHTTOGO_TEST_POSTGRES_DSN` env var. Replaced the backend
+README's stale "682 tests" line with a non-brittle pointer to the new test README.
+
+**Rationale:**
+Surfaced during the PR #147 review discussion: a reader could mistake the skipped count for a coverage
+gap. Documenting the two-tier strategy makes the intent durable. Docs-only; no test or source changes.
+
+**References:**
+- Issue: #134 (M4-quality epic #140), PR #147
+- ADR-0012 (three-pattern backend architecture); SRS §11 (quality engineering)
+
+---
+
+## [2026-06-12] #134 — Address PR #147 review feedback
+
+**Change Type:** Test
+**Scope:** web/backend (tests/integration/auth/test_auth_audit.py, tests/integration/audit/test_migration_0009.py)
+
+**Summary:**
+Addressed three review comments on the #134 tests. (1) Widened the taxonomy-parity regex from
+`[a-z_]+\.[a-z_]+` to `["']([\w.]+)["']` so a future event value with a digit, casing, or a second dot is
+captured rather than silently dropped — the old class would have reported drift that does not exist. (2)
+Derived the account-lockout loop bound from `get_settings().max_login_attempts + 1` instead of a hard-coded
+`range(6)`, so the test tracks the configured threshold. (3) Extracted a shared `_assert_email_masked`
+helper used by both the failed-login and account-locked audit tests, and tightened it to assert the masked
+value `startswith("***")` — encoding the NFR-Priv-1 front-masking contract, which catches a leading
+local-part leak (e.g. `tes***@example.com`) that the previous `"@example.com" in ...` check missed.
+
+**Rationale:**
+Code review (PR #147). Each guard was re-verified against a mutation: the widened regex now reports a
+digit-bearing drift value (`oauth2.login`) cleanly instead of dropping it. The tightened email assertion
+improves on the reviewer's literal suggestion (asserting `"test"` is absent), which would not have caught
+the `tes***@example.com` leak it cited, whereas the front-mask check does.
+
+**References:**
+- Issue: #134 (M4-quality epic #140), PR #147
+- `docs/standards/M4_WEB_APP_QUALITY.md` finding 5
+
+---
+
+## [2026-06-12] #134 — Guard the audit event taxonomy against migration drift
+
+**Change Type:** Test
+**Scope:** web/backend (tests/integration/audit/test_migration_0009.py)
+
+**Summary:**
+Added `test_event_type_check_constraint_matches_enum`, which parses migration 0009's `for v in (...)`
+event-type tuple and asserts it equals `{e.value for e in AuditEventType}`. The ORM model derives its
+event-type CHECK from the enum automatically, but the migration hard-codes the list; this guard catches
+a future enum addition that lands without a matching CHECK update.
+
+**Rationale:**
+Finding 5 (M4 Web App Quality Review): nothing asserted that the migration's hard-coded taxonomy stays in
+sync with the enum. Proven RED via a mutation check — adding a bogus enum member made the test fail;
+reverted to green. Two extraction bugs surfaced while watching it fail and were fixed: source literals are
+double-quoted (the single quotes in `f"'{v}'"` are runtime-only), and the value match must be scoped to
+`for v in (...)` so the unrelated `"users.user_id"` foreign-key literal is not swept in. Per the chosen
+approach, the assertion is pinned to migration 0009 and moves to a later migration if one re-declares the CHECK.
+
+**References:**
+- Issue: #134 (M4-quality epic #140)
+- `docs/standards/M4_WEB_APP_QUALITY.md` finding 5 (Structure, Loops and Branches, Defensive Programming)
+
+---
+
+## [2026-06-12] #134 — Cover the account-locked audit path
+
+**Change Type:** Test
+**Scope:** web/backend (tests/integration/auth/test_auth_audit.py)
+
+**Summary:**
+Added `test_account_locked_writes_account_locked_event_with_masked_email`, an integration test that
+drives six failed logins (the fifth sets the lockout, the sixth trips `AccountLockedError`) and asserts
+the `auth.account_locked` audit row is written with a null `user_id` and a masked email. This was the
+one audited path that previously had no coverage; the test mirrors the existing `login_failed` audit test.
+
+**Rationale:**
+Finding 5 (M4 Web App Quality Review): every other audited path has an assertion, but the lockout path
+did not. Proven RED via a mutation check — temporarily swapping the handler's event type to
+`auth.login_failed` made the test fail because no `account_locked` row was written; reverted to green.
+
+**References:**
+- Issue: #134 (M4-quality epic #140)
+- `docs/standards/M4_WEB_APP_QUALITY.md` finding 5 (Structure, Loops and Branches, Defensive Programming)
+
+---
+
+## [2026-06-12] #133 — Document atomic restore in the backup/restore runbook
+
+**Change Type:** Docs
+**Scope:** docs/runbooks (backup-restore.md)
+
+**Summary:**
+Updated the §4 restore procedure to match the now-atomic script: the DESTRUCTIVE note states the
+restore runs inside a single transaction (`--single-transaction`) and rolls back atomically on a
+mid-restore failure (leaving the database unchanged rather than partially clobbered, and implying
+`--exit-on-error`), while keeping the scratch-database-first + verify-before-cutover guidance as
+defense-in-depth for the still-destructive success path. Added `--single-transaction` to the raw
+equivalent `pg_restore` command so the documented command matches `restore.sh`.
+
+**Rationale:**
+Finding 4's Documentation half: the runbook must describe the chosen behavior. With atomicity now
+enforced in the script, the runbook documents the atomic guarantee rather than a partial-restore
+recovery procedure.
+
+**References:**
+- Issue: #133 (M4-quality epic #140)
+- `docs/standards/M4_WEB_APP_QUALITY.md` finding 4 (Defensive Programming, Documentation)
+
+---
+
+## [2026-06-12] #133 — Make restore.sh atomic with --single-transaction
+
+**Change Type:** Fix
+**Scope:** web/backend (scripts/restore.sh, tests/scripts)
+
+**Summary:**
+Added `--single-transaction` to the `pg_restore` invocation in `restore.sh` so a restore commits or
+rolls back atomically (the flag also implies `--exit-on-error`, making `set -e` predictable). Drove it
+with `test_restore_uses_single_transaction_for_atomicity`, which asserts the flag reaches `pg_restore`
+via the suite's argument-echoing stub. Written test-first (proven RED — the prior command passed only
+`--clean --if-exists --no-owner --no-privileges`); committed test + fix together because the pre-commit
+hook runs the full backend suite, which must stay green.
+
+**Rationale:**
+Finding 4 (Defensive Programming: leave the resource in a correct state on failure). Without
+`--single-transaction`, DROP/CREATE/COPY run as independent statements, so a mid-restore failure leaves
+the database partially clobbered. The flag is the review's recommended fix; verified against the
+PostgreSQL 16 `pg_restore` docs. Asserting at the script level matches the suite's convention of proving
+guard logic without a live database — PostgreSQL's transactional semantics belong to the engine.
+
+**References:**
+- Issue: #133 (M4-quality epic #140)
+- `docs/standards/M4_WEB_APP_QUALITY.md` finding 4 (Defensive Programming, Documentation)
+
+---
+
+## [2026-06-11] #132 — Update ADR-0024 to describe the protected audit contract (PR #145 review)
+
+**Change Type:** Docs
+**Scope:** docs/adr (0024-audit-log-structure.md)
+
+**Summary:**
+Follow-on to the contract redesign. Rewrote the ADR-0024 Consequences bullet so the citation matches
+what is actually enforced: `weighttogo.audit` is imported only by the four interface routers, and no
+other module — another context's interface, any domain/application/infrastructure layer, the request
+middleware, or a future bounded context — may import it, "Enforced by the
+`audit: only the four interface routers may import audit` import-linter `protected` contract". The
+earlier wording cited the `forbidden` contract, which only enforced the domain/application half of the
+claim; the review noted a reviewer trusting that sentence might approve a new wiring site believing CI
+would catch it.
+
+**Rationale:**
+The review offered "tighten the contract or soften the wording"; tightening to a `protected` contract
+makes the exclusivity claim literally true, so the ADR can keep the strong claim and now back it. No new
+ADR and no `docs/adr/README.md` index-row change.
+
+**References:**
+- Issue: #132 (M4-quality epic #140); PR #145 review
+- `docs/standards/M4_WEB_APP_QUALITY.md` finding 3 (Documentation)
+
+---
+
+## [2026-06-11] #132 — Strengthen audit isolation to a protected contract; harden the architecture test (PR #145 review)
+
+**Change Type:** Fix
+**Scope:** web/backend (import-linter contracts, architecture tests)
+
+**Summary:**
+Addressed the PR #145 review. Replaced the original `forbidden` contract — which fenced only the six
+other contexts' `domain`/`application` layers — with a `protected` contract
+(`audit: only the four interface routers may import audit`): `weighttogo.audit` may be imported only by
+the four `*.interface.router` allow-listed importers; every other module is forbidden by default
+(`as_packages` defaults to True, so audit's own descendants still import each other). This closes the
+gaps the review identified — `achievements.interface`/`dashboard.interface` (non-wiring interfaces), the
+top-level `weighttogo.interface` middleware, every `*.infrastructure` layer, and any future bounded
+context — none of which the `forbidden` allow-list covered, and none of which need hand-maintenance now.
+Also added `weighttogo.audit` to the pre-existing `shared: must not import bounded contexts`
+`forbidden_modules` so all of `shared`'s isolation rules live in one contract (closing a pre-existing
+omission). Hardened `tests/architecture/test_import_contracts.py`: a session-scoped fixture runs
+`lint-imports` once (was twice; removed the duplicated `shutil.which`/`subprocess.run` block); the audit
+test asserts `returncode == 0` and matches the contract's `KEPT` status against whitespace-normalized
+stdout (robust to rich's width-based soft-wrapping and import-linter output reformats); the config path
+is anchored to `Path(__file__).parents[2]` with an explicit `cwd` (location-independent) and a 120s
+`subprocess` timeout (fail-fast on a wedged run).
+
+**Rationale:**
+A `protected` contract inverts the allow-list fragility the review flagged: instead of enumerating every
+module that must *not* import audit (where the first omission silently defeats the invariant), it names
+the only modules that *may*, so the default is closed and the ADR's "only the four routers" claim is now
+literally enforced rather than partially. Verified by a manual red proof: temporary `import
+weighttogo.audit` statements in `achievements.interface`, `goals.infrastructure`, and
+`weighttogo.interface` — all previously uncaught — each made `lint-imports` report the contract `BROKEN`,
+then reverted. The `independence` contract remained the wrong tool (it would flag the four legitimate
+routers). Contracts: 16 kept, 0 broken.
+
+**References:**
+- Issue: #132 (M4-quality epic #140); PR #145 review
+- `docs/standards/M4_WEB_APP_QUALITY.md` finding 3
+- import-linter `protected` contract (allow-list of importers; `as_packages` default True)
+
+---
+
+## [2026-06-11] #132 — Align ADR-0024 with the enforced audit isolation and SAVEPOINT mechanism
+
+**Change Type:** Docs
+**Scope:** docs/adr (0024-audit-log-structure.md)
+
+**Summary:**
+Documentation half of #132. Two corrections to ADR-0024. (1) The Consequences bullet claiming the
+`audit` domain "is never imported by other domain packages (enforced by import-linter)" was made precise
+and now genuinely backed: it names the new `audit: other contexts must not import audit` contract and
+states the allowed exception — the four interface routers wiring audit at the composition root. (2) Added
+the missing SAVEPOINT detail to the "Failure handling asymmetry" rationale: the fail-open auth audit
+write runs inside `session.begin_nested()` so a rejected INSERT confines its rollback and leaves the
+main transaction (and the successful login) intact; the data-mutation path needs no savepoint because it
+fails closed.
+
+**Rationale:**
+The review (finding 3 + Documentation section) flagged both the unbacked import-linter claim and the
+omitted SAVEPOINT mechanism the code actually uses, recommending they be fixed in the same ADR pass.
+No new ADR and no `docs/adr/README.md` index-row change — this edits existing ADR-0024 content only.
+
+**References:**
+- Issue: #132 (M4-quality epic #140)
+- `docs/standards/M4_WEB_APP_QUALITY.md` finding 3 (and Documentation section)
+- `web/backend/src/weighttogo/auth/interface/router.py` (`_audit` SAVEPOINT)
+
+---
+
+## [2026-06-11] #132 — Enforce audit context isolation with an import-linter contract
+
+**Change Type:** Fix
+**Scope:** web/backend (import-linter contracts, architecture tests)
+
+**Summary:**
+Closed M4 Web App Quality Review finding 3: ADR-0024 claimed the `audit` context "is never imported
+by other domain packages (enforced by import-linter)", but no contract backed that — the invariant held
+only by convention. Added a `forbidden` import-linter contract (`audit: other contexts must not import
+audit`) to `web/backend/pyproject.toml` whose source is the six other contexts' `domain`/`application`
+sub-packages plus `weighttogo.shared`, forbidding any reach into `weighttogo.audit`. Added a committed
+test (`test_audit_context_isolation_contract_is_enforced`) that asserts `lint-imports` reports the named
+contract as `KEPT`. The four interface-layer routers (auth, goals, weight_tracking, preferences) keep
+their legitimate composition-root wiring. Contracts: 16 kept, 0 broken.
+
+**Rationale:**
+Chose mechanical enforcement (the review's primary recommendation) over softening the ADR wording —
+it makes the stronger claim true rather than retreating to "verified by review". A `forbidden` contract
+scoped to domain/application is the correct tool; an `independence` contract was rejected because it
+would wrongly flag the four interface routers' legitimate audit imports. The new test asserts on the
+named contract being `KEPT`, giving a genuine red→green TDD cycle (the name is absent before the
+contract exists) and a regression guard against silent deletion. The contract was additionally proven
+non-trivial by a manual red proof: a temporary `import weighttogo.audit` in `goals.application` made
+`lint-imports` report the contract `BROKEN` (`weighttogo.goals.application -> weighttogo.audit`), then
+reverted.
+
+**References:**
+- Issue: #132 (M4-quality epic #140)
+- `docs/standards/M4_WEB_APP_QUALITY.md` finding 3
+- ADR-0024 (`docs/adr/0024-audit-log-structure.md`)
+
+---
+
+## [2026-06-11] #131 — Complete the database-architecture constraint and index catalogues
+
+**Change Type:** Docs
+**Scope:** docs/architecture (WeighToGo_Web_Database_Architecture.md §3–§5)
+
+**Summary:**
+Reconciled §4/§5 of the web database-architecture document against the full Alembic chain
+(migrations 0001–0010), closing M4 Web App Quality Review finding 2. The catalogues claimed "all
+tables" but silently omitted the entire authentication subsystem. Added a `users` (4 constraints) and
+`refresh_tokens` (2 constraints) subsection to §4 — the four migration-0001 CHECKs
+(`users_email_format`, `users_display_name_length`, `users_failed_login_nonneg`,
+`refresh_tokens_expiry_after_issuance`) plus the two UNIQUE constraints (`uq_users_email`,
+`uq_refresh_tokens_hash`). Added four index rows to §5 (`idx_users_email_active`,
+`idx_refresh_tokens_user_active`, `idx_refresh_tokens_family`, `idx_user_preferences_user`). Filled the
+DB-enforced rule into the §3.1 `email`, `display_name`, and `failed_login_count` notes. Corrected
+`idx_achievements_user_earned`'s provenance from `ADR-0026` (which makes no indexing decision) to
+`migration 0005 (no ADR)`, matching the `idx_goals_one_active_per_user` convention.
+
+**Rationale:**
+Completed the catalogues (the review's Option A) rather than narrowing the "all tables" scope
+sentences — for a Databases milestone whose graded artifact is this catalogue, a genuinely complete
+catalogue is the stronger fix and leaves the existing claim honest. UNIQUE constraints placed in §4
+(not §5) to stay consistent with the existing `user_preferences_unique_key` entry; the alternative
+would have introduced a fresh §4/§5 inconsistency. An ADR is cited only where its Decision text makes
+the call: ADR-0009 explicitly decides the unique email, so `uq_users_email` cites it; every other auth
+object has no governing ADR and is marked `migration NNNN (no ADR)`. Verified with a reconciliation
+script that extracts all 41 named constraints/indexes from the migrations and confirms each appears in
+the doc (no automated test added — documentation-only change).
+
+**References:**
+- Issue: #131 (M4-quality epic #140)
+- Source: docs/standards/M4_WEB_APP_QUALITY.md finding 2
+
+---
+
+## [2026-06-11] #130 — Address code review: scope shell-main locator, harden assertions, reserve main min-width
+
+**Change Type:** Fix
+**Scope:** web/frontend (application shell + e2e)
+
+**Summary:**
+Addressed five review comments on PR #141. (1) Scoped the geometry guard's `getByRole('main')` to
+`.first()` in both tests: every authenticated page renders its own `<main>` nested inside the shell's
+`<main>`, so the bare locator is ambiguous under Playwright strict mode — the committed spec passed
+only because the lazy `DashboardPage` chunk had not yet mounted its `<main>` when the assertion ran (a
+Suspense timing race). Added a wait for the dashboard heading so the test measures the settled
+two-`<main>` state deterministically. (2) Replaced the brittle `width > 360` mobile assertion with
+`>= viewportSize().width - 16`. (3) Added `minWidth: 0` to the main flex item so wide or unbreakable
+content cannot push the row past the viewport now that the drawer column is reserved. (4) Hardened the
+register helper's email with random entropy (`Date.now()` alone collides under `--repeat-each`, as a
+UniqueViolation confirmed). The shell spec passes 6/6 under `--repeat-each=3`.
+
+**Bug Fix Context:**
+The strict-mode ambiguity stems from a latent duplicate/nested `<main>` landmark (WCAG) across all
+authenticated pages — pre-existing and out of #130's scope; recommended as a dedicated follow-up along
+with a shared, collision-proof e2e auth helper.
+
+**References:**
+- Issue: #130 (M4-quality epic #140); PR #141 review
+
+---
+
+## [2026-06-11] #130 — Extract registration helper and add mobile shell-layout guard (TDD refactor)
+
+**Change Type:** Refactor
+**Scope:** web/frontend (e2e)
+
+**Summary:**
+Refactored the shell-layout spec: extracted the duplicated register-and-land flow into a
+`registerFreshUser` helper, and added a mobile guard (390×844) asserting the main region stays
+flush left and (nearly) full-width when the temporary drawer is the closed overlay. This locks
+the "mobile layout unchanged" requirement from the issue as a durable assertion rather than a
+one-time manual check. Full Playwright suite green at 49 passed.
+
+**References:**
+- Issue: #130 (M4-quality epic #140)
+
+---
+
+## [2026-06-11] #130 — Reserve permanent-drawer width so main content clears the sidebar (TDD green)
+
+**Change Type:** Fix
+**Scope:** web/frontend (application shell)
+
+**Summary:**
+Fixed the desktop application shell so the main content region no longer renders under the
+permanent sidebar. Added `width: DRAWER_WIDTH` and `flexShrink: 0` to the permanent `Drawer`
+root `sx` so the docked root reserves its 240px column in the flex row, and removed the
+now-redundant `width: calc(100% - 240px)` from `<Box component="main">`, leaving `flexGrow: 1`
+to fill the remaining width. The previously-failing geometry spec now passes (main left edge
+at x=240, not x=0). The mobile temporary-drawer path is untouched.
+
+**Bug Fix Context:**
+A permanent MUI Drawer's paper is `position: fixed` (removed from flow). The shell set the
+240px width only on `.MuiDrawer-paper`, never on the docked root, so nothing reserved horizontal
+space; `flexGrow: 1` then expanded the main region across the full viewport and the fixed drawer
+painted over its left 240px. Reserving the width on the root restores the intended two-column
+layout.
+
+**References:**
+- Issue: #130 (M4-quality epic #140)
+- docs/standards/M4_WEB_APP_QUALITY.md (Finding 1)
+
+---
+
+## [2026-06-11] #130 — Failing layout-geometry spec for the desktop shell (TDD red)
+
+**Change Type:** Test
+**Scope:** web/frontend (e2e)
+
+**Summary:**
+Added `web/frontend/e2e/app-shell-layout.spec.ts`, a Playwright regression guard that
+registers a user, lands on the dashboard inside the application shell at a 1366×768
+desktop viewport, and asserts the `main` landmark's left edge sits at or beyond the
+240px permanent-drawer width. The spec fails as written — the main region's left edge
+measures x=0, painted under the drawer — pinning the Finding 1 defect that the Vitest
+and axe suites cannot catch because jsdom has no layout engine.
+
+**Rationale:**
+TDD red step: write the single failing test first. Geometry is the only thing that
+distinguishes the broken layout from the fixed one, and only a real browser can measure
+it, so the guard is an end-to-end spec rather than a component test.
+
+**References:**
+- Issue: #130 (M4-quality epic #140)
+- docs/standards/M4_WEB_APP_QUALITY.md (Finding 1)
+
+---
+
+## [2026-06-03] M4 Web App Quality Review
+
+**Change Type:** Docs
+**Scope:** docs/standards
+
+**Summary:**
+Added `docs/standards/M4_WEB_APP_QUALITY.md`, the post-close quality review of the
+web application at the Milestone Four (Databases) completion state (tag `v0.3.0`),
+following the M2/M3 report format and the CS 499 code-review checklist. The checklist
+was applied across the audit-log slice, the constraint/index hardening migration,
+migration discipline, the web database-architecture document, and the backup/restore
+runbook, with a live render of the running application. Full verification was run from
+the local checkout: backend 682 passed at 98% coverage, the PostgreSQL-marked
+index-plan tests executed against a real PostgreSQL instance (11 passed, closing the
+M3 local-proof gap), frontend 388 passed, and Playwright end-to-end 47 passed. Ten
+findings are recorded; the two High-severity ones are a desktop layout defect where
+the permanent sidebar overlays the main content (the AppLayout drawer root reserves
+no width) and the database-architecture document's constraint and index catalogues
+omitting the auth tables despite an "all tables" claim. Finding 6 and the variables
+note cross-reference existing issues #104 and #110.
+
+**References:**
+- docs/standards/M4_WEB_APP_QUALITY.md
+- Related issues: #104, #110
 
 ---
 

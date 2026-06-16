@@ -158,11 +158,11 @@ ON DELETE policies are stated explicitly. SRS references are per §8.2.
 | Column | Type | Nullable | Default | Notes |
 |--------|------|----------|---------|-------|
 | `user_id` | BIGINT | NOT NULL | autoincrement | PK |
-| `email` | CITEXT | NOT NULL | — | Unique; case-insensitive (ADR-0009) |
+| `email` | CITEXT | NOT NULL | — | Unique; case-insensitive (ADR-0009); format CHECK `users_email_format` |
 | `password_hash` | TEXT | NOT NULL | — | bcrypt hash; raw value never stored |
-| `display_name` | VARCHAR(50) | NOT NULL | — | |
+| `display_name` | VARCHAR(50) | NOT NULL | — | Trimmed length 2–50 (`users_display_name_length`) |
 | `is_active` | BOOLEAN | NOT NULL | TRUE | Soft-disable without deletion |
-| `failed_login_count` | INTEGER | NOT NULL | 0 | Lockout counter |
+| `failed_login_count` | INTEGER | NOT NULL | 0 | Lockout counter; `>= 0` (`users_failed_login_nonneg`) |
 | `locked_until` | TIMESTAMPTZ | NULL | — | NULL = not locked |
 | `created_at` | TIMESTAMPTZ | NOT NULL | `now()` | |
 | `updated_at` | TIMESTAMPTZ | NOT NULL | `now()` | |
@@ -306,6 +306,22 @@ All named CHECK and UNIQUE constraints across all tables. Format: constraint nam
 table | rule | rationale | ADR. Adding a new constraint requires a migration; adding
 a new value to a closed enum also requires a migration.
 
+### `users` (4 constraints)
+
+| Constraint | Rule | Rationale | ADR |
+|------------|------|-----------|-----|
+| `users_email_format` | `email ~* '^[^@\s]+@[^@\s]+\.[^@\s]+$'` | Rejects malformed addresses at the DB level beneath application validation | migration 0001 (no ADR) |
+| `users_display_name_length` | `length(trim(display_name)) BETWEEN 2 AND 50` | Requires a non-trivial display name after trimming whitespace; rejects blank or single-character names | migration 0001 (no ADR) |
+| `users_failed_login_nonneg` | `failed_login_count >= 0` | The lockout counter can never go negative | migration 0001 (no ADR) |
+| `uq_users_email` | UNIQUE (`email`) | One account per email; the unique, case-insensitive (CITEXT) email is the sole login identifier | ADR-0009 |
+
+### `refresh_tokens` (2 constraints)
+
+| Constraint | Rule | Rationale | ADR |
+|------------|------|-----------|-----|
+| `refresh_tokens_expiry_after_issuance` | `expires_at > issued_at` | A token cannot expire before it is issued | migration 0001 (no ADR) |
+| `uq_refresh_tokens_hash` | UNIQUE (`token_hash`) | One row per stored token hash; the SHA-256 hash is the lookup key for the opaque token presented on refresh | migration 0001 (no ADR) |
+
 ### `weight_entries` (5 constraints)
 
 | Constraint | Rule | Rationale | ADR |
@@ -362,6 +378,9 @@ query served | ADR. "Partial" means a `WHERE` predicate restricts the indexed ro
 
 | Index | Table | Columns | Type | Query served | ADR |
 |-------|-------|---------|------|--------------|-----|
+| `idx_users_email_active` | `users` | `(email)` WHERE `is_active = TRUE` | Partial | Active-account lookup by email during login; excludes soft-disabled accounts | migration 0001 (no ADR) |
+| `idx_refresh_tokens_user_active` | `refresh_tokens` | `(user_id)` WHERE `revoked_at IS NULL` | Partial | Lists a user's currently-valid refresh tokens; excludes revoked rows | migration 0001 (no ADR) |
+| `idx_refresh_tokens_family` | `refresh_tokens` | `(family_id)` | Single-column | Family-level revocation: revoke every token in a family when token reuse is detected | migration 0001 (no ADR) |
 | `idx_weight_entries_user_date_active` | `weight_entries` | `(user_id, observation_date)` WHERE `is_deleted = FALSE` | Partial UNIQUE | Prevents duplicate entries per (user, date); drives upsert conflict target | ADR-0021 |
 | `idx_weight_entries_user_observation_desc` | `weight_entries` | `(user_id, observation_date DESC)` WHERE `is_deleted = FALSE` | Partial composite | Paginated entry list ordered most-recent-first for the authenticated user | ADR-0021 |
 | `idx_weight_entries_user_created_at` | `weight_entries` | `(user_id, created_at DESC)` WHERE `is_deleted = FALSE` | Partial composite | NFR-P-3: dashboard load must retrieve 30 entries in < 100 ms; partial predicate excludes soft-delete tombstones (migration 0007) | ADR-0021 |
@@ -369,7 +388,8 @@ query served | ADR. "Partial" means a `WHERE` predicate restricts the indexed ro
 | `idx_goals_user_created` | `goals` | `(user_id, created_at DESC)` | Composite | Full goal history listing; `idx_goals_one_active_per_user` is partial and misses inactive goals (migration 0010) | ADR-0025 |
 | `idx_achievements_unique_milestone` | `achievements` | `(goal_id, achievement_type, threshold)` WHERE `threshold IS NOT NULL` | Partial UNIQUE | Idempotency: at most one milestone/streak row per (goal, type, threshold) tuple | ADR-0019 |
 | `idx_achievements_unique_goal_reached` | `achievements` | `(goal_id, achievement_type)` WHERE `threshold IS NULL` | Partial UNIQUE | Idempotency: at most one `goal_reached` row per goal | ADR-0019 |
-| `idx_achievements_user_earned` | `achievements` | `(user_id, earned_at)` | Composite | Achievement history listing per user ordered by `earned_at` | ADR-0026 |
+| `idx_achievements_user_earned` | `achievements` | `(user_id, earned_at)` | Composite | Achievement history listing per user ordered by `earned_at` | migration 0005 (no ADR) |
+| `idx_user_preferences_user` | `user_preferences` | `(user_id)` | Single-column | Loads all preference rows for a user in one indexed scan (EAV read path) | migration 0006 (no ADR) |
 | `idx_audit_log_user_created` | `audit_log` | `(user_id, created_at DESC)` | Composite | Per-user audit trail lookup for security review queries | ADR-0024 |
 | `idx_audit_log_event_type_created` | `audit_log` | `(event_type, created_at DESC)` | Composite | Per-event-type audit queries (e.g. all failed logins within a time window) | ADR-0024 |
 

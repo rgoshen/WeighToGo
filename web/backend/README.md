@@ -42,7 +42,10 @@ uv run pytest --cov=weighttogo
 
 ## Tests
 
-682 pytest tests at 98% coverage. Coverage thresholds are enforced in CI.
+The suite runs on SQLite by default; a small set of PostgreSQL-only fidelity
+tests (`@pytest.mark.postgres`) skip locally and run in CI. ~98% coverage,
+thresholds enforced in CI. See [tests/README.md](tests/README.md) for the
+two-tier strategy and why some tests skip locally.
 
 ## Documentation
 

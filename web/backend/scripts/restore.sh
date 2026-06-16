@@ -37,7 +37,10 @@ main() {
   fi
 
   local dsn="${DATABASE_URL/postgresql+psycopg:/postgresql:}"
-  pg_restore --clean --if-exists --no-owner --no-privileges \
+  # --single-transaction wraps the whole restore in one transaction, so it commits or
+  # rolls back atomically (and implies --exit-on-error): a mid-restore failure cannot
+  # leave a partially clobbered database. See docs/runbooks/backup-restore.md.
+  pg_restore --single-transaction --clean --if-exists --no-owner --no-privileges \
     --dbname="${dsn}" "${dump_file}"
   echo "restore complete from ${dump_file}"
 }
