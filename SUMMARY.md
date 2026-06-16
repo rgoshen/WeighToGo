@@ -7,6 +7,26 @@ issues were resolved.
 
 ---
 
+## [2026-06-15] Add CS 499 final project guidelines and rubric reference
+
+**Change Type:** Docs
+**Scope:** docs/plans
+
+**Summary:**
+Committed the official CS 499 Final Project Guidelines and Rubric to docs/plans/ as
+an in-repo reference for the capstone's final-submission requirements, course
+outcomes, and grading rubric.
+
+**Rationale:**
+Keeps the authoritative grading criteria versioned alongside the milestone briefs,
+so final-submission scope decisions trace back to the rubric rather than an external
+copy.
+
+**References:**
+- docs/plans/CS 499 Final Project Guidelines and Rubric.md
+
+---
+
 ## [2026-06-15] Dependency security patches (resolve PR #155 audit failures)
 
 **Change Type:** Fix
