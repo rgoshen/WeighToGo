@@ -39,10 +39,17 @@ the Final enhancement.
 
 ### Unit control — segmented radio (`UnitPreferenceControl`)
 
-Two MUI `Radio` buttons rendered as a `ToggleButtonGroup`-style pair (using `RadioGroup`
-with styled `Radio` inside `Paper` segments), one per unit. The selected unit is highlighted
-with `primary.main` background. Accessible via `<FormLabel>` + `<RadioGroup>` with
-`aria-labelledby`.
+Two MUI `Radio` buttons rendered as a segmented pair (using `RadioGroup` with styled
+`Radio` inside bordered segments), one per unit. The selected unit is highlighted with a
+`primary.main` border and a subtle `action.selected` tint, keeping its radio indicator
+visible; the unselected unit shows a `divider` border. Accessible via `<FormLabel>` +
+`<RadioGroup>` with `aria-labelledby`.
+
+> **Amendment (2026-06-15):** The selected unit was originally specified as a solid
+> `primary.main` background with the radio tinted `primary.contrastText`, which occluded
+> the radio indicator and made the control read as a toggle button rather than a radio.
+> Corrected to the border + subtle-tint treatment above so the radio stays visible, per
+> the segmented-radio intent already shown in the Visual Reference below.
 
 ### Notification toggles (`NotificationTogglesControl`)
 

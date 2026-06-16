@@ -36,9 +36,10 @@ export function UnitPreferenceControl({ value, onChange }: UnitPreferenceControl
               px: 2,
               py: 0.5,
               borderRadius: 1,
-              bgcolor: value === unit ? 'primary.main' : 'transparent',
-              color: value === unit ? 'primary.contrastText' : 'text.primary',
-              '& .MuiRadio-root': { color: value === unit ? 'primary.contrastText' : undefined },
+              border: 1,
+              borderColor: value === unit ? 'primary.main' : 'divider',
+              bgcolor: value === unit ? 'action.selected' : 'transparent',
+              color: 'text.primary',
             }}
           />
         ))}

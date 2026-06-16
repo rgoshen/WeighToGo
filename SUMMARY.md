@@ -7,6 +7,32 @@ issues were resolved.
 
 ---
 
+## [2026-06-15] #139 — Keep weight-unit radio indicator visible when selected
+
+**Change Type:** Fix
+**Scope:** web/frontend (settings), docs/ddr
+
+**Summary:**
+Fixed the Weight unit control's selected-state styling. The selected option was painted
+with a solid `primary.main` fill and its radio tinted `primary.contrastText`, occluding the
+radio indicator so the control read as a toggle button rather than a radio. Replaced the
+solid fill with a `primary.main` border + subtle `action.selected` tint and removed the
+contrast-tint override, so the radio stays visible; the unselected option carries a
+`divider` border, giving a consistent segmented-radio appearance.
+
+**Rationale:**
+A toggle implies independent on/off; the unit choice is mutually exclusive, so it must read
+as a radio. The fix preserves the existing `RadioGroup`/`Radio` semantics (roles and
+accessible names unchanged), so the existing settings unit tests and the preferences e2e
+spec continue to cover it without modification. Restores the segmented-radio intent already
+documented in DDR-0008's Visual Reference; DDR-0008's decision text was amended to match.
+
+**References:**
+- docs/ddr/0008-settings-page-layout.md (amended)
+- Issue: #139
+
+---
+
 ## [2026-06-15] Add CS 499 final project guidelines and rubric reference
 
 **Change Type:** Docs
