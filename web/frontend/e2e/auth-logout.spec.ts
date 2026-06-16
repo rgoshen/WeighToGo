@@ -12,7 +12,8 @@ test('logout clears the session and protected routes redirect', async ({ page, c
 
   await page.getByRole('button', { name: /account menu/i }).click();
   await page.getByRole('menuitem', { name: /log out/i }).click();
-  await expect(page).toHaveURL(/\/login/);
+  // Logout now returns to the root landing rather than the login-only page.
+  await expect(page).toHaveURL('/');
 
   await page.goto('/weight');
   await expect(page).toHaveURL(/\/login\?from=%2Fweight/);

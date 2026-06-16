@@ -7,6 +7,27 @@ issues were resolved.
 
 ---
 
+## [2026-06-15] #153 — Fix remaining logout e2e assertions
+
+**Change Type:** Test
+**Scope:** web/frontend — e2e (Playwright)
+
+**Summary:**
+Running the full e2e suite locally surfaced two more specs that asserted
+logout → `/login` and so broke under the logout → `/` change: `auth-logout.spec.ts`
+(the direct logout test) and the `seedUser` helper in `auth-login-errors.spec.ts`
+(which logs out before each error test). Updated both logout assertions to `/`
+and the helper comment; left the `auth-login-errors.spec.ts:35` assertion — a
+*failed login* correctly staying on `/login` — unchanged. Full suite green:
+50/50 passing when run serially (`--workers=1 --retries=1`, CI-like). The
+transient failures seen under default local parallelism (`retries: 0`, 2 workers)
+were load/timing flakiness, which CI's `retries: 1` absorbs.
+
+**References:**
+- Issue: #153 (epic #5)
+
+---
+
 ## [2026-06-15] #153 — Documentation for the auth-aware root landing
 
 **Change Type:** Docs

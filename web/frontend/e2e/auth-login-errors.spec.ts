@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 
-// Helper: register a user and log out, leaving the browser on /login.
+// Helper: register a user and log out, leaving the browser on the root landing.
 async function seedUser(page: Page, email: string, password: string) {
   await page.goto('/register');
   await page.getByLabel(/display name/i).fill('Err User');
@@ -11,7 +11,7 @@ async function seedUser(page: Page, email: string, password: string) {
   await expect(page).toHaveURL('/', { timeout: 10_000 });
   await page.getByRole('button', { name: /account menu/i }).click();
   await page.getByRole('menuitem', { name: /log out/i }).click();
-  await expect(page).toHaveURL(/\/login/);
+  await expect(page).toHaveURL('/');
 }
 
 test('invalid credentials surface "Invalid credentials." and clear password only', async ({
