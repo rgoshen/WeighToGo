@@ -14,7 +14,9 @@ export function useLogout() {
     onSettled: () => {
       clearAuth();
       queryClient.removeQueries({ queryKey: AUTH_QUERY_KEY });
-      navigate('/login', { replace: true });
+      // Return to the canonical unauthenticated entry — the split-screen landing
+      // at "/" (login + registration) — rather than the login-only /login page.
+      navigate('/', { replace: true });
     },
   });
 
